@@ -20,13 +20,15 @@ fi
 prefix_locations="$prefix /usr/local /usr .."
 exec_prefix_locations="$exec_prefix /usr/local /usr .."
 
+SRC_DIR=`cd $srcdir; pwd`
+AC_SUBST(SRC_DIR)
 
 #----------------------------------------------------------------------------
 #       Get mpiface.c version, set sh variable MPEXPR_VERSION
 #       and set MPEXPR_LIBVER
 #----------------------------------------------------------------------------
 
-eval `egrep '^#define MPEXPR_VERSION' ../generic/mpexpr.h | \
+eval `egrep '^#define MPEXPR_VERSION' $srcdir/../generic/mpexpr.h | \
       sed -e 's/#define //' -e 's/ *"/="/'`
 
 # set the library version as with . stripped out
@@ -38,8 +40,10 @@ MPEXPR_LIBVER=`echo $MPEXPR_VERSION | sed -e 's/\.//'`
 #       based on prefix and exec_prefix value
 #----------------------------------------------------------------------------
 
+AC_ARG_WITH(tcl, [  --with-tcl=PATH           path to Tcl installation], with_tclpath=${withval})
+
 # find include/tcl.h
-for f in $prefix_locations ; do
+for f in $with_tclpath $prefix_locations ; do
   if test -r "$f/include/tcl.h"; then
     TCL_INC_DIR=$f/include
     AC_MSG_RESULT(setting TCL_INC_DIR to $TCL_INC_DIR)
@@ -48,7 +52,7 @@ for f in $prefix_locations ; do
 done
  
 # find lib/tclConfig.sh
-for f in $exec_prefix_locations ; do
+for f in $with_tclpath $exec_prefix_locations ; do
   if test -r "$f/lib/tclConfig.sh"; then
     TCL_LIB_DIR=$f/lib
     AC_MSG_RESULT(setting TCL_LIB_DIR to $TCL_LIB_DIR)
@@ -82,6 +86,23 @@ else
   AC_MSG_RESULT(tclConfig.sh has TCL_VERSION = $TCL_VERSION)
 fi
 
+#----------------------------------------------------------------------------
+#       On AIX check for ldAix. If not found, use local copy
+#----------------------------------------------------------------------------
+system=`uname`
+case $system in
+  AIX)
+    # Get the first parameter to LD
+    TMP_LD=`echo $TCL_SHLIB_LD | cut -f 1 -d ' '`
+    if test -r "$TMP_LD" ; then
+      TCL_SHLIB_LD=$TCL_SHLIB_LD
+    else
+      TMP_LD_PARAM=`echo $TCL_SHLIB_LD | cut -f 2- -d ' '`
+      TCL_SHLIB_LD="$SRC_DIR/ldAix $TMP_LD_PARAM"
+    fi
+    AC_MSG_RESULT(setting TCL_SHLIB_LD to $TCL_SHLIB_LD)
+    ;;
+esac
 
 #----------------------------------------------------------------------------
 #       Set defaults for optional packages tk and tclx
@@ -234,35 +255,43 @@ fi
 #       ld.  try to coerce '-Wl,<flag>,<parm>' into just '<flag> <parm>'
 #       other flags are left as is.
 #--------------------------------------------------------------------
+# As of Tcl8.3.4, the mismatch between TCL_LD_SEARCH_FLAGS and 
+# TCL_SHLIB_LD occurs on Solaris but not Linux and AIX.
  
-OTHER_LD_SEARCH_FLAGS=''
-SPACE=''
-for arg in $TCL_LD_SEARCH_FLAGS
-do
-  newarg=''
-  case $arg in
-    -Wl*)
-      IFS_SAVE=$IFS
-      IFS=,
-      for p in $arg
-      do
-        case $p in
-          -Wl)
-            ;;
-          *)
-            newarg="$newarg $p"
-            ;;
-        esac
-      done
-      IFS=$IFS_SAVE
-      ;;
-    *)
-      newarg=$arg
-      ;;
-  esac
-  OTHER_LD_SEARCH_FLAGS="${OTHER_LD_SEARCH_FLAGS}${SPACE}${newarg}"
-  SPACE=' '
-done
+case $system in
+  SunOS)
+    OTHER_LD_SEARCH_FLAGS=''
+    SPACE=''
+    for arg in $TCL_LD_SEARCH_FLAGS
+    do
+      newarg=''
+      case $arg in
+        -Wl*)
+          IFS_SAVE=$IFS
+          IFS=,
+          for p in $arg
+          do
+            case $p in
+              -Wl)
+                ;;
+              *)
+                newarg="$newarg $p"
+                ;;
+            esac
+          done
+          IFS=$IFS_SAVE
+          ;;
+        *)
+          newarg=$arg
+          ;;
+      esac
+      OTHER_LD_SEARCH_FLAGS="${OTHER_LD_SEARCH_FLAGS}${SPACE}${newarg}"
+      SPACE=' '
+    done
+    TCL_LD_SEARCH_FLAGS=$OTHER_LD_SEARCH_FLAGS
+    AC_MSG_RESULT(setting TCL_LD_SEARCH_FLAGS to $TCL_LD_SEARCH_FLAGS)
+  ;;
+esac
 
 #--------------------------------------------------------------------
 #  	Substitute all variables for Makefile
@@ -277,6 +306,8 @@ AC_SUBST(PROGS)
 AC_SUBST(INSTALL_TARGET)
 AC_SUBST(MPEXPR_VERSION)
 AC_SUBST(MPEXPR_LIBVER)
+AC_SUBST(TCL_DBGX)
+AC_SUBST(TK_DBGX)
 AC_SUBST(TCL_VERSION)
 AC_SUBST(TK_VERSION)
 AC_SUBST(TCL_PREFIX)

@@ -34,10 +34,10 @@
 #ifndef _MPEXPRH
 #define _MPEXPRH
 
-#include <tcl.h>
-#include <qmath.h>
-
 #include <ctype.h>
+
+#include <tcl.h>
+#include "qmath.h"
 
 #define MPEXPR_VERSION   "1.0"
 

@@ -152,13 +152,14 @@ math_fill(str, width)
 
 /*VARARGS2*/
 void
-math_fmt TCL_VARARGS_DEF(char *, fmt)
+math_fmt TCL_VARARGS_DEF(char *, arg1)
 
 {
 	va_list ap;
 	char buf[200];
+	char *fmt;
 
-	TCL_VARARGS_START(char *, fmt, ap);
+	fmt = TCL_VARARGS_START(char *, arg1, ap);
 	
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
