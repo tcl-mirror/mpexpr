@@ -311,6 +311,10 @@ static void             Mp_CreateMathFunc _ANSI_ARGS_ ((Tcl_Interp *interp,
 			    char *name, int numArgs, Mp_ValueType *argTypes,
 			    Mp_MathProc *proc, ClientData clientData));
 static void             ExprFreeMathArgs _ANSI_ARGS_ ((Mp_Value *args));
+/* EFP */
+static int		ExprTertiaryZFunc _ANSI_ARGS_((ClientData clientData,
+                                           Tcl_Interp *interp, Mp_Value *args,
+                                           Mp_Value *resultPtr));
 
 
 /*
@@ -397,7 +401,8 @@ static BuiltinFunc funcTable[] = {
     {"comb", 2, {MP_INT, MP_INT}, (Mp_MathProc *)ExprBinaryZFunc, (ClientData) zcomb},
     {"prime", 2, {MP_INT, MP_INT}, (Mp_MathProc *)ExprBinaryZFunc, (ClientData) Zprimetest},
     {"relprime", 2, {MP_INT, MP_INT}, (Mp_MathProc *)ExprBinaryZFunc, (ClientData) Zrelprime},
-
+    /* EFP */
+    {"pmod", 3, {MP_INT,MP_INT,MP_INT}, (Mp_MathProc *)ExprTertiaryZFunc, (ClientData) zpowermod},
     {0},
 };
 
@@ -2360,6 +2365,28 @@ ExprBinaryZFunc(clientData, interp, args, resultPtr)
     (void) (*func)(args[0].intValue, args[1].intValue, &resultPtr->intValue);
     return TCL_OK;
 }
+
+
+/* EFP */
+static int
+ExprTertiaryZFunc(clientData, interp, args, resultPtr)
+ClientData clientData;		/* Contains address of procedure that
+                                 * takes two int arguments and
+                                 * returns a int result. */
+Tcl_Interp *interp;
+Mp_Value *args;
+Mp_Value *resultPtr;
+{
+    void (*func) _ANSI_ARGS_((ZVALUE, ZVALUE, ZVALUE, ZVALUE *))
+    = (void (*)_ANSI_ARGS_((ZVALUE, ZVALUE, ZVALUE, ZVALUE *))) clientData;
+
+
+    resultPtr->type = MP_INT;
+    zfree(resultPtr->intValue);
+    (void) (*func)(args[0].intValue, args[1].intValue, args[2].intValue, &resultPtr->intValue);
+    return TCL_OK;
+}
+
 
 	/* ARGSUSED */
 static int
