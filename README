@@ -1,0 +1,202 @@
+
+Mpexpr README
+
+Multiple precision math for Tcl
+
+Copyright 1998 Tom Poindexter,  all rights reserved
+tpoindex@nyx.net
+
+Mpexpr is distributed under a "BSD" style license.  
+See the file 'LICENSE.TERMS' for details.
+
+
+WHERE TO GET IT
+
+http://www.neosoft.com/tcl/ftparchive/sorted/math/mpexpr-1.0/mpexpr-1.0.tar.gz
+ftp://ftp.neosoft.com/pub/tcl/sorted/math/mpexpr-1.0/mpexpr-1.0.tar.gz
+
+see http://www.nyx.net/~tpoindex for web info
+
+
+WHAT IS MPEXPR ?
+
+Mpexpr adds two new commands to Tcl, 'mpexpr' and 'mpformat'.  Mpexpr works 
+much like Tcl's  native 'expr', but does all calculations using an arbitrary 
+precision math package.  Mpexpr numbers can be any number of digits, with any 
+decimal precision.  Final precision is controlled by a Tcl variable 
+'mp_precision', which can be any reasonable integer, limiting only the
+number of digits to the right of the decimal point. 
+
+Mpformat works much like Tcl's 'format', except it formats multiple
+precision numbers in a variety of formats.
+
+Mpexpr also includes most math functions provided by 'expr', as well
+as several new functions.  Mpexpr also supports Tcl variables and
+nested evaluation, just like 'expr':
+
+	% set mp_precision 50
+	50
+	% mpexpr 2.0/3.0
+	0.66666666666666666666666666666666666666666666666667
+	% mpexpr atan(1.0)*4			    ;# common pi approximation
+	3.14159265358979323846264338327950288419716939937511
+	% mpexpr gcd(234521432954782625385493,725)  ;# greatest common divisor
+	29.0
+	% mpexpr fact(34)			    ;# factorial
+	295232799039604140847618609643520000000
+	% mpexpr comb(2345,23)			    ;# combination
+	11318394336656126537744856410588463128324931424862853400
+	% set num 129
+	129
+	% mpexpr {fib($num)}			    ;# fibonnaci number
+	407305795904080553832073954
+	% set mp_precision 15
+	15
+	% set a [ mpexpr {root([set num],3)} ]	    ;# find the cube root
+	5.052774347208561
+	% mpformat %d $a			    ;# format as integer
+	5
+	% mpformat %r $a			    ;# as rational fraction
+	5052774347208561/1000000000000000
+	% mpformat %.7f $a			    ;# and as floating point
+	5.0527743
+
+
+The trade-off for 'mpepxr' is in execution time.  Since 'mpepxr' doesn't
+use native integer or floating point machine instructions, execution
+times can be much greater.  Larger precision values (set with 'mp_precision')
+also require more execution time that of smaller values.  (timings from a
+lightly loaded Linux/Intel 233mHz)
+
+	% expr atan(1.0)*4
+	3.14159265359
+	% set mp_precision 11
+	11
+	% mpexpr atan(1.0)*4
+	3.14159265359
+	% time {expr atan(1.0)*4} 10		;# native expr floating point
+	45 microseconds per iteration
+	% time {mpexpr atan(1.0)*4} 10		;# mpexpr at 11 digits precision
+	12047 microseconds per iteration
+	% set mp_precision 50
+	50
+	% time {mpexpr atan(1.0)*4} 10		;# mpexpr at 50 digits precision
+	123132 microseconds per iteration
+
+
+
+ACKNOWLEDGEMENTS:
+
+Mpexpr is a marraige between two other pieces of sofware,
+the code from the Tcl 7.6 'expr' command, and the math
+routines from David Bell's 'calc' program.
+
+I gratefully acknowledge the prior work of David Bell for his fine 'calc'
+program and math package, and all of the Tcl crew.
+
+Landon Curt Noll is now maintaining 'calc'.  See his page at:
+
+	http://reality.sgi.com/chongo/calc.html 
+
+Calc is being used to find some of the world's largest known prime numbers!
+Awesome!
+
+Here are the original copyright notices:
+
+   Calc
+    # Copyright (c) 1994 David I. Bell
+    # Permission is granted to use, distribute, or modify this source,
+    # provided that this copyright notice remains intact.
+    #
+    # Arbitrary precision calculator.
+    
+    David Bell's original 'calc' source can be found at:
+      ftp://ripem.msu.edu/pub/bignum/calc-2.9.3t6.tar.gz
+
+
+   Tcl 7.6
+    * tclExpr.c --
+    *
+    *      This file contains the code to evaluate expressions for
+    *      Tcl.
+    *
+    *      This implementation of floating-point support was modelled
+    *      after an initial implementation by Bill Carpenter.
+    *
+    * Copyright (c) 1987-1994 The Regents of the University of California.
+    * Copyright (c) 1994 Sun Microsystems, Inc.
+    *
+    * See the file "license.terms" for information on usage and redistribution
+    * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+
+REQUIREMENTS:
+
+ Tcl 8.0 
+	tcl8.0p2.tar.gz or newer
+	http://www.scriptics.com
+	ftp://ftp.scriptics.com
+
+ Mpexpr should build with Tcl 7.6.  As of version 1.0, I'm testing only 
+ with Tcl 8.0.
+
+ Mpexpr builds as a shared library by default, or builds a static library
+ and executables (--disable-shared).
+
+ Mpexpr can also build executables with Extended Tcl (TclX).  See the
+ file INSTALL.
+
+ When mpexpr is built as a shared library, you can load the extension with:
+
+	package require Mpexpr
+
+
+WINDOWS & MACINTOSH
+
+A Windows DLL is included, compiled with Tcl 8.0.  To install, unpack
+all the files in the ./win directory, and run:
+	tclsh80 install.tcl
+
+Please note!!  	I'm not suppling a .zip file for Windows.
+		The popular WinZip program can unpack .tar.gz files.  Save the
+	  	distribution file on your Windows machine, 
+		using .tgz instead of .tar.gz for best results. 
+
+Macintosh -  I'm afraid it's a Sad Mac.  Mpexpr compiles and links,
+but dies in the tests.  See the ./mac directory for more details.
+
+
+INSTALLATION
+See the file INSTALL.  Really.
+Quickie version: 
+	./configure --prefix=/same/as/tcl --exec-prefix=/same/as/tcl/exec/prefix
+	make
+	make install
+
+
+TEST SUITE
+A test suite exists in the ./tests directory.  You can run the
+test suite from the Makefile by:
+	make tests
+
+
+DOCUMENTATION
+See the man page for mpexpr.  Html, text, and Postscript
+versions of the man page are in ./doc.  mpexpr.n was largely adapted from
+Tcl's documentation.
+
+
+SAMPLE
+See the ./samples directory.  As of version 1.0, the only sample available
+is 'mpksc', an adaptation of Ken St-Cyr's Scientific Calculator.  I've
+modified the program some to add some Mpexpr functions (gcd, lcm, perm, etc.)
+and to do all calculations in Mpexpr.  See the comments in the
+file for other changes.
+
+Thanks to Ken St-Cyr for writing and sharing his fine calculator.
+
+
+BUG REPORTS, FIXES, COMMENTS, & SUGGESTIONS
+Please mail to me at: tpoindex@nyx.net
+
+

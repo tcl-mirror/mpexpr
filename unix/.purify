@@ -1,0 +1,2 @@
+suppress umr TclCleanupByteCode
+suppress umr TclGetExceptionRangeForPc

@@ -1,0 +1,16 @@
+Mpexpr for Macintosh
+
+:-(   It's a Sad Mac.
+
+I compiled Mpexpr for Macintosh, using MPW.  Unfortunately it
+dies in the test suite when it hits the transcendentals (the first
+acos() in test 'mpexpr-32.1' in the mpexpr.test file.)
+
+I'm guessing something in qtrans.c is hanging, but I haven't
+tracked it down.
+
+I'm providing my MPW Makefile and associated files if you
+are so inclined to experiment further with a Mac port.
+
+Please let me know if you have any success.
+

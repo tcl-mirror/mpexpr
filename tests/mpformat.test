@@ -1,0 +1,81 @@
+# test for Mpformat
+#
+#  this file is designed to be run from mpexpr/unix or mpexpr/win
+#
+
+# Commands covered:  mpformat
+#
+# This file contains a collection of tests for one or more of the Tcl
+# built-in commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 1991-1994 The Regents of the University of California.
+# Copyright (c) 1994 Sun Microsystems, Inc.
+#
+# See the file "mpexpr.c" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+
+# check if mpexpr is already loaded:
+
+if {[info commands mpexpr] == "mpexpr"} {
+  puts "mpexpr statically compiled into [info nameofexecutable]"
+} else {
+  set extdll  ""
+  catch {set extdll [glob ./libMpexpr*[info sharedlibextension]] }
+  if {[catch {load $extdll}]} {
+         puts "can't load $extdll"
+         exit
+  }
+  puts "mpexpr $extdll dynamically loaded into [info nameofexecutable]"
+}
+
+
+cd ../tests
+
+source defs
+
+set mp_i 12345678901234567890
+set mp_s 12345678901234567890.12345678901234567890
+set mp_b 12345678901234567890.98765432109876543210
+
+
+test mpformat-1.1 {%d integer} {mpformat %d $mp_i} 12345678901234567890
+test mpformat-1.2 {%d integer} {mpformat >%30d< $mp_i} {>          12345678901234567890<}
+test mpformat-1.2 {%d integer} {mpformat >%-30d< $mp_i} {>12345678901234567890<}
+test mpformat-1.3 {%d float}   {mpformat %d $mp_s} 12345678901234567890
+test mpformat-1.4 {%d float}   {mpformat %d $mp_b} 12345678901234567890
+
+
+test mpformat-2.1 {%f integer} {mpformat %f $mp_i} 12345678901234567890.00000000
+test mpformat-2.2 {%f float}   {mpformat %f $mp_s} 12345678901234567890.12345679
+test mpformat-2.3 {%f float}   {mpformat %f $mp_b} 12345678901234567890.98765432
+test mpformat-2.4 {%f float}   {mpformat >%30f< $mp_b} {> 12345678901234567890.98765432<}
+test mpformat-2.5 {%f float}   {mpformat >%30.30f< $mp_b} {>12345678901234567890.987654321098765432100000000000<}
+test mpformat-2.6 {%f float}   {mpformat >%-30.30f< $mp_b} {>12345678901234567890.987654321098765432100000000000<}
+test mpformat-2.7 {%f float}   {mpformat >%0.8f< $mp_b} {>12345678901234567890.98765432<}
+test mpformat-2.8 {%f float}   {mpformat %.0f $mp_b} {12345678901234567891}
+
+test mpformat-3.1 {%e integer} {mpformat %e $mp_i} {1.23456789e19}
+test mpformat-3.2 {%e integer} {mpformat >%.40e< $mp_i} {>1.2345678901234567890000000000000000000000e19<}
+test mpformat-3.3 {%e float}   {mpformat %e $mp_s} {1.23456789e19}
+
+test mpformat-4.1 {%r integer} {mpformat %r $mp_i} {12345678901234567890}
+test mpformat-4.2 {%r float}   {mpformat %r $mp_s} {123456789012345678901234567890123456789/10000000000000000000}
+test mpformat-4.3 {%r float}   {mpformat %r $mp_b} {123456789012345678909876543210987654321/10000000000000000000}
+
+test mpformat-5.1 {%N float}   {mpformat %N $mp_s} {123456789012345678901234567890123456789}
+
+test mpformat-5.1 {%D float}   {mpformat %D $mp_s} {10000000000000000000}
+
+test mpformat-6.1 {%o integer} {mpformat %o $mp_i} {01255245230635307605322}
+test mpformat-6.2 {%o float}   {mpformat %o $mp_s} {01347016464530012776613253375062425616300425/01053071060221172000000}
+
+test mpformat-7.1 {%x integer} {mpformat %x $mp_i} {0xab54a98ceb1f0ad2}
+test mpformat-7.2 {%x float}   {mpformat %x $mp_s} {0x5ce0e9a56015fec5aadfa328ae398115/0x8ac7230489e80000}
+
+test mpformat-8.1 {%b integer} {mpformat %b $mp_i} {0b1010101101010100101010011000110011101011000111110000101011010010}
+test mpformat-8.2 {%b float}   {mpformat %b $mp_s} {0b1011100111000001110100110100101011000000001010111111110110001011010101011011111101000110010100010101110001110011000000100010101/0b1000101011000111001000110000010010001001111010000000000000000000}
+
+
+

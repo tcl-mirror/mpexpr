@@ -1,0 +1,528 @@
+###############################################################################
+#
+# Mpexpr-1.0
+# Makefile.in for Mpexpr configure
+#
+# Copyright 1998 Tom Poindexter 
+
+MPEXPR_VERSION = @MPEXPR_VERSION@
+MPEXPR_LIBVER  = @MPEXPR_LIBVER@
+
+SHELL = /bin/sh
+
+###############################################################################
+#
+# set the following defines as needed: 
+
+prefix       = @TCL_PREFIX@
+exec_prefix  = @TCL_EXEC_PREFIX@
+
+# alternative defs
+#prefix      = @prefix@
+#exec_prefix = @exec_prefix@
+
+#------------------------------------------------------------------------------
+# define where Mpexpr should put binaries, libraries, and mapages
+#
+
+BIN_DIR      = $(exec_prefix)/bin
+LIB_DIR      = $(exec_prefix)/lib
+MAN_DIR      = $(prefix)/man
+MANN_DIR     = $(MAN_DIR)/mann
+
+#------------------------------------------------------------------------------
+# define where Tcl include and libraries are located
+# Mpexpr assumes that Tcl, Tk (and possibly Extended Tcl) are installed
+# in the same locations
+
+TCL_INC_DIR  = @TCL_INC_DIR@
+TCL_LIB_DIR  = @TCL_LIB_DIR@
+
+#------------------------------------------------------------------------------
+# define Tcl, Tk, TclX libraries and extra libs
+
+TCL_VERSION   = @TCL_VERSION@
+TK_VERSION    = @TK_VERSION@
+
+TCL_LIB_SPEC  = @TCL_LIB_SPEC@
+TCL_LIBS      = @TCL_LIBS@
+
+TK_LIB_SPEC   = @TK_LIB_SPEC@
+TK_LIBS       = @TK_LIBS@
+TK_XINCLUDES  = @TK_XINCLUDES@
+TK_XLIBSW     = @TK_XLIBSW@
+
+TCLX_LIB_SPEC = @TCLX_LIB_SPEC@
+TCLX_LIBS     = @TCLX_LIBS@
+TCLX_LIB_LOC  = @TCLX_LIB_LOC@
+TCLX_LIB_SEP  = @TCLX_LIB_SEP@
+TKX_LIB_SPEC  = @TKX_LIB_SPEC@
+TKX_LIBS      = @TKX_LIBS@
+
+# grab the versions from TclX, needed to find TclX appinit files
+TCLX_FULL_VERSION = @TCLX_FULL_VERSION@
+TKX_FULL_VERSION  = @TKX_FULL_VERSION@
+
+#------------------------------------------------------------------------------
+# compiler and flags from tcl config, so don't change CC
+# without some thought, otherwise you might break the shared flags.
+ 
+CC                = @TCL_CC@
+#CC                = purify -cache-dir=pure_cache -chain-length="13" cc 
+
+OPT_FLAG          = -O
+#OPT_FLAG          = -g
+
+TCL_DEFS          = $(OPT_FLAG) @TCL_DEFS@   @DEFS@
+TCL_LD_FLAGS      = @TCL_LD_FLAGS@
+TCL_SHLIB_SUFFIX  = @TCL_SHLIB_SUFFIX@
+TCL_SHLIB_CFLAGS  = @TCL_SHLIB_CFLAGS@
+TCL_SHLIB_LD      = @TCL_SHLIB_LD@
+TCL_SHLIB_LD_LIBS = @TCL_SHLIB_LD_LIBS@
+
+#------------------------------------------------------------------------------
+# define names for Mpexpr tclsh/tcl executable
+
+TCL_EXEC   = tclsh
+TCLX_EXEC  = tcl
+
+#------------------------------------------------------------------------------
+# define name for Mpexpr wish/wishx executable
+
+WISH_EXEC  = wish
+WISHX_EXEC = wishx
+
+#------------------------------------------------------------------------------
+# define names for Mpexpr library files, static and shared
+
+LIB_MPEXPR    = libMpexpr$(MPEXPR_LIBVER).a
+LNK_MPEXPR    = -lMpexpr$(MPEXPR_LIBVER)
+LIB_SH_MPEXPR = libMpexpr$(MPEXPR_LIBVER)$(TCL_SHLIB_SUFFIX)
+
+
+#------------------------------------------------------------------------------
+# object files
+
+MPEXPR_OBJ =  	mpiface.o	\
+		mpexpr.o	\
+		mpparse.o	\
+		mpformat.o	\
+		qfunc.o		\
+		qio.o		\
+		qmath.o		\
+		qmod.o		\
+		qtrans.o	\
+		zfunc.o		\
+		zio.o		\
+		zmath.o		\
+		zmod.o		\
+		zmul.o		
+
+MPEXPR_SH_OBJ =	shared/mpiface.o	\
+		shared/mpexpr.o		\
+		shared/mpparse.o	\
+		shared/mpformat.o	\
+		shared/qfunc.o		\
+		shared/qio.o		\
+		shared/qmath.o		\
+		shared/qmod.o		\
+		shared/qtrans.o		\
+		shared/zfunc.o		\
+		shared/zio.o		\
+		shared/zmath.o		\
+		shared/zmod.o		\
+		shared/zmul.o		
+
+#------------------------------------------------------------------------------
+# OTHER_LD_SEARCH_FLAGS so that dynamic loader will look for other libraries
+# NOTE: these are hacked from TCL_LD_SEARCH_FLAGS, and may need tweaking
+# for a particular platform.  LIB_INSTALL_DIR used in tcl7.5,
+# LIB_RUNTIME_DIR used in tcl7.5p1+.  If your linker doesn't like a colon
+# separated path, then you will have to figure out what works, or 
+# possible leave off the second lib. The inclusion of the Tcl lib dir is
+# for the occasion you are building a static lib, but a shared Tcl lib is
+# found during linking.
+
+LIB_INSTALL_DIR        = @SEARCH_DIRS@
+LIB_RUNTIME_DIR        = @SEARCH_DIRS@
+OTHER_LD_SEARCH_FLAGS  = @OTHER_LD_SEARCH_FLAGS@
+
+# Include tcl's cc flags for dynamic lib search path.  This is in case you
+# are builing a static binary for Mpexpr, but have both static and dynamic
+# tcl libraries, of which the loader will probably prefer the dynamic verisons.
+# Without this flag, the resulting binary won't have lib search information.
+# Note that TCL_LD_SEARCH_FLAGS only works when LIB_RUNTIME_DIR has been set
+# as above.
+ 
+TCL_LD_SEARCH_FLAGS    = @TCL_LD_SEARCH_FLAGS@
+ 
+
+#------------------------------------------------------------------------------
+# define man page 
+
+MAN_PAGE = mpexpr.n
+
+
+#------------------------------------------------------------------------------
+# define ranlib command for systems that need it; touch otherwise
+
+RANLIB = @RANLIB@
+
+#------------------------------------------------------------------------------
+# how to install
+
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+
+
+#
+# end of defines
+#
+###############################################################################
+
+
+T_EXEC = @T_EXEC@
+W_EXEC = @W_EXEC@
+
+all:	@PROGS@  
+
+
+#------------------------------------------------------------------------------
+# helper programs - determine endian and longbits
+
+# (the following was taken from David Bell's Makefile for 'calc' - tp)
+# Copyright (c) 1994 David I. Bell and Landon Curt Noll
+# Permission is granted to use, distribute, or modify this source,
+# provided that this copyright notice remains intact.
+
+#
+# Determine the byte order of your machine
+#
+#    Big Endian:        Amdahl, 68k, Pyramid, Mips, Sparc, ...
+#    Little Endian:     Vax, 32k, Spim (Dec Mips), i386, i486, ...
+#
+# If in doubt, leave BYTE_ORDER empty.  This makefile will attempt to
+# use BYTE_ORDER in <machine/endian.h> or it will attempt to run
+# the endian program.  If you get syntax errors when you compile,
+# try forcing the value to be BIG_ENDIAN and run the calc regression
+# tests. (see the README file)  If the calc regression tests fail, do
+# a make clobber and try LITTLE_ENDIAN.  If that fails, ask a wizard
+# for help.
+#
+BYTE_ORDER=
+#BYTE_ORDER= BIG_ENDIAN
+#BYTE_ORDER= LITTLE_ENDIAN
+
+# Determine the number of bits in a long
+#
+# If in doubt, leave LONG_BITS empty.  This makefile will run
+# the longbits program to determine the length.
+#
+LONG_BITS=
+#LONG_BITS= 32
+#LONG_BITS= 64
+
+
+endian:	../generic/endian.c
+	-@rm -f endian.o endian
+	$(CC) ../generic/endian.c -o endian
+
+longbits: ../generic/longbits.c
+	-@rm -f longbits.o longbits
+	${CC} ../generic/longbits.c -o longbits
+
+calcendian.h: endian
+	-@rm -f calcendian.h
+	@echo 'forming calcendian.h'
+	@echo '/*' > calcendian.h
+	@echo ' * DO NOT EDIT -- generated by the Makefile' >> calcendian.h
+	@echo ' */' >> calcendian.h
+	@echo '' >> calcendian.h
+	-@if test X"${BYTE_ORDER}" = X ; then \
+	    if [ -f /usr/include/machine/endian.h ]; then \
+		echo '#include <machine/endian.h>' >> endian.h; \
+	    else \
+		./endian >> calcendian.h; \
+	    fi; \
+	else \
+	    echo "#define BYTE_ORDER ${BYTE_ORDER}" >> calcendian.h; \
+	fi
+	@echo 'calcendian.h formed'
+
+longbits.h: longbits
+	-@rm -f longbits.h
+	@echo 'forming longbits.h'
+	@echo '/*' > longbits.h
+	@echo ' * DO NOT EDIT -- generated by the Makefile' >> longbits.h
+	@echo ' */' >> longbits.h
+	@echo '' >> longbits.h
+	-@if test X"${LONG_BITS}" = X ; then \
+	    ./longbits >> longbits.h; \
+	else \
+	    echo "#define LONG_BITS ${LONG_BITS}" >> longbits.h; \
+	fi
+	@echo 'longbits.h formed'
+
+
+#------------------------------------------------------------------------------
+# how to build objects for mpexpr and libMpexpr
+
+C_OBJ = $(CC) -c -I$(TCL_INC_DIR) -I. -I../generic $(TCL_DEFS)
+
+mpiface.o:	longbits.h calcendian.h ../generic/mpiface.c
+	$(C_OBJ) ../generic/mpiface.c
+
+mpexpr.o:	longbits.h calcendian.h ../generic/mpexpr.c
+	$(C_OBJ) ../generic/mpexpr.c
+
+mpparse.o:	longbits.h calcendian.h ../generic/mpparse.c
+	$(C_OBJ) ../generic/mpparse.c
+
+mpformat.o:	longbits.h calcendian.h ../generic/mpformat.c
+	$(C_OBJ) ../generic/mpformat.c
+
+qfunc.o:	longbits.h calcendian.h ../generic/qfunc.c
+	$(C_OBJ) ../generic/qfunc.c
+
+qio.o:		longbits.h calcendian.h ../generic/qio.c
+	$(C_OBJ) ../generic/qio.c
+
+qmath.o:	longbits.h calcendian.h ../generic/qmath.c
+	$(C_OBJ) ../generic/qmath.c
+
+qmod.o:		longbits.h calcendian.h ../generic/qmod.c
+	$(C_OBJ) ../generic/qmod.c
+
+qtrans.o:	longbits.h calcendian.h ../generic/qtrans.c
+	$(C_OBJ) ../generic/qtrans.c
+
+zfunc.o:	longbits.h calcendian.h ../generic/zfunc.c
+	$(C_OBJ) ../generic/zfunc.c
+
+zio.o:		longbits.h calcendian.h ../generic/zio.c
+	$(C_OBJ) ../generic/zio.c
+
+zmath.o:	longbits.h calcendian.h ../generic/zmath.c
+	$(C_OBJ) ../generic/zmath.c
+
+zmod.o:		longbits.h calcendian.h ../generic/zmod.c
+	$(C_OBJ) ../generic/zmod.c
+
+zmul.o:		longbits.h calcendian.h ../generic/zmul.c
+	$(C_OBJ) ../generic/zmul.c
+
+
+C_SHOBJ = $(CC) $(TCL_SHLIB_CFLAGS) -c -I$(TCL_INC_DIR) -I.. -I../../generic \
+	   $(TCL_DEFS)
+
+shared/mpiface.o:	longbits.h calcendian.h ../generic/mpiface.c
+	(cd shared; $(C_SHOBJ) ../../generic/mpiface.c )
+
+shared/mpexpr.o:	longbits.h calcendian.h ../generic/mpexpr.c
+	(cd shared; $(C_SHOBJ) ../../generic/mpexpr.c )
+
+shared/mpparse.o:	longbits.h calcendian.h ../generic/mpparse.c
+	(cd shared; $(C_SHOBJ) ../../generic/mpparse.c )
+
+shared/mpformat.o:	longbits.h calcendian.h ../generic/mpformat.c
+	(cd shared; $(C_SHOBJ) ../../generic/mpformat.c )
+
+shared/qfunc.o:	longbits.h calcendian.h ../generic/qfunc.c
+	(cd shared; $(C_SHOBJ) ../../generic/qfunc.c )
+
+shared/qio.o:		longbits.h calcendian.h ../generic/qio.c
+	(cd shared; $(C_SHOBJ) ../../generic/qio.c )
+
+shared/qmath.o:	longbits.h calcendian.h ../generic/qmath.c
+	(cd shared; $(C_SHOBJ) ../../generic/qmath.c )
+
+shared/qmod.o:		longbits.h calcendian.h ../generic/qmod.c
+	(cd shared; $(C_SHOBJ) ../../generic/qmod.c )
+
+shared/qtrans.o:	longbits.h calcendian.h ../generic/qtrans.c
+	(cd shared; $(C_SHOBJ) ../../generic/qtrans.c )
+
+shared/zfunc.o:	longbits.h calcendian.h ../generic/zfunc.c
+	(cd shared; $(C_SHOBJ) ../../generic/zfunc.c )
+
+shared/zio.o:		longbits.h calcendian.h ../generic/zio.c
+	(cd shared; $(C_SHOBJ) ../../generic/zio.c )
+
+shared/zmath.o:	longbits.h calcendian.h ../generic/zmath.c
+	(cd shared; $(C_SHOBJ) ../../generic/zmath.c )
+
+shared/zmod.o:		longbits.h calcendian.h ../generic/zmod.c
+	(cd shared; $(C_SHOBJ) ../../generic/zmod.c )
+
+shared/zmul.o:		longbits.h calcendian.h ../generic/zmul.c
+	(cd shared; $(C_SHOBJ) ../../generic/zmul.c )
+
+
+
+#------------------------------------------------------------------------------
+# how to build objects for standard tcl
+
+
+$(LIB_MPEXPR):  $(MPEXPR_OBJ)
+	-@rm $(LIB_MPEXPR)
+	ar cr $(LIB_MPEXPR) $(MPEXPR_OBJ)
+
+$(LIB_SH_MPEXPR):  $(MPEXPR_SH_OBJ)
+	(cd shared; \
+	$(TCL_SHLIB_LD)  $(OTHER_LD_SEARCH_FLAGS) \
+	      -o ../$(LIB_SH_MPEXPR) $(MPEXPR_OBJ) \
+	      $(TCL_LIB_SPEC) $(TCL_LIBS) \
+	)
+
+#------------------------------------------------------------------------------
+# how to build objects for standard tcl
+
+TCL_APPINIT   = $(TCL_LIB_DIR)/tcl$(TCL_VERSION)/tclAppInit.c
+TK_APPINIT    = $(TCL_LIB_DIR)/tk$(TK_VERSION)/tkAppInit.c
+
+tclAppInit.c:   $(TCL_APPINIT)
+	sed -f mpinit.sed <$(TCL_APPINIT) >tclAppInit.c
+
+tkAppInit.c:    $(TK_APPINIT)
+	sed -f mpinit.sed <$(TK_APPINIT) >tkAppInit.c
+
+tclAppInit.o:   tclAppInit.c
+	$(CC) -c -I$(TCL_INC_DIR) $(TCL_DEFS) tclAppInit.c
+
+tkAppInit.o:    tkAppInit.c
+	$(CC) -c -I$(TCL_INC_DIR) $(TK_XINCLUDES) tkAppInit.c
+
+
+#------------------------------------------------------------------------------
+# how to build objects for neosoft extended tcl
+
+TCLX_APPINIT  = $(prefix)/$(TCLX_LIB_LOC)tclX$(TCLX_LIB_SEP)$(TCLX_FULL_VERSION)/tclXAppInit.c
+TKX_APPINIT   = $(prefix)/$(TCLX_LIB_LOC)tkX$(TCLX_LIB_SEP)$(TKX_FULL_VERSION)/tkXAppInit.c
+
+tclXAppInit.c:	$(TCLX_APPINIT)
+	sed -f mpinit.sed <$(TCLX_APPINIT) >tclXAppInit.c
+
+tkXAppInit.c:	$(TKX_APPINIT)
+	sed -f mpinit.sed <$(TKX_APPINIT)  >tkXAppInit.c
+
+tclXAppInit.o:	tclXAppInit.c
+	$(CC)  -c -I$(TCL_INC_DIR) $(TCL_DEFS)  tclXAppInit.c
+
+tkXAppInit.o:	tkXAppInit.c
+	$(CC)  -c -I$(TCL_INC_DIR) $(TCL_DEFS) $(TK_XINCLUDES) tkXAppInit.c
+
+
+#------------------------------------------------------------------------------
+# how to build executables and man page
+
+$(TCL_EXEC):   $(LIB_MPEXPR) tclAppInit.o
+	$(CC) tclAppInit.o    $(TCL_LD_FLAGS) $(TCL_LD_SEARCH_FLAGS) \
+	       -L. $(LNK_MPEXPR) \
+	       $(TCL_LIB_SPEC) $(TCL_LIBS) \
+	       -o $(TCL_EXEC)
+
+$(WISH_EXEC):  $(LIB_MPEXPR)  tkAppInit.o
+	$(CC) tkAppInit.o $(TCL_LD_FLAGS) $(TCL_LD_SEARCH_FLAGS) \
+	       -L. $(LNK_MPEXPR) \
+	       $(TK_LIB_SPEC)  $(TK_LIBS) \
+	       $(TCL_LIB_SPEC) $(TCL_LIBS) \
+	       -o $(WISH_EXEC)
+
+$(TCLX_EXEC):  $(LIB_MPEXPR) tclXAppInit.o 
+	$(CC) tclXAppInit.o   $(TCL_LD_FLAGS) $(TCL_LD_SEARCH_FLAGS) \
+	       -L. $(LNK_MPEXPR) \
+	       $(TCLX_LIB_SPEC) \
+               $(TCL_LIB_SPEC) $(TCLX_LIBS) $(TCL_LIBS) \
+	       -o $(TCLX_EXEC)
+
+$(WISHX_EXEC): $(LIB_MPEXPR) tkXAppInit.o
+	$(CC) tkXAppInit.o   $(TCL_LD_FLAGS) $(TCL_LD_SEARCH_FLAGS) \
+	       -L. $(LNK_MPEXPR) \
+	       $(TKX_LIB_SPEC) $(TCLX_LIB_SPEC) \
+	       $(TK_LIB_SPEC) $(TCL_LIB_SPEC) \
+	       $(TK_LIBS) $(TKX_LIBS) $(TCLX_LIBS) $(TCL_LIBS) \
+	       -o $(WISHX_EXEC)
+
+$(MAN_PAGE):	../doc/mpexpr.man
+	cp ../doc/mpexpr.man $(MAN_PAGE)
+
+man-formatted: ../doc/mpexpr.man
+	rman -f html ../doc/mpexpr.man > ../doc/mpexpr.html
+	nroff -man ../doc/mpexpr.man > ../doc/mpexpr.txt
+	groff -Tps -man ../doc/mpexpr.man > ../doc/mpexpr.ps
+
+
+#------------------------------------------------------------------------------
+# test
+
+tests: test
+
+test:
+	@if test -x "$(T_EXEC)" ; then \
+	    echo running tests with ./$(T_EXEC) ; \
+	    ./$(T_EXEC)  ../tests/mpexpr.test ; \
+	    ./$(T_EXEC)  ../tests/mpformat.test ; \
+	else \
+	    echo running tests with $(BIN_DIR)/tclsh$(TCL_VERSION) ; \
+	    $(BIN_DIR)/tclsh$(TCL_VERSION)  ../tests/mpexpr.test ; \
+	    $(BIN_DIR)/tclsh$(TCL_VERSION)  ../tests/mpformat.test ; \
+	fi
+
+
+#------------------------------------------------------------------------------
+# install targets
+
+install:	@INSTALL_TARGET@  install-man install-tools
+
+install-shared:	$(LIB_SH_MPEXPR)   
+	@echo installing $(LIB_SH_MPEXPR)
+	$(INSTALL_PROGRAM) $(LIB_SH_MPEXPR)  $(LIB_DIR)/$(LIB_SH_MPEXPR)
+	@echo installing pkgIndex.tcl
+	-mkdir $(LIB_DIR)/Mpexpr$(MPEXPR_LIBVER)
+	$(INSTALL_PROGRAM) pkgIndex.tcl  $(LIB_DIR)/Mpexpr$(MPEXPR_LIBVER)/pkgIndex.tcl
+
+install-static:	@PROGS@   $(LIB_MPEXPR)
+	@for f in $(T_EXEC) $(W_EXEC) ; do  \
+	  if test -x $$f ; then  \
+	    echo installing $$f; \
+	    $(INSTALL_PROGRAM) $$f  $(BIN_DIR)/$$f ; \
+	  fi ; \
+	  done
+	@echo installing $(LIB_MPEXPR)
+	$(INSTALL_DATA)    $(LIB_MPEXPR) $(LIB_DIR)/$(LIB_MPEXPR)
+
+install-man:	$(MAN_PAGE)
+	@echo installing $(MAN_PAGE)
+	$(INSTALL_DATA)    $(MAN_PAGE)  $(MANN_DIR)/$(MAN_PAGE)
+
+install-tools:
+	for file in mpksc ; do \
+	  echo "installing $$file" ; \
+	  if test "@INSTALL_TARGET@" = "install-shared" ; then \
+	        echo '#!$(BIN_DIR)/wish$(TK_VERSION)' >$(BIN_DIR)/$$file ; \
+	  else \
+	        echo '#!$(BIN_DIR)/$(W_EXEC)' >$(BIN_DIR)/$$file ; \
+	  fi ; \
+	  cat ../samples/$$file >>$(BIN_DIR)/$$file ; \
+	  chmod 755 $(BIN_DIR)/$$file ; \
+	done
+
+
+clean:
+	rm -f $(T_EXEC) $(W_EXEC) $(MAN_PAGE) \
+	      $(LIB_MPEXPR) $(LIB_SH_MPEXPR)  \
+	      endian longbits \
+	      calcendian.h longbits.h \
+	      tclXAppInit.c tkXAppInit.c tclXAppInit.o tkXAppInit.o     \
+	      tclAppInit.c  tkAppInit.c  tclAppInit.o  tkAppInit.o      \
+	      *.o shared/*.o \
+	      config.cache config.log
+
+really-clean:	clean
+	rm -f Makefile config.status install pkgIndex.tcl
+
+
+###############################################################################
+# end of Makefile
+###############################################################################

@@ -1,0 +1,313 @@
+dnl  
+dnl mpexpr-1.0 configure.in   Relies heavily on Tcl/Tk/TclX being installed
+dnl and finding tclConfig.sh, tkConfig.sh, tclxConfig.sh, tkxConfig.sh
+dnl Tom Poindexter
+dnl
+
+AC_INIT(../generic/mpiface.c)
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+AC_CHECK_FUNC(bcopy, , AC_DEFINE(NO_BCOPY))
+
+if test -z "$prefix" -o "$prefix" = "NONE" ; then
+    prefix=/usr/local
+fi
+
+if test -z "$exec_prefix" -o "$exec_prefix" = "NONE" ; then
+    exec_prefix=$prefix
+fi
+
+prefix_locations="$prefix /usr/local /usr .."
+exec_prefix_locations="$exec_prefix /usr/local /usr .."
+
+
+#----------------------------------------------------------------------------
+#       Get mpiface.c version, set sh variable MPEXPR_VERSION
+#       and set MPEXPR_LIBVER
+#----------------------------------------------------------------------------
+
+eval `egrep '^#define MPEXPR_VERSION' ../generic/mpexpr.h | \
+      sed -e 's/#define //' -e 's/ *"/="/'`
+
+# set the library version as with . stripped out
+
+MPEXPR_LIBVER=`echo $MPEXPR_VERSION | sed -e 's/\.//'`
+
+#----------------------------------------------------------------------------
+#       Check where Tcl/Tk and maybe TclX is installed 
+#       based on prefix and exec_prefix value
+#----------------------------------------------------------------------------
+
+# find include/tcl.h
+for f in $prefix_locations ; do
+  if test -r "$f/include/tcl.h"; then
+    TCL_INC_DIR=$f/include
+    AC_MSG_RESULT(setting TCL_INC_DIR to $TCL_INC_DIR)
+    break
+  fi
+done
+ 
+# find lib/tclConfig.sh
+for f in $exec_prefix_locations ; do
+  if test -r "$f/lib/tclConfig.sh"; then
+    TCL_LIB_DIR=$f/lib
+    AC_MSG_RESULT(setting TCL_LIB_DIR to $TCL_LIB_DIR)
+    break
+  fi
+done
+ 
+if test -z "$TCL_INC_DIR" ; then
+  AC_ERROR(could not find include/tcl.h in $prefix_locations)
+fi
+if test -z "$TCL_LIB_DIR" ; then
+  AC_ERROR(could not find lib/tclConfig.sh in $exec_prefix_locations)
+fi
+
+SEARCH_DIRS="$TCL_LIB_DIR"
+
+#----------------------------------------------------------------------------
+#       Source the tcl/tk config shells
+#----------------------------------------------------------------------------
+
+for f in tclConfig.sh tkConfig.sh ; do
+  if test -r "$TCL_LIB_DIR/$f" ; then
+    . $TCL_LIB_DIR/$f
+    AC_MSG_RESULT(using $TCL_LIB_DIR/$f)
+  fi
+done
+
+if test -z "$TCL_VERSION" ; then
+  AC_ERROR(could not find tclConfig.sh in $TCL_LIB_DIR)
+else
+  AC_MSG_RESULT(tclConfig.sh has TCL_VERSION = $TCL_VERSION)
+fi
+
+
+#----------------------------------------------------------------------------
+#       Set defaults for optional packages tk and tclx
+#       These may get turned off if --enable-shared is requested
+#----------------------------------------------------------------------------
+
+tk=yes
+AC_ARG_WITH(tk, [  --with-tk                 build wish executable (default --with-tk)], tk=$withval,tk=yes)
+tclx=no
+AC_ARG_WITH(tclx, [  --with-tclx               build with TclX (default --without-tclx)], tclx=$withval,tclx=no)
+
+
+#----------------------------------------------------------------------------
+#       Check whether shared library should be built
+#----------------------------------------------------------------------------
+
+MPEXPR_SH_LIB=""
+shared=yes
+AC_ARG_ENABLE(shared, [  --disable-shared          build static lib & exe (default --enable-shared)], [shared=$enableval], [shared=yes])
+
+if test "$shared" = "yes" -a "${TCL_SHLIB_SUFFIX}" != ""; then
+    RANLIB=':'
+    AC_MSG_RESULT(will build shared library)
+else
+  if test "$shared" = "yes" ; then
+    AC_MSG_RESULT(--enable-shared requested but Tcl is not configure for dynamic loading.)
+    AC_MSG_RESULT(Building a dynamic shared library for Mpexpr is not possible.)
+    AC_MSG_RESULT(reconfigure Mpexpr with --disable-shared or)
+    AC_MSG_RESULT(reconfigure Tcl with --enable-shared.)
+    AC_MSG_ERROR(halted.)
+  else
+    AC_MSG_RESULT(will build static library and executables)
+  fi
+fi
+
+if test "$shared" = "yes" ; then
+  PROGS="libMpexpr${MPEXPR_LIBVER}${TCL_SHLIB_SUFFIX}"
+  INSTALL_TARGET=install-shared
+  tk=no
+  tclx=no
+else
+  INSTALL_TARGET=install-static
+fi
+
+
+#----------------------------------------------------------------------------
+#       Check if tk is installed.  Honour the options:
+#               --with-tk=yes|no  --without-tk  (default to yes)
+#----------------------------------------------------------------------------
+
+if test "$tk" = "yes" ; then
+  if test -z "$TK_VERSION" ; then
+    AC_ERROR(could not find tkConfig.sh in $TCL_LIB_DIR)
+  else
+    AC_MSG_RESULT(tkConfig.sh has TK_VERSION = $TK_VERSION)
+    X11_LIB_DIR=`echo ${TK_XLIBSW} |sed -e "s|-L||" -e "s/ .*$//g" -e "s/-l.*$//g"`
+    if test "x${X11_LIB_DIR}" != "x" ; then
+      SEARCH_DIRS="${SEARCH_DIRS}:${X11_LIB_DIR}"
+    fi
+  fi
+else
+  tk=''
+fi
+
+
+#----------------------------------------------------------------------------
+#       Check if tclx is installed on this system. Honour the options:
+#               --with-tclx=yes|no  --without-tclx  (default to yes)
+#----------------------------------------------------------------------------
+
+TCLX_LIB_SPEC=''
+TCLX_LIBS=''
+TKX_LIB_SPEC=''
+TKX_LIBS=''
+TCLX_FULL_VERSION=''
+TKX_FULL_VERSION=''
+TCLX_LIB_LOC=""
+TCLX_LIB_SEP="/"
+
+if test "$tclx" = "yes" ; then
+  for f in tclxConfig.sh tkxConfig.sh ; do
+    if test -r "$TCL_LIB_DIR/$f" ; then
+      . $TCL_LIB_DIR/$f
+    fi
+  done
+
+  if test -z "$TCLX_FULL_VERSION" ; then
+    AC_ERROR(could not find tclxConfig.sh in $TCL_LIB_DIR)
+  else
+    AC_MSG_RESULT(tclxConfig.sh has TCLX_FULL_VERSION = $TCLX_FULL_VERSION)
+ 
+    # check if TCLX_LIB_SPEC defined in tclxConfig.sh; if not, build our own
+    if test "$TCLX_LIB_SPEC" = "" ; then
+      TCLX_LIB_SPEC='-ltclx'
+    fi
+  fi
+
+  if test -z "$TKX_FULL_VERSION" -a "$tk" = "yes" ; then
+    AC_ERROR(could not find tkxConfig.sh in $TCL_LIB_DIR)
+  else
+    AC_MSG_RESULT(tkxConfig.sh has TKX_FULL_VERSION = $TKX_FULL_VERSION)
+ 
+    # check if TKX_LIB_SPEC defined in tkxConfig.sh; if not, build our own
+    if test "$TKX_LIB_SPEC" = "" ; then
+      TKX_LIB_SPEC='-ltkx'
+    fi
+  fi
+
+  # tclx installs its appinit.c in lib/ tree for tclx7.6.0b2+
+  if test -r "$TCL_PREFIX/lib/tclX$TCLX_FULL_VERSION/tclXAppInit.c" ; then
+    TCLX_LIB_LOC="lib/"
+    TCLX_LIB_SEP=""
+  else
+    # tclx7.6.0b1 slightly different
+    if test -r "$TCL_PREFIX/lib/tclX/$TCLX_FULL_VERSION/tclXAppInit.c" ; then
+      TCLX_LIB_LOC="lib/"
+      TCLX_LIB_SEP="/"
+    fi
+    #else it must be tclx7.5.2-, defaults should work
+  fi
+
+  T_EXEC='${TCLX_EXEC}'
+  if test "$tk" ; then
+    W_EXEC='${WISHX_EXEC}'
+  else
+    W_EXEC=''
+  fi
+
+else
+
+  # no tclx, set defines for standard tcl/tk
+
+  T_EXEC='${TCL_EXEC}'
+  if test "$tk" ; then
+    W_EXEC='${WISH_EXEC}'
+  else
+    W_EXEC=''
+  fi
+fi
+
+# change PROGS target if not building shared lib
+ 
+if test "$shared" != "yes" ; then
+  PROGS="${T_EXEC} ${W_EXEC}"
+fi
+
+
+#--------------------------------------------------------------------
+#       sigh. TCL_LD_SEARCH_FLAGS is built for cc, we need one built for
+#       ld.  try to coerce '-Wl,<flag>,<parm>' into just '<flag> <parm>'
+#       other flags are left as is.
+#--------------------------------------------------------------------
+ 
+OTHER_LD_SEARCH_FLAGS=''
+SPACE=''
+for arg in $TCL_LD_SEARCH_FLAGS
+do
+  newarg=''
+  case $arg in
+    -Wl*)
+      IFS_SAVE=$IFS
+      IFS=,
+      for p in $arg
+      do
+        case $p in
+          -Wl)
+            ;;
+          *)
+            newarg="$newarg $p"
+            ;;
+        esac
+      done
+      IFS=$IFS_SAVE
+      ;;
+    *)
+      newarg=$arg
+      ;;
+  esac
+  OTHER_LD_SEARCH_FLAGS="${OTHER_LD_SEARCH_FLAGS}${SPACE}${newarg}"
+  SPACE=' '
+done
+
+#--------------------------------------------------------------------
+#  	Substitute all variables for Makefile
+#--------------------------------------------------------------------
+
+# fix TCL_LIB_DIR to platform independent lib dir
+TCL_LIB_DIR=$TCL_PREFIX/lib
+
+AC_SUBST(T_EXEC)
+AC_SUBST(W_EXEC)
+AC_SUBST(PROGS)
+AC_SUBST(INSTALL_TARGET)
+AC_SUBST(MPEXPR_VERSION)
+AC_SUBST(MPEXPR_LIBVER)
+AC_SUBST(TCL_VERSION)
+AC_SUBST(TK_VERSION)
+AC_SUBST(TCL_PREFIX)
+AC_SUBST(TCL_EXEC_PREFIX)
+AC_SUBST(TCL_INC_DIR)
+AC_SUBST(TCL_LIB_DIR)
+AC_SUBST(TCL_SRC_DIR)
+AC_SUBST(TCL_LIB_SPEC)
+AC_SUBST(TCL_LIBS)
+AC_SUBST(TK_LIB_SPEC)
+AC_SUBST(TK_LIBS)
+AC_SUBST(TK_XINCLUDES)
+AC_SUBST(TK_XLIBSW)
+AC_SUBST(TCLX_LIB_SPEC)
+AC_SUBST(TCLX_LIBS)
+AC_SUBST(TCLX_LIB_LOC)
+AC_SUBST(TCLX_LIB_SEP)
+AC_SUBST(TKX_LIB_SPEC)
+AC_SUBST(TKX_LIBS)
+AC_SUBST(TCLX_FULL_VERSION)
+AC_SUBST(TKX_FULL_VERSION)
+AC_SUBST(TCL_CC)
+AC_SUBST(TCL_DEFS)
+AC_SUBST(TCL_LD_FLAGS)
+AC_SUBST(TCL_LD_SEARCH_FLAGS)
+AC_SUBST(TCL_SHLIB_SUFFIX)
+AC_SUBST(TCL_SHLIB_CFLAGS)
+AC_SUBST(TCL_SHLIB_LD)
+AC_SUBST(TCL_SHLIB_LD_LIBS)
+AC_SUBST(SEARCH_DIRS)
+AC_SUBST(OTHER_LD_SEARCH_FLAGS)
+
+AC_OUTPUT(Makefile pkgIndex.tcl)
+

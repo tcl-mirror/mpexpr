@@ -1,0 +1,870 @@
+# test for Mpexp
+#
+#  hacked heavily from Tcl7.6 'tests/expr.test'
+#
+#  this file is designed to be run from mpexpr/unix or mpexpr/win
+#
+
+# Commands covered:  mpexpr
+#
+# This file contains a collection of tests for one or more of the Tcl
+# built-in commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 1991-1994 The Regents of the University of California.
+# Copyright (c) 1994 Sun Microsystems, Inc.
+#
+# See the file "mpexpr.c" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+
+
+# check if mpexpr is already loaded:
+
+if {[info commands mpexpr] == "mpexpr"} {
+  puts "mpexpr statically compiled into [info nameofexecutable]"
+} else {
+  set extdll  ""
+  catch {set extdll [lindex [glob ./libMpexpr*[info sharedlibextension]] 0] }
+  if {[catch {load $extdll}]} {
+         puts "can't load $extdll"
+         exit
+  }
+  puts "mpexpr $extdll dynamically loaded into [info nameofexecutable]"
+}
+
+
+cd ../tests
+
+source defs
+
+
+# First, test all of the integer operators individually.
+
+test mpexpr-1.1 {integer operators} {mpexpr -4} -4
+test mpexpr-1.2 {integer operators} {mpexpr -(1+4)} -5
+test mpexpr-1.3 {integer operators} {mpexpr ~3} -4
+test mpexpr-1.4 {integer operators} {mpexpr !2} 0
+test mpexpr-1.5 {integer operators} {mpexpr !0} 1
+test mpexpr-1.6 {integer operators} {mpexpr 4*6} 24
+test mpexpr-1.7 {integer operators} {mpexpr 36/12} 3
+test mpexpr-1.8 {integer operators} {mpexpr 27/4} 6
+test mpexpr-1.9 {integer operators} {mpexpr 27%4} 3
+test mpexpr-1.10 {integer operators} {mpexpr 2+2} 4
+test mpexpr-1.11 {integer operators} {mpexpr 2-6} -4
+test mpexpr-1.12 {integer operators} {mpexpr 1<<3} 8
+test mpexpr-1.13 {integer operators} {mpexpr 0xff>>2} 63
+test mpexpr-1.14 {integer operators} {mpexpr -1>>2} 0
+test mpexpr-1.15 {integer operators} {mpexpr 3>2} 1
+test mpexpr-1.16 {integer operators} {mpexpr 2>2} 0
+test mpexpr-1.17 {integer operators} {mpexpr 1>2} 0
+test mpexpr-1.18 {integer operators} {mpexpr 3<2} 0
+test mpexpr-1.19 {integer operators} {mpexpr 2<2} 0
+test mpexpr-1.20 {integer operators} {mpexpr 1<2} 1
+test mpexpr-1.21 {integer operators} {mpexpr 3>=2} 1
+test mpexpr-1.22 {integer operators} {mpexpr 2>=2} 1
+test mpexpr-1.23 {integer operators} {mpexpr 1>=2} 0
+test mpexpr-1.24 {integer operators} {mpexpr 3<=2} 0
+test mpexpr-1.25 {integer operators} {mpexpr 2<=2} 1
+test mpexpr-1.26 {integer operators} {mpexpr 1<=2} 1
+test mpexpr-1.27 {integer operators} {mpexpr 3==2} 0
+test mpexpr-1.28 {integer operators} {mpexpr 2==2} 1
+test mpexpr-1.29 {integer operators} {mpexpr 3!=2} 1
+test mpexpr-1.30 {integer operators} {mpexpr 2!=2} 0
+test mpexpr-1.31 {integer operators} {mpexpr 7&0x13} 3
+test mpexpr-1.32 {integer operators} {mpexpr 7^0x13} 20
+test mpexpr-1.33 {integer operators} {mpexpr 7|0x13} 23
+test mpexpr-1.34 {integer operators} {mpexpr 0&&1} 0
+test mpexpr-1.35 {integer operators} {mpexpr 0&&0} 0
+test mpexpr-1.36 {integer operators} {mpexpr 1&&3} 1
+test mpexpr-1.37 {integer operators} {mpexpr 0||1} 1
+test mpexpr-1.38 {integer operators} {mpexpr 3||0} 1
+test mpexpr-1.39 {integer operators} {mpexpr 0||0} 0
+test mpexpr-1.40 {integer operators} {mpexpr 3>2?44:66} 44
+test mpexpr-1.41 {integer operators} {mpexpr 2>3?44:66} 66
+test mpexpr-1.42 {integer operators} {mpexpr 36/5} 7
+test mpexpr-1.43 {integer operators} {mpexpr 36%5} 1
+test mpexpr-1.44 {integer operators} {mpexpr -36/5} -8
+test mpexpr-1.45 {integer operators} {mpexpr -36%5} 4
+test mpexpr-1.46 {integer operators} {mpexpr 36/-5} -8
+test mpexpr-1.47 {integer operators} {mpexpr 36%-5} -4
+test mpexpr-1.48 {integer operators} {mpexpr -36/-5} 7
+test mpexpr-1.49 {integer operators} {mpexpr -36%-5} -1
+test mpexpr-1.50 {integer operators} {mpexpr +36} 36
+test mpexpr-1.51 {integer operators} {mpexpr +--++36} 36
+test mpexpr-1.52 {integer operators} {mpexpr +36%+5} 1
+test mpexpr-1.53 {integer operators} {mpexpr -36/6} -6
+test mpexpr-1.54 {integer operators} {mpexpr -36/-6} 6
+test mpexpr-1.55 {integer operators} {mpexpr -36%-6} 0
+test mpexpr-1.56 {integer operators} {mpexpr 3%5} 3
+test mpexpr-1.57 {integer operators} {mpexpr 3%-5} -2
+test mpexpr-1.58 {integer operators} {mpexpr -3%5} 2
+test mpexpr-1.59 {integer operators} {mpexpr -3%-5} -3 
+
+# Marco Jacobs 112398 extra tests for / and %                                   
+test mpexpr-1.60 {integer operators} {mpexpr -2/1} -2
+test mpexpr-1.61 {integer operators} {mpexpr 2/-1} -2
+test mpexpr-1.62 {integer operators} {mpexpr 128/-1} -128
+test mpexpr-1.63 {integer operators} {mpexpr 128%-1} 0
+test mpexpr-1.64 {integer operators} {mpexpr 3%-2} -1
+test mpexpr-1.65 {integer operators} {mpexpr 0%-2} 0
+test mpexpr-1.66 {integer operators} {mpexpr -2/-1} 2
+test mpexpr-1.67 {integer operators} {mpexpr -2123/-1} 2123
+test mpexpr-1.68 {integer operators} {mpexpr -2123%-17} -15
+
+
+# Check the floating-point operators individually, along with
+# automatic conversion to integers where needed.
+
+test mpexpr-2.1 {floating-point operators} {mpexpr -4.2} -4.2
+test mpexpr-2.2 {floating-point operators} {mpexpr -(1.1+4.2)} -5.3
+test mpexpr-2.3 {floating-point operators} {mpexpr +5.7} 5.7
+test mpexpr-2.4 {floating-point operators} {mpexpr +--+-62.0} -62.0
+test mpexpr-2.5 {floating-point operators} {mpexpr !2.1} 0
+test mpexpr-2.6 {floating-point operators} {mpexpr !0.0} 1
+test mpexpr-2.7 {floating-point operators} {mpexpr 4.2*6.3} 26.46
+test mpexpr-2.8 {floating-point operators} {mpexpr 36.0/12.0} 3.0
+test mpexpr-2.9 {floating-point operators} {mpexpr 27/4.0} 6.75
+test mpexpr-2.10 {floating-point operators} {mpexpr 2.3+2.1} 4.4
+test mpexpr-2.11 {floating-point operators} {mpexpr 2.3-6.5} -4.2
+test mpexpr-2.12 {floating-point operators} {mpexpr 3.1>2.1} 1
+test mpexpr-2.13 {floating-point operators} {mpexpr {2.1 > 2.1}} 0
+test mpexpr-2.14 {floating-point operators} {mpexpr 1.23>2.34e+1} 0
+test mpexpr-2.15 {floating-point operators} {mpexpr 3.45<2.34} 0
+test mpexpr-2.16 {floating-point operators} {mpexpr 0.002e3<--200e-2} 0
+test mpexpr-2.17 {floating-point operators} {mpexpr 1.1<2.1} 1
+test mpexpr-2.18 {floating-point operators} {mpexpr 3.1>=2.2} 1
+test mpexpr-2.19 {floating-point operators} {mpexpr 2.345>=2.345} 1
+test mpexpr-2.20 {floating-point operators} {mpexpr 1.1>=2.2} 0
+test mpexpr-2.21 {floating-point operators} {mpexpr 3.0<=2.0} 0
+test mpexpr-2.22 {floating-point operators} {mpexpr 2.2<=2.2} 1
+test mpexpr-2.23 {floating-point operators} {mpexpr 2.2<=2.2001} 1
+test mpexpr-2.24 {floating-point operators} {mpexpr 3.2==2.2} 0
+test mpexpr-2.25 {floating-point operators} {mpexpr 2.2==2.2} 1
+test mpexpr-2.26 {floating-point operators} {mpexpr 3.2!=2.2} 1
+test mpexpr-2.27 {floating-point operators} {mpexpr 2.2!=2.2} 0
+test mpexpr-2.28 {floating-point operators} {mpexpr 0.0&&0.0} 0
+test mpexpr-2.29 {floating-point operators} {mpexpr 0.0&&1.3} 0
+test mpexpr-2.30 {floating-point operators} {mpexpr 1.3&&0.0} 0
+test mpexpr-2.31 {floating-point operators} {mpexpr 1.3&&3.3} 1
+test mpexpr-2.32 {floating-point operators} {mpexpr 0.0||0.0} 0
+test mpexpr-2.33 {floating-point operators} {mpexpr 0.0||1.3} 1
+test mpexpr-2.34 {floating-point operators} {mpexpr 1.3||0.0} 1
+test mpexpr-2.35 {floating-point operators} {mpexpr 3.3||0.0} 1
+test mpexpr-2.36 {floating-point operators} {mpexpr 3.3>2.3?44.3:66.3} 44.3
+test mpexpr-2.37 {floating-point operators} {mpexpr 2.3>3.3?44.3:66.3} 66.3
+test mpexpr-2.38 {floating-point operators} {
+    list [catch {mpexpr 028.1 + 09.2} msg] $msg
+} {0 37.3}
+
+# Operators that aren't legal on floating-point numbers
+
+test mpexpr-3.1 {illegal floating-point operations} {
+    list [catch {mpexpr ~4.0} msg] $msg
+} {1 {can't use floating-point value as operand of "~"}}
+test mpexpr-3.2 {illegal floating-point operations} {
+    list [catch {mpexpr 27%4.0} msg] $msg
+} {1 {can't use floating-point value as operand of "%"}}
+test mpexpr-3.3 {illegal floating-point operations} {
+    list [catch {mpexpr 27.0%4} msg] $msg
+} {1 {can't use floating-point value as operand of "%"}}
+test mpexpr-3.4 {illegal floating-point operations} {
+    list [catch {mpexpr 1.0<<3} msg] $msg
+} {1 {can't use floating-point value as operand of "<<"}}
+test mpexpr-3.5 {illegal floating-point operations} {
+    list [catch {mpexpr 3<<1.0} msg] $msg
+} {1 {can't use floating-point value as operand of "<<"}}
+test mpexpr-3.6 {illegal floating-point operations} {
+    list [catch {mpexpr 24.0>>3} msg] $msg
+} {1 {can't use floating-point value as operand of ">>"}}
+test mpexpr-3.7 {illegal floating-point operations} {
+    list [catch {mpexpr 24>>3.0} msg] $msg
+} {1 {can't use floating-point value as operand of ">>"}}
+test mpexpr-3.8 {illegal floating-point operations} {
+    list [catch {mpexpr 24&3.0} msg] $msg
+} {1 {can't use floating-point value as operand of "&"}}
+test mpexpr-3.9 {illegal floating-point operations} {
+    list [catch {mpexpr 24.0|3} msg] $msg
+} {1 {can't use floating-point value as operand of "|"}}
+test mpexpr-3.10 {illegal floating-point operations} {
+    list [catch {mpexpr 24.0^3} msg] $msg
+} {1 {can't use floating-point value as operand of "^"}}
+
+# Check the string operators individually.
+
+test mpexpr-4.1 {string operators} {mpexpr {"abc" > "def"}} 0
+test mpexpr-4.2 {string operators} {mpexpr {"def" > "def"}} 0
+test mpexpr-4.3 {string operators} {mpexpr {"g" > "def"}} 1
+test mpexpr-4.4 {string operators} {mpexpr {"abc" < "abd"}} 1
+test mpexpr-4.5 {string operators} {mpexpr {"abd" < "abd"}} 0
+test mpexpr-4.6 {string operators} {mpexpr {"abe" < "abd"}} 0
+test mpexpr-4.7 {string operators} {mpexpr {"abc" >= "def"}} 0
+test mpexpr-4.8 {string operators} {mpexpr {"def" >= "def"}} 1
+test mpexpr-4.9 {string operators} {mpexpr {"g" >= "def"}} 1
+test mpexpr-4.10 {string operators} {mpexpr {"abc" <= "abd"}} 1
+test mpexpr-4.11 {string operators} {mpexpr {"abd" <= "abd"}} 1
+test mpexpr-4.12 {string operators} {mpexpr {"abe" <= "abd"}} 0
+test mpexpr-4.13 {string operators} {mpexpr {"abc" == "abd"}} 0
+test mpexpr-4.14 {string operators} {mpexpr {"abd" == "abd"}} 1
+test mpexpr-4.15 {string operators} {mpexpr {"abc" != "abd"}} 1
+test mpexpr-4.16 {string operators} {mpexpr {"abd" != "abd"}} 0
+test mpexpr-4.17 {string operators} {mpexpr {"0y" < "0x12"}} 1
+test mpexpr-4.18 {string operators} {mpexpr {"." < " "}} 0
+
+# The following tests are non-portable because on some systems "+"
+# and "-" can be parsed as numbers.
+
+test mpexpr-4.19 {string operators} {nonPortable} {mpexpr {"0" == "+"}} 0
+test mpexpr-4.20 {string operators} {nonPortable} {mpexpr {"0" == "-"}} 0
+test mpexpr-4.21 {string operators} {mpexpr {1?"foo":"bar"}} foo
+test mpexpr-4.22 {string operators} {mpexpr {0?"foo":"bar"}} bar
+
+# Operators that aren't legal on string operands.
+
+test mpexpr-5.1 {illegal string operations} {
+    list [catch {mpexpr {-"a"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "-"}}
+test mpexpr-5.2 {illegal string operations} {
+    list [catch {mpexpr {+"a"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "+"}}
+test mpexpr-5.3 {illegal string operations} {
+    list [catch {mpexpr {~"a"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "~"}}
+test mpexpr-5.4 {illegal string operations} {
+    list [catch {mpexpr {!"a"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "!"}}
+test mpexpr-5.5 {illegal string operations} {
+    list [catch {mpexpr {"a"*"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "*"}}
+test mpexpr-5.6 {illegal string operations} {
+    list [catch {mpexpr {"a"/"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "/"}}
+test mpexpr-5.7 {illegal string operations} {
+    list [catch {mpexpr {"a"%"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "%"}}
+test mpexpr-5.8 {illegal string operations} {
+    list [catch {mpexpr {"a"+"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "+"}}
+test mpexpr-5.9 {illegal string operations} {
+    list [catch {mpexpr {"a"-"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "-"}}
+test mpexpr-5.10 {illegal string operations} {
+    list [catch {mpexpr {"a"<<"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "<<"}}
+test mpexpr-5.11 {illegal string operations} {
+    list [catch {mpexpr {"a">>"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of ">>"}}
+test mpexpr-5.12 {illegal string operations} {
+    list [catch {mpexpr {"a"&"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "&"}}
+test mpexpr-5.13 {illegal string operations} {
+    list [catch {mpexpr {"a"^"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "^"}}
+test mpexpr-5.14 {illegal string operations} {
+    list [catch {mpexpr {"a"|"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "|"}}
+test mpexpr-5.15 {illegal string operations} {
+    list [catch {mpexpr {"a"&&"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "&&"}}
+test mpexpr-5.16 {illegal string operations} {
+    list [catch {mpexpr {"a"||"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "||"}}
+test mpexpr-5.17 {illegal string operations} {
+    list [catch {mpexpr {"a"?4:2}} msg] $msg
+} {1 {can't use non-numeric string as operand of "?"}}
+
+# Check precedence pairwise.
+
+test mpexpr-6.1 {precedence checks} {mpexpr -~3} 4
+test mpexpr-6.2 {precedence checks} {mpexpr -!3} 0
+test mpexpr-6.3 {precedence checks} {mpexpr -~0} 1
+
+test mpexpr-7.1 {precedence checks} {mpexpr 2*4/6} 1
+test mpexpr-7.2 {precedence checks} {mpexpr 24/6*3} 12
+test mpexpr-7.3 {precedence checks} {mpexpr 24/6/2} 2
+
+test mpexpr-8.1 {precedence checks} {mpexpr -2+4} 2
+test mpexpr-8.2 {precedence checks} {mpexpr -2-4} -6
+test mpexpr-8.3 {precedence checks} {mpexpr +2-4} -2
+
+test mpexpr-9.1 {precedence checks} {mpexpr 2*3+4} 10
+test mpexpr-9.2 {precedence checks} {mpexpr 8/2+4} 8
+test mpexpr-9.3 {precedence checks} {mpexpr 8%3+4} 6
+test mpexpr-9.4 {precedence checks} {mpexpr 2*3-1} 5
+test mpexpr-9.5 {precedence checks} {mpexpr 8/2-1} 3
+test mpexpr-9.6 {precedence checks} {mpexpr 8%3-1} 1
+
+test mpexpr-10.1 {precedence checks} {mpexpr 6-3-2} 1
+
+test mpexpr-11.1 {precedence checks} {mpexpr 7+1>>2} 2
+test mpexpr-11.2 {precedence checks} {mpexpr 7+1<<2} 32
+test mpexpr-11.3 {precedence checks} {mpexpr 7>>3-2} 3
+test mpexpr-11.4 {precedence checks} {mpexpr 7<<3-2} 14
+
+test mpexpr-12.1 {precedence checks} {mpexpr 6>>1>4} 0
+test mpexpr-12.2 {precedence checks} {mpexpr 6>>1<2} 0
+test mpexpr-12.3 {precedence checks} {mpexpr 6>>1>=3} 1
+test mpexpr-12.4 {precedence checks} {mpexpr 6>>1<=2} 0
+test mpexpr-12.5 {precedence checks} {mpexpr 6<<1>5} 1
+test mpexpr-12.6 {precedence checks} {mpexpr 6<<1<5} 0
+test mpexpr-12.7 {precedence checks} {mpexpr 5<=6<<1} 1
+test mpexpr-12.8 {precedence checks} {mpexpr 5>=6<<1} 0
+
+test mpexpr-13.1 {precedence checks} {mpexpr 2<3<4} 1
+test mpexpr-13.2 {precedence checks} {mpexpr 0<4>2} 0
+test mpexpr-13.3 {precedence checks} {mpexpr 4>2<1} 0
+test mpexpr-13.4 {precedence checks} {mpexpr 4>3>2} 0
+test mpexpr-13.5 {precedence checks} {mpexpr 4>3>=2} 0
+test mpexpr-13.6 {precedence checks} {mpexpr 4>=3>2} 0
+test mpexpr-13.7 {precedence checks} {mpexpr 4>=3>=2} 0
+test mpexpr-13.8 {precedence checks} {mpexpr 0<=4>=2} 0
+test mpexpr-13.9 {precedence checks} {mpexpr 4>=2<=0} 0
+test mpexpr-13.10 {precedence checks} {mpexpr 2<=3<=4} 1
+
+test mpexpr-14.1 {precedence checks} {mpexpr 1==4>3} 1
+test mpexpr-14.2 {precedence checks} {mpexpr 0!=4>3} 1
+test mpexpr-14.3 {precedence checks} {mpexpr 1==3<4} 1
+test mpexpr-14.4 {precedence checks} {mpexpr 0!=3<4} 1
+test mpexpr-14.5 {precedence checks} {mpexpr 1==4>=3} 1
+test mpexpr-14.6 {precedence checks} {mpexpr 0!=4>=3} 1
+test mpexpr-14.7 {precedence checks} {mpexpr 1==3<=4} 1
+test mpexpr-14.8 {precedence checks} {mpexpr 0!=3<=4} 1
+
+test mpexpr-15.1 {precedence checks} {mpexpr 1==3==3} 0
+test mpexpr-15.2 {precedence checks} {mpexpr 3==3!=2} 1
+test mpexpr-15.3 {precedence checks} {mpexpr 2!=3==3} 0
+test mpexpr-15.4 {precedence checks} {mpexpr 2!=1!=1} 0
+
+test mpexpr-16.1 {precedence checks} {mpexpr 2&3==2} 0
+test mpexpr-16.2 {precedence checks} {mpexpr 1&3!=3} 0
+
+test mpexpr-17.1 {precedence checks} {mpexpr 7&3^0x10} 19
+test mpexpr-17.2 {precedence checks} {mpexpr 7^0x10&3} 7
+
+test mpexpr-18.1 {precedence checks} {mpexpr 7^0x10|3} 23
+test mpexpr-18.2 {precedence checks} {mpexpr 7|0x10^3} 23
+
+test mpexpr-19.1 {precedence checks} {mpexpr 7|3&&1} 1
+test mpexpr-19.2 {precedence checks} {mpexpr 1&&3|7} 1
+test mpexpr-19.3 {precedence checks} {mpexpr 0&&1||1} 1
+test mpexpr-19.4 {precedence checks} {mpexpr 1||1&&0} 1
+
+test mpexpr-20.1 {precedence checks} {mpexpr 1||0?3:4} 3
+test mpexpr-20.2 {precedence checks} {mpexpr 1?0:4||1} 0
+test mpexpr-20.3 {precedence checks} {mpexpr 1?2:0?3:4} 2
+test mpexpr-20.4 {precedence checks} {mpexpr 0?2:0?3:4} 4
+test mpexpr-20.5 {precedence checks} {mpexpr 1?2?3:4:0} 3
+test mpexpr-20.6 {precedence checks} {mpexpr 0?2?3:4:0} 0
+
+# Parentheses.
+
+test mpexpr-21.1 {parenthesization} {mpexpr (2+4)*6} 36
+test mpexpr-21.2 {parenthesization} {mpexpr (1?0:4)||1} 1
+test mpexpr-21.3 {parenthesization} {mpexpr +(3-4)} -1
+
+# Embedded commands and variable names.
+
+set a 16
+test mpexpr-22.1 {embedded variables} {mpexpr {2*$a}} 32
+test mpexpr-22.2 {embedded variables} {
+    set x -5
+    set y 10
+    mpexpr {$x + $y}
+} {5}
+test mpexpr-22.3 {embedded variables} {
+    set x "  -5"
+    set y "  +10"
+    mpexpr {$x + $y}
+} {5}
+test mpexpr-22.4 {embedded commands and variables} {mpexpr {[set a] - 14}} 2
+test mpexpr-22.5 {embedded commands and variables} {
+    list [catch {mpexpr {12 - [bad_command_name]}} msg] $msg
+} {1 {invalid command name "bad_command_name"}}
+
+# Double-quotes and things inside them.
+
+test mpexpr-23.1 {double quotes} {mpexpr {"abc"}} abc
+test mpexpr-23.2 {double quotes} {
+    set a 189
+    mpexpr {"$a.bc"}
+} 189.bc
+test mpexpr-23.3 {double quotes} {
+    set b2 xyx
+    mpexpr {"$b2$b2$b2.[set b2].[set b2]"}
+} xyxxyxxyx.xyx.xyx
+test mpexpr-23.4 {double quotes} {mpexpr {"11\}\}22"}} 11}}22
+test mpexpr-23.5 {double quotes} {mpexpr {"\*bc"}} {*bc}
+test mpexpr-23.6 {double quotes} {
+    catch {unset bogus__}
+    list [catch {mpexpr {"$bogus__"}} msg] $msg
+} {1 {can't read "bogus__": no such variable}}
+test mpexpr-23.7 {double quotes} {
+    list [catch {mpexpr {"a[error Testing]bc"}} msg] $msg
+} {1 Testing}
+test mpexpr-23.8 {double quotes} {
+    list [catch {mpexpr {"12398712938788234-1298379" != ""}} msg] $msg
+} {0 1}
+
+# Numbers in various bases.
+
+test mpexpr-24.1 {numbers in different bases} {mpexpr 0x20} 32
+test mpexpr-24.2 {numbers in different bases} {mpexpr 015} 13
+
+# Conversions between various data types.
+
+test mpexpr-25.1 {type conversions} {mpexpr 2+2.5} 4.5
+test mpexpr-25.2 {type conversions} {mpexpr 2.5+2} 4.5
+test mpexpr-25.3 {type conversions} {mpexpr 2-2.5} -0.5
+test mpexpr-25.4 {type conversions} {mpexpr 2/2.5} 0.8
+test mpexpr-25.5 {type conversions} {mpexpr 2>2.5} 0
+test mpexpr-25.6 {type conversions} {mpexpr 2.5>2} 1
+test mpexpr-25.7 {type conversions} {mpexpr 2<2.5} 1
+test mpexpr-25.8 {type conversions} {mpexpr 2>=2.5} 0
+test mpexpr-25.9 {type conversions} {mpexpr 2<=2.5} 1
+test mpexpr-25.10 {type conversions} {mpexpr 2==2.5} 0
+test mpexpr-25.11 {type conversions} {mpexpr 2!=2.5} 1
+test mpexpr-25.12 {type conversions} {mpexpr 2>"ab"} 0
+test mpexpr-25.13 {type conversions} {mpexpr {2>" "}} 1
+test mpexpr-25.14 {type conversions} {mpexpr {"24.1a" > 24.1}} 1
+test mpexpr-25.15 {type conversions} {mpexpr {24.1 > "24.1a"}} 0
+test mpexpr-25.16 {type conversions} {mpexpr 2+2.5} 4.5
+test mpexpr-25.17 {type conversions} {mpexpr 2+2.5} 4.5
+test mpexpr-25.18 {type conversions} {mpexpr 2.0e2} 200.0
+test mpexpr-25.19 {type conversions} {mpexpr 2.0e15} 2000000000000000.0
+test mpexpr-25.20 {type conversions} {mpexpr 10.0} 10.0
+
+# Various error conditions.
+
+test mpexpr-26.1 {error conditions} {
+    list [catch {mpexpr 2+"a"} msg] $msg
+} {1 {can't use non-numeric string as operand of "+"}}
+test mpexpr-26.2 {error conditions} {
+    list [catch {mpexpr 2+4*} msg] $msg
+} {1 {syntax error in expression "2+4*"}}
+test mpexpr-26.3 {error conditions} {
+    list [catch {mpexpr 2+4*(} msg] $msg
+} {1 {syntax error in expression "2+4*("}}
+catch {unset _non_existent_}
+test mpexpr-26.4 {error conditions} {
+    list [catch {mpexpr 2+$_non_existent_} msg] $msg
+} {1 {can't read "_non_existent_": no such variable}}
+set a xx
+test mpexpr-26.5 {error conditions} {
+    list [catch {mpexpr {2+$a}} msg] $msg
+} {1 {can't use non-numeric string as operand of "+"}}
+test mpexpr-26.6 {error conditions} {
+    list [catch {mpexpr {2+[set a]}} msg] $msg
+} {1 {can't use non-numeric string as operand of "+"}}
+test mpexpr-26.7 {error conditions} {
+    list [catch {mpexpr {2+(4}} msg] $msg
+} {1 {unmatched parentheses in expression "2+(4"}}
+test mpexpr-26.8 {error conditions} {
+    list [catch {mpexpr 2/0} msg] $msg $errorCode
+} {1 {divide by zero} {ARITH DIVZERO {divide by zero}}}
+test mpexpr-26.9 {error conditions} {
+    list [catch {mpexpr 2%0} msg] $msg $errorCode
+} {1 {divide by zero} {ARITH DIVZERO {divide by zero}}}
+test mpexpr-26.10 {error conditions} {
+    list [catch {mpexpr 2.0/0.0} msg] $msg $errorCode
+} {1 {divide by zero} {ARITH DIVZERO {divide by zero}}}
+test mpexpr-26.11 {error conditions} {
+    list [catch {mpexpr 2#} msg] $msg
+} {1 {syntax error in expression "2#"}}
+test mpexpr-26.12 {error conditions} {
+    list [catch {mpexpr a.b} msg] $msg
+} {1 {syntax error in expression "a.b"}}
+test mpexpr-26.13 {error conditions} {
+    list [catch {mpexpr {"a"/"b"}} msg] $msg
+} {1 {can't use non-numeric string as operand of "/"}}
+test mpexpr-26.14 {error conditions} {
+    list [catch {mpexpr 2:3} msg] $msg
+} {1 {can't have : operator without ? first}}
+test mpexpr-26.15 {error conditions} {
+    list [catch {mpexpr a@b} msg] $msg
+} {1 {syntax error in expression "a@b"}}
+test mpexpr-26.16 {error conditions} {
+    list [catch {mpexpr a[b} msg] $msg
+} {1 {missing close-bracket}}
+test mpexpr-26.17 {error conditions} {
+    list [catch {mpexpr a`b} msg] $msg
+} {1 {syntax error in expression "a`b"}}
+test mpexpr-26.18 {error conditions} {
+    list [catch {mpexpr \"a\"\{b} msg] $msg
+} {1 {missing close-brace}}
+test mpexpr-26.19 {error conditions} {
+    list [catch {mpexpr a} msg] $msg
+} {1 {syntax error in expression "a"}}
+test mpexpr-26.20 {error conditions} {
+    list [catch mpexpr msg] $msg
+} {1 {wrong # args: should be "mpexpr arg ?arg ...?"}}
+
+# Cancelled evaluation.
+
+test mpexpr-27.1 {cancelled evaluation} {
+    set a 1
+    mpexpr {0&&[set a 2]}
+    set a
+} 1
+test mpexpr-27.2 {cancelled evaluation} {
+    set a 1
+    mpexpr {1||[set a 2]}
+    set a
+} 1
+test mpexpr-27.3 {cancelled evaluation} {
+    set a 1
+    mpexpr {0?[set a 2]:1}
+    set a
+} 1
+test mpexpr-27.4 {cancelled evaluation} {
+    set a 1
+    mpexpr {1?2:[set a 2]}
+    set a
+} 1
+catch {unset x}
+test mpexpr-27.5 {cancelled evaluation} {
+    list [catch {mpexpr {[info exists x] && $x}} msg] $msg
+} {0 0}
+test mpexpr-27.6 {cancelled evaluation} {
+    list [catch {mpexpr {0 && [concat $x]}} msg] $msg
+} {0 0}
+test mpexpr-27.7 {cancelled evaluation} {
+    set one 1
+    list [catch {mpexpr {1 || 1/$one}} msg] $msg
+} {0 1}
+test mpexpr-27.8 {cancelled evaluation} {
+    list [catch {mpexpr {1 || -"string"}} msg] $msg
+} {0 1}
+test mpexpr-27.9 {cancelled evaluation} {
+    list [catch {mpexpr {1 || ("string" * ("x" && "y"))}} msg] $msg
+} {0 1}
+test mpexpr-27.10 {cancelled evaluation} {
+    set x -1.0
+    list [catch {mpexpr {($x > 0) ? round(log($x)) : 0}} msg] $msg
+} {0 0}
+test mpexpr-27.11 {cancelled evaluation} {
+    list [catch {mpexpr {0 && foo}} msg] $msg
+} {1 {syntax error in expression "0 && foo"}}
+test mpexpr-27.12 {cancelled evaluation} {
+    list [catch {mpexpr {0 ? 1 : foo}} msg] $msg
+} {1 {syntax error in expression "0 ? 1 : foo"}}
+
+
+# Operands enclosed in braces
+
+test mpexpr-29.1 {braces} {mpexpr {{abc}}} abc
+test mpexpr-29.2 {braces} {mpexpr {{00010}}} 8
+test mpexpr-29.3 {braces} {mpexpr {{3.1200000}}} 3.12
+test mpexpr-29.4 {braces} {mpexpr {{a{b}{1 {2 3}}c}}} "a{b}{1 {2 3}}c"
+test mpexpr-29.5 {braces} {
+    list [catch {mpexpr "\{abc"} msg] $msg
+} {1 {missing close-brace}}
+
+# Very long values
+
+test mpexpr-30.1 {long values} {
+    set a "0000 1111 2222 3333 4444"
+    set a "$a | $a | $a | $a | $a"
+    set a "$a || $a || $a || $a || $a"
+    mpexpr {$a}
+} {0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 || 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 || 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 || 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 || 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444 | 0000 1111 2222 3333 4444}
+test mpexpr-30.2 {long values} {
+    set a "000000000000000000000000000000"
+    set a "$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a$a${a}5"
+    mpexpr $a
+} 5
+
+# Expressions spanning multiple arguments
+
+test mpexpr-31.1 {multiple arguments to mpexpr command} {
+    mpexpr 4 + ( 6 *12) -3
+} 73
+test mpexpr-31.2 {multiple arguments to mpexpr command} {
+    list [catch {mpexpr 2 + (3 + 4} msg] $msg
+} {1 {unmatched parentheses in expression "2 + (3 + 4"}}
+test mpexpr-31.3 {multiple arguments to mpexpr command} {
+    list [catch {mpexpr 2 + 3 +} msg] $msg
+} {1 {syntax error in expression "2 + 3 +"}}
+test mpexpr-31.4 {multiple arguments to mpexpr command} {
+    list [catch {mpexpr 2 + 3 )} msg] $msg
+} {1 {syntax error in expression "2 + 3 )"}}
+
+# Math functions
+
+test mpexpr-32.1 {math functions in expressions} {
+    mpexpr acos(0.5)
+} {1.04719755119659775}
+test mpexpr-32.2 {math functions in expressions} {
+    mpexpr asin(0.5)
+} {0.52359877559829887}
+test mpexpr-32.3 {math functions in expressions} {
+    mpexpr atan(1.0)
+} {0.78539816339744831}
+test mpexpr-32.4 {math functions in expressions} {
+    mpexpr atan2(2.0, 2.0)
+} {0.78539816339744831}
+test mpexpr-32.5 {math functions in expressions} {
+    mpexpr ceil(1.999)
+} {2.0}
+test mpexpr-32.6 {math functions in expressions} {
+    mpexpr cos(.1)
+} {0.99500416527802577}
+test mpexpr-32.7 {math functions in expressions} {
+    mpexpr cosh(.1)
+} {1.0050041680558036}
+test mpexpr-32.8 {math functions in expressions} {
+    mpexpr exp(1.0)
+} {2.71828182845904524}
+test mpexpr-32.9 {math functions in expressions} {
+    mpexpr floor(2.000)
+} {2.0}
+test mpexpr-32.10 {math functions in expressions} {
+    mpexpr floor(2.001)
+} {2.0}
+test mpexpr-32.11 {math functions in expressions} {
+    mpexpr fmod(7.3, 3.2)
+} {0.9}
+test mpexpr-32.12 {math functions in expressions} {
+    mpexpr hypot(3.0, 4.0)
+} {5.0}
+test mpexpr-32.13 {math functions in expressions} {
+    mpexpr log(2.8)
+} {1.02961941718115824}
+test mpexpr-32.14 {math functions in expressions} {
+    mpexpr log10(2.8)
+} {0.44715803134221922}
+test mpexpr-32.15 {math functions in expressions} {
+    mpexpr pow(2.1, 3.1)
+} {9.9742399926587076}
+test mpexpr-32.16 {math functions in expressions} {
+    mpexpr sin(.1)
+} {0.09983341664682815}
+test mpexpr-32.17 {math functions in expressions} {
+    mpexpr sinh(.1)
+} {0.10016675001984403}
+test mpexpr-32.18 {math functions in expressions} {
+    mpexpr sqrt(2.0)
+} {1.41421356237309505}
+test mpexpr-32.19 {math functions in expressions} {
+    mpexpr tan(0.8)
+} {1.02963855705036401}
+test mpexpr-32.20 {math functions in expressions} {
+    mpexpr tanh(0.8)
+} {0.66403677026784896}
+test mpexpr-32.21 {math functions in expressions} {
+    mpexpr abs(-1.8)
+} {1.8}
+test mpexpr-32.22 {math functions in expressions} {
+    mpexpr abs(10.0)
+} {10.0}
+test mpexpr-32.23 {math functions in expressions} {
+    mpexpr abs(-4)
+} {4}
+test mpexpr-32.24 {math functions in expressions} {
+    mpexpr abs(66)
+} {66}
+test mpexpr-32.25 {math functions in expressions} {nonPortable} {
+    mpexpr abs(0x80000000)
+} {2147483648}
+test mpexpr-32.26 {math functions in expressions} {
+    mpexpr double(1)
+} {1.0}
+test mpexpr-32.27 {math functions in expressions} {
+    mpexpr double(1.1)
+} {1.1}
+test mpexpr-32.28 {math functions in expressions} {
+    mpexpr int(1)
+} {1}
+test mpexpr-32.29 {math functions in expressions} {
+    mpexpr int(1.4)
+} {1}
+test mpexpr-32.30 {math functions in expressions} {
+    mpexpr int(1.6)
+} {1}
+test mpexpr-32.31 {math functions in expressions} {
+    mpexpr int(-1.4)
+} {-1}
+test mpexpr-32.32 {math functions in expressions} {
+    mpexpr int(-1.6)
+} {-1}
+test mpexpr-32.33 {math functions in expressions} {
+    mpexpr int(1e60)
+} {1000000000000000000000000000000000000000000000000000000000000}
+test mpexpr-32.34 {math functions in expressions} {
+    mpexpr int(-1e60)
+} {-1000000000000000000000000000000000000000000000000000000000000}
+test mpexpr-32.35 {math functions in expressions} {
+    mpexpr round(1.49)
+} {1}
+test mpexpr-32.36 {math functions in expressions} {
+    mpexpr round(1.51)
+} {2}
+test mpexpr-32.37 {math functions in expressions} {
+    mpexpr round(-1.49)
+} {-1}
+test mpexpr-32.38 {math functions in expressions} {
+    mpexpr round(-1.51)
+} {-2}
+test mpexpr-32.39 {math functions in expressions} {
+    mpexpr round(1e60)
+} {1000000000000000000000000000000000000000000000000000000000000}
+test mpexpr-32.40 {math functions in expressions} {
+    mpexpr round(-1e60)
+} {-1000000000000000000000000000000000000000000000000000000000000}
+test mpexpr-32.41 {math functions in expressions} {
+    mpexpr pow(1.0 + 3.0 - 2, .8 * 5)
+} {16.0}
+test mpexpr-32.42 {math functions in expressions} {
+    mpexpr hypot(5*.8,3)
+} {5.0}
+
+# additional test for mpexpr only functions:
+
+test mpexpr-32.43 {math functions in expressions} {
+    mpexpr root(25,2)
+} {5.0}
+test mpexpr-32.44 {math functions in expressions} {
+    mpexpr frem(12,2)
+} {3.0}
+test mpexpr-32.45 {math functions in expressions} {
+    mpexpr minv(23,3)
+} {2.0}
+test mpexpr-32.46 {math functions in expressions} {
+    mpexpr gcd(100,45)
+} {5.0}
+test mpexpr-32.47 {math functions in expressions} {
+    mpexpr lcm(100,45)
+} {900.0}
+test mpexpr-32.48 {math functions in expressions} {
+    mpexpr max(100,45)
+} {100.0}
+test mpexpr-32.49 {math functions in expressions} {
+    mpexpr min(-5.5,-0.1)
+} {-5.5}
+test mpexpr-32.50 {math functions in expressions} {
+    mpexpr fib(9)
+} {34}
+test mpexpr-32.51 {math functions in expressions} {
+    mpexpr fact(34)
+} {295232799039604140847618609643520000000}
+test mpexpr-32.52 {math functions in expressions} {
+    mpexpr pfact(34)
+} {200560490130}
+test mpexpr-32.53 {math functions in expressions} {
+    mpexpr lfactor(232453,19)
+} {13}
+test mpexpr-32.54 {math functions in expressions} {
+    mpexpr iroot(123,5)
+} {2}
+test mpexpr-32.55 {math functions in expressions} {
+    mpexpr gcdrem(1211,7)
+} {173}
+test mpexpr-32.56 {math functions in expressions} {
+    mpexpr perm(6,4)
+} {360}
+test mpexpr-32.57 {math functions in expressions} {
+    mpexpr comb(6,4)
+} {15}
+test mpexpr-32.57 {math functions in expressions} {
+    mpexpr prime(19,5)
+} {1}
+test mpexpr-32.58 {math functions in expressions} {
+    mpexpr relprime(19,5)
+} {1}
+test mpexpr-32.59 {math functions in expressions} {
+    mpexpr pi()
+} {3.14159265358979324}
+
+
+
+test mpexpr-33.1 {conversions and fancy args to math functions} {
+    mpexpr hypot ( 3 , 4 )
+} 5.0
+test mpexpr-33.2 {conversions and fancy args to math functions} {
+    mpexpr hypot ( (2.0+1.0) , 4 )
+} 5.0
+test mpexpr-33.3 {conversions and fancy args to math functions} {
+    mpexpr hypot ( 3 , (3.0 + 1.0) )
+} 5.0
+test mpexpr-33.4 {conversions and fancy args to math functions} {
+    mpexpr cos(acos(0.1))
+} 0.1
+
+test mpexpr-34.1 {errors in math functions} {
+    list [catch {mpexpr func_2(1.0)} msg] $msg
+} {1 {unknown math function "func_2"}}
+test mpexpr-34.2 {errors in math functions} {
+    list [catch {mpexpr func|(1.0)} msg] $msg
+} {1 {syntax error in expression "func|(1.0)"}}
+test mpexpr-34.3 {errors in math functions} {
+    list [catch {mpexpr {hypot("a b", 2.0)}} msg] $msg
+} {1 {argument to math function didn't have numeric value}}
+test mpexpr-34.4 {errors in math functions} {
+    list [catch {mpexpr hypot(1.0 2.0)} msg] $msg
+} {1 {syntax error in expression "hypot(1.0 2.0)"}}
+test mpexpr-34.5 {errors in math functions} {
+    list [catch {mpexpr hypot(1.0, 2.0} msg] $msg
+} {1 {syntax error in expression "hypot(1.0, 2.0"}}
+test mpexpr-34.6 {errors in math functions} {
+    list [catch {mpexpr hypot(1.0 ,} msg] $msg
+} {1 {syntax error in expression "hypot(1.0 ,"}}
+test mpexpr-34.7 {errors in math functions} {
+    list [catch {mpexpr hypot(1.0)} msg] $msg
+} {1 {too few arguments for math function}}
+test mpexpr-34.8 {errors in math functions} {
+    list [catch {mpexpr hypot(1.0, 2.0, 3.0)} msg] $msg
+} {1 {too many arguments for math function}}
+test mpexpr-34.9 {errors in math functions} {
+    list [catch {mpexpr acos(-2.0)} msg] $msg $errorCode
+} {1 {Argument too large for acos} NONE}
+
+catch {unset mp_precision}
+test mpexpr-35.1 {mp_precision variable} {
+    mpexpr 2.0/3
+} 0.66666666666666667
+set mp_precision 1
+test mpexpr-35.2 {mp_precision variable} {
+    mpexpr 2.0/3
+} 0.7
+test mpexpr-35.3 {mp_precision variable} {
+    mpexpr 2.0/3
+} 0.7
+catch {unset mp_precision}
+test mpexpr-35.8 {mp_precision variable} {
+    mpexpr 2.0/3
+} 0.66666666666666667
+
+test mpexpr-36.1 {ExprLooksLikeInt procedure} {
+    list [catch {mpexpr 0289} msg] $msg
+} {1 {syntax error in expression "0289"}}
+test mpexpr-36.2 {ExprLooksLikeInt procedure} {
+    set x 0289
+    list [catch {mpexpr {$x+1}} msg] $msg
+} {1 {can't use non-numeric string as operand of "+"}}
+test mpexpr-36.3 {ExprLooksLikeInt procedure} {
+    list [catch {mpexpr 0289.1} msg] $msg
+} {0 289.1}
+test mpexpr-36.4 {ExprLooksLikeInt procedure} {
+    set x 0289.1
+    list [catch {mpexpr {$x+1}} msg] $msg
+} {0 290.1}
+test mpexpr-36.5 {ExprLooksLikeInt procedure} {
+    set x {  +22}
+    list [catch {mpexpr {$x+1}} msg] $msg
+} {0 23}
+test mpexpr-36.6 {ExprLooksLikeInt procedure} {
+    set x {	-22}
+    list [catch {mpexpr {$x+1}} msg] $msg
+} {0 -21}
+test mpexpr-36.7 {ExprLooksLikeInt procedure} {nonPortable unixOnly} {
+    list [catch {mpexpr nan} msg] $msg
+} {1 {domain error: argument not in valid range}}
+test mpexpr-36.8 {ExprLooksLikeInt procedure} {
+    list [catch {mpexpr 78e1} msg] $msg
+} {0 780.0}
+test mpexpr-36.9 {ExprLooksLikeInt procedure} {
+    list [catch {mpexpr 24E1} msg] $msg
+} {0 240.0}
+test mpexpr-36.10 {ExprLooksLikeInt procedure} {nonPortable unixOnly} {
+    list [catch {mpexpr 78e} msg] $msg
+} {1 {syntax error in expression "78e"}}
+
+

@@ -1,0 +1,594 @@
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+NNNNAAAAMMMMEEEE
+     mpexpr - Evaluate an expression with multiple precision math
+
+
+SSSSYYYYNNNNOOOOPPPPSSSSIIIISSSS
+     ppppaaaacccckkkkaaaaggggeeee rrrreeeeqqqquuuuiiiirrrreeee MMMMppppeeeexxxxpppprrrr
+     mmmmppppeeeexxxxpppprrrr _a_r_g ?_a_r_g _a_r_g ...?
+     mmmmppppffffoooorrrrmmmmaaaatttt _f_o_r_m_a_t_S_t_r_i_n_g ?_a_r_g _a_r_g ...?
+     gggglllloooobbbbaaaallll mmmmpppp____pppprrrreeeecccciiiissssiiiioooonnnn
+
+
+DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+     Mpexpr is based on Tcl's native  _e_x_p_r  command,  and  shares
+     many  similarities  with  _e_x_p_r.   Mpexpr performs all of its
+     calculations using an arbitrary precision math package.
+
+     Mpexpr concatenates _a_r_g's (adding separator  spaces  between
+     them), evaluates the result as a Tcl expression, and returns
+     the value.  The operators permitted in Tcl expressions are a
+     subset of the operators permitted in C expressions, and they
+     have the same meaning and precedence as the corresponding  C
+     operators.   Expressions almost always yield numeric results
+     (integer  or  floating-point  values).   For  example,   the
+     expression
+
+     mmmmppppeeeexxxxpppprrrr 8888....2222 ++++ 6666
+
+     evaluates to 14.2.  Tcl expressions differ  from  C  expres-
+     sions  in  the  way  that operands are specified.  Also, Tcl
+     expressions support non-numeric  operands  and  string  com-
+     parisons.
+
+
+OOOOPPPPEEEERRRRAAAANNNNDDDDSSSS
+     A Tcl expression consists  of  a  combination  of  operands,
+     operators, and parentheses.  White space may be used between
+     the operands and operators and parentheses; it is ignored by
+     the  expression  processor.   Where  possible,  operands are
+     interpreted as integer values.  Integer values may be speci-
+     fied  in  decimal  (the normal case), in octal (if the first
+     character of the operand is 0000), or in  hexadecimal  (if  the
+     first  two characters of the operand are 0000xxxx).  If an operand
+     does not have one of the integer formats given  above,  then
+     it  is  treated as a floating-point number if that is possi-
+     ble.  Floating-point numbers may be specified in any of  the
+     ways  accepted  by an ANSI-compliant C compiler (except that
+     the ``f'', ``F'', ``l'', and ``L'' suffixes will not be per-
+     mitted in most installations).  For example, all of the fol-
+     lowing are valid  floating-point  numbers:   2.1,  3.,  6e4,
+     7.91e+16.  If no numeric interpretation is possible, then an
+     operand is left as a string  (and  only  a  limited  set  of
+     operators may be applied to it).
+
+
+
+Tcl                Last change: 8 January 1998                  1
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+     Operands may be specified in any of the following ways:
+
+     [1]  As an numeric value, either integer or floating-point.
+
+     [2]  As a Tcl variable,  using  standard  $$$$  notation.   The
+          variable's value will be used as the operand.
+
+     [3]  As a string enclosed in double-quotes.  The  expression
+          parser  will  perform  backslash, variable, and command
+          substitutions on the information  between  the  quotes,
+          and use the resulting value as the operand
+
+     [4]  As a string enclosed in braces.  The characters between
+          the open brace and matching close brace will be used as
+          the operand without any substitutions.
+
+     [5]  As a Tcl command enclosed  in  brackets.   The  command
+          will  be  executed  and  its result will be used as the
+          operand.
+
+     [6]  As a mathematical function whose arguments have any  of
+          the above forms for operands, such as ``ssssiiiinnnn(((($$$$xxxx))))''.  See
+          below for a list of defined functions.
+
+     Where  substitutions  occur  above   (e.g.   inside   quoted
+     strings),  they  are  performed by the expression processor.
+     However, an additional layer  of  substitution  may  already
+     have been performed by the command parser before the expres-
+     sion processor was called.  As discussed below, it  is  usu-
+     ally  best  to  enclose expressions in braces to prevent the
+     command parser from performing  substitutions  on  the  con-
+     tents.
+
+     For some examples of simple expressions, suppose  the  vari-
+     able  aaaa  has the value 3 and the variable bbbb has the value 6.
+     Then the command on the left side of each of the lines below
+     will produce the value on the following line:
+
+
+     mmmmppppeeeexxxxpppprrrr 3333....1111 ++++ $$$$aaaa
+          6.1
+
+     mmmmppppeeeexxxxpppprrrr 2222 ++++ """"$$$$aaaa....$$$$bbbb""""
+          5.6
+
+     mmmmppppeeeexxxxpppprrrr 4444****[[[[lllllllleeeennnnggggtttthhhh """"6666 2222""""]]]]
+          8
+
+     mmmmppppeeeexxxxpppprrrr {{{{{{{{wwwwoooorrrrdddd oooonnnneeee}}}} <<<< """"wwwwoooorrrrdddd $$$$aaaa""""}}}}
+          0
+
+
+
+
+
+Tcl                Last change: 8 January 1998                  2
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+OOOOPPPPEEEERRRRAAAATTTTOOOORRRRSSSS
+     The valid operators are listed below, grouped in  decreasing
+     order of precedence:
+
+     ----  ++++  ~~~~  !!!!           Unary minus, unary plus, bit-wise  NOT,
+                         logical NOT.  None of these operands may
+                         be applied to string operands, and  bit-
+                         wise   NOT   may   be  applied  only  to
+                         integers.
+
+     ****  ////  %%%%             Multiply, divide,  remainder.   None  of
+                         these  operands may be applied to string
+                         operands, and remainder may  be  applied
+                         only  to  integers.   The remainder will
+                         always have the same sign as the divisor
+                         and  an  absolute value smaller than the
+                         divisor.
+
+     ++++   ----                 Add  and  subtract.   Valid  for   any
+                         numeric operands.
+
+     <<<<<<<<  >>>>>>>>              Left and right shift.  Valid for integer
+                         operands  only.   Integers in mpexpr are
+                         not limited to a machine word and do not
+                         use  two's complement format.  Therefore
+                         shifting will not include a sign bit.
+
+     <<<<  >>>>  <<<<====  >>>>====        Boolean  less,  greater,  less  than  or
+                         equal,  and greater than or equal.  Each
+                         operator produces 1 if the condition  is
+                         true,  0 otherwise.  These operators may
+                         be applied to strings as well as numeric
+                         operands,  in  which  case  string  com-
+                         parison is used.
+
+     ========  !!!!====              Boolean  equal  and  not  equal.    Each
+                         operator  produces  a  zero/one  result.
+                         Valid for all operand types.
+
+     &&&&                   Bit-wise   AND.    Valid   for   integer
+                         operands only.
+
+     ^^^^                   Bit-wise  exclusive   OR.    Valid   for
+                         integer operands only.
+
+     ||||                   Bit-wise OR.  Valid for integer operands
+                         only.
+
+     &&&&&&&&                  Logical AND.  Produces  a  1  result  if
+                         both operands are non-zero, 0 otherwise.
+                         Valid   for   numeric   operands    only
+                         (integers or floating-point).
+
+
+
+Tcl                Last change: 8 January 1998                  3
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+     ||||||||                  Logical OR.  Produces a 0 result if both
+                         operands  are  zero, 1 otherwise.  Valid
+                         for numeric operands only  (integers  or
+                         floating-point).
+
+     _x????_y::::_z               If-then-else, as in C.  If  _x  evaluates
+                         to  non-zero,  then  the  result  is the
+                         value of _y.  Otherwise the result is the
+                         value  of  _z.  The _x operand must have a
+                         numeric value.
+
+     See the C manual for more details on the results produced by
+     each  operator.   All of the binary operators group left-to-
+     right within the same precedence level.   For  example,  the
+     command
+
+     mmmmppppeeeexxxxpppprrrr 4444****2222 <<<< 7777
+
+     returns 0.
+
+     The &&&&&&&&, ||||||||, and ????:::: operators have ``lazy evaluation'',  just
+     as in C, which means that operands are not evaluated if they
+     are not needed to determine the outcome.   For  example,  in
+     the command
+
+     mmmmppppeeeexxxxpppprrrr {{{{$$$$vvvv ???? [[[[aaaa]]]] :::: [[[[bbbb]]]]}}}}
+
+     only one of [[[[aaaa]]]] or [[[[bbbb]]]] will actually be evaluated, depending
+     on  the  value of $$$$vvvv.  Note, however, that this is only true
+     if the entire expression is enclosed in  braces;   otherwise
+     the  Tcl parser will evaluate both [[[[aaaa]]]] and [[[[bbbb]]]] before invok-
+     ing the eeeexxxxpppprrrr command.
+
+
+MMMMAAAATTTTHHHH FFFFUUUUNNNNCCCCTTTTIIIIOOOONNNNSSSS
+     Mpexpr supports  the  following  mathematical  functions  in
+     expressions.   _x and _y are integer or floating point values;
+     _i, _j and _c are integer values;
+
+     Math functions compatible with _e_x_p_r:
+
+     aaaaccccoooossss((((_x))))        Arc cosine of _x.
+
+     aaaassssiiiinnnn((((_x))))        Arc sine of _x.
+
+     aaaattttaaaannnn((((_x))))        Arc tangent of _x.
+
+     aaaattttaaaannnn2222((((_x,_y))))     Arc tangent of _x / _y.
+
+     cccceeeeiiiillll((((_x))))        Least integral value greater than or equal to
+                    _x.
+
+
+
+
+Tcl                Last change: 8 January 1998                  4
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+     ccccoooossss((((_x))))         Cosine of _x.
+
+     ccccoooosssshhhh((((_x))))        Hyperbolic cosine of _x.
+
+     eeeexxxxpppp((((_x))))         Exponential function e ** _x.
+
+     fffflllloooooooorrrr((((_x))))       Greatest integral value less than or equal to
+                    _x.
+
+     ffffmmmmoooodddd((((_x,_y))))      Remainder of _x divided by _y.
+
+     hhhhyyyyppppooootttt((((_x,_y))))     Euclidean distance of sqrt( _x * _x + _y * _y).
+
+     lllloooogggg((((_x))))         Natural logarithm of _x.
+
+     lllloooogggg11110000((((_x))))       Base-10 logarithm of _x.
+
+     ppppoooowwww((((_x,_y))))       _x raised to the _y power.
+
+     ssssiiiinnnn((((_x))))         Sine of _x.
+
+     ssssiiiinnnnhhhh((((_x))))        Hyperbolic sine of _x.
+
+     ssssqqqqrrrrtttt((((_x))))        Square root of _x.
+
+     ttttaaaannnn((((_x))))         Tangent of _x.
+
+     ttttaaaannnnhhhh((((_x))))        Hyperbolic tangent of _x.
+
+     aaaabbbbssss((((_x))))         Returns the absolute value of _x.   _x  may  be
+                    either  integer  or  floating-point,  and the
+                    result is returned in the same form.
+
+     ddddoooouuuubbbblllleeee((((_x))))      If _x is a floating value, returns  _x,  other-
+                    wise  converts  _x to floating and returns the
+                    converted value.
+
+     iiiinnnntttt((((_x))))         If _x is an integer value, returns  _x,  other-
+                    wise  converts _x to integer by truncation and
+                    returns the converted value.
+
+     rrrroooouuuunnnndddd((((_x))))       If _x is an integer value, returns  _x,  other-
+                    wise  converts  _x  to integer by rounding and
+                    returns the converted value.
+
+     Additional _m_p_e_x_p_r functions:
+
+     rrrrooooooootttt((((_x,_y))))      The _y_t_h root of _x.
+
+     ffffrrrreeeemmmm((((_x,_y))))      Remove all occurance of factor_y  from  number
+                    _x.
+
+
+
+
+Tcl                Last change: 8 January 1998                  5
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+     mmmmiiiinnnnvvvv((((_x,_y))))      Inverse of _x modulo _y.
+
+     ggggccccdddd((((_x,_y))))       Greatest common divisor of _x and _y.
+
+     llllccccmmmm((((_x,_y))))       Least common multiple of _x and _y.
+
+     mmmmaaaaxxxx((((_x,_y))))       Maximum of _x and _y.
+
+     mmmmiiiinnnn((((_x,_y))))       Minimum of _x and _y.
+
+     ppppiiii(((())))           Value of pi.
+
+     ffffiiiibbbb((((_i))))         Fibonacci number of integer _i.
+
+     ffffaaaacccctttt((((_i))))        Factorial of integer _i.
+
+     ppppffffaaaacccctttt((((_i))))       Product of prime numbers up to integer _i.
+
+     llllffffaaaaccccttttoooorrrr((((_i,_c))))   Lowest prime  factor  of  integer  _i,  trying
+                    count _c times.
+
+     iiiirrrrooooooootttt((((_i,_j))))     Integer root _j of integer _i.
+
+     ggggccccddddrrrreeeemmmm((((_i,_j))))    Relatively prime of greatest common  divisior
+                    of _i divided by _j.
+
+     ppppeeeerrrrmmmm((((_i,_j))))      Permutations of _i taking _j at a time: _i ! / (
+                    _i - _j ) !.
+
+     ccccoooommmmbbbb((((_i,_j))))      Combinations of _i taking _j at a time: _i ! / (
+                    _j ! * ( _i - _j ) ! ) .
+
+     pppprrrriiiimmmmeeee((((_i,_c))))     Return 0 if _i is not prime,  return  1  if  _i
+                    probably  is prime.  Test for primality count
+                    _c times. The chance of  a  non-prime  passing
+                    this  test  is  less  than  (1/4)^count.  For
+                    example, a count of 100 fails for only  1  in
+                    10^60 numbers.
+
+     rrrreeeellllpppprrrriiiimmmmeeee((((_i,_j))))  Return 1 if _i and _j are relatively  prime  to
+                    each other, 0 otherwise.
+
+
+TTTTYYYYPPPPEEEESSSS,,,, OOOOVVVVEEEERRRRFFFFLLLLOOOOWWWW,,,, AAAANNNNDDDD PPPPRRRREEEECCCCIIIISSSSIIIIOOOONNNN
+     Computations are performed using arbitrary fixed and  float-
+     ing  point  values.   Native machine values (_i_n_t, _l_o_n_g, _I_E_E_E
+     _7_5_4 _f_l_o_a_t_i_n_g _p_o_i_n_t, _e_t_c.  ) and instructions are  not  used.
+     Conversion   among  internal  representations  for  integer,
+     floating-point, and string operands is done automatically as
+     needed.   For  arithmetic  computations,  integers  are used
+     until some floating-point number is introduced, after  which
+     floating-point is used.  For example,
+
+
+
+Tcl                Last change: 8 January 1998                  6
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+     mmmmppppeeeexxxxpppprrrr 5555 //// 4444
+
+     returns 1, while
+
+     mmmmppppeeeexxxxpppprrrr 5555 //// 4444....0000
+     mmmmppppeeeexxxxpppprrrr 5555 //// (((( [[[[ssssttttrrrriiiinnnngggg lllleeeennnnggggtttthhhh """"aaaabbbbccccdddd""""]]]] ++++ 0000....0000 ))))
+
+     both return 1.25.  Floating-point values are always returned
+     with  a  ``.''   or an ``e'' so that they will not look like
+     integer values.  For example,
+
+     mmmmppppeeeexxxxpppprrrr 22220000....0000////5555....0000
+
+     returns ``4.0'', not ``4''.
+
+     The global variable mmmmpppp____pppprrrreeeecccciiiissssiiiioooonnnn determines  the  number  of
+     significant  digits  that  are  retained  during evaluation.
+     If mmmmpppp____pppprrrreeeecccciiiissssiiiioooonnnn is unset then 17  digits  of  precision  are
+     used.   The  maximum  value  of mmmmpppp____pppprrrreeeecccciiiissssiiiioooonnnn is 10000.  Note
+     that larger values for mmmmpppp____pppprrrreeeecccciiiissssiiiioooonnnn  will  require  increas-
+     ingly  longer  execution  times.  Setting mmmmpppp____pppprrrreeeecccciiiissssiiiioooonnnn to an
+     illegal value will generate an error.
+
+
+SSSSTTTTRRRRIIIINNNNGGGG OOOOPPPPEEEERRRRAAAATTTTIIIIOOOONNNNSSSS
+     String values may be used  as  operands  of  the  comparison
+     operators,  although  the  expression  evaluator tries to do
+     comparisons as integer or floating-point when  it  can.   If
+     one  of  the  operands  of  a comparison is a string and the
+     other has a numeric value, the numeric operand is  converted
+     back to a string using the C _s_p_r_i_n_t_f format specifier %%%%dddd for
+     integers and %%%%gggg for floating-point values.  For example, the
+     commands
+
+     mmmmppppeeeexxxxpppprrrr {{{{""""0000xxxx00003333"""" >>>> """"2222""""}}}} mmmmppppeeeexxxxpppprrrr {{{{""""0000yyyy"""" <<<< """"0000xxxx11112222""""}}}}
+
+     both return 1.  The first comparison is done  using  integer
+     comparison,  and  the second is done using string comparison
+     after the second operand is converted to the string  ``18''.
+     Because  of  Tcl's tendency to treat values as numbers when-
+     ever possible, it isn't generally a good idea to use  opera-
+     tors  like ======== when you really want string comparison and the
+     values of the operands could be arbitrary;  it's  better  in
+     these cases to use the ssssttttrrrriiiinnnngggg ccccoooommmmppppaaaarrrreeee command instead.
+
+     mmmmppppffffoooorrrrmmmmaaaatttt formats a string in the style of Tcl's native  _f_o_r_-
+     _m_a_t  command.   Mpformat will interpret numeric arguments as
+     arbitrary precision numbers.  Mpformat  performs  limited  %
+     substitution  on  the  output  string.  The following may be
+     specified:
+
+     %%%% [[[[----]]]] [[[[wwwwiiiiddddtttthhhh[[[[....pppprrrreeeecccciiiissssiiiioooonnnn]]]]]]]] ffffoooorrrrmmmmaaaattttCCCChhhhaaaarrrr
+
+
+
+Tcl                Last change: 8 January 1998                  7
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+     ----    Specifies left justification;  right  justification  is
+          the default.
+
+     wwwwiiiiddddtttthhhh....pppprrrreeeecccciiiissssiiiioooonnnn
+          Specifies optional width and precision.  Default preci-
+          sion  is  8. Width and/or precision may be specified as
+          ****, in which the next argument  will  be  used  for  the
+          width or precision value.
+
+     FFFFoooorrrrmmmmaaaatttt cccchhhhaaaarrrraaaacccctttteeeerrrr aaaannnndddd rrrreeeessssuuuulllltttt
+
+     dddd    Format next argument as integer, truncating  after  the
+          decimal point.
+
+     ffff    Format next argument in decimal floating point.
+
+     eeee    Format next argument in scientific notation.
+
+     rrrr, RRRR Format next argument as rational fraction x / y.
+
+     NNNN    Format next argument  as  numerator  only  of  rational
+          fraction x / y.
+
+     DDDD    Format next argument as denominator  only  of  rational
+          fraction x / y.
+
+     oooo    Format next argument in octal format, with leading '0';
+          floating  point  argument  formatted  as octal rational
+          fraction x / y.
+
+     xxxx    Format next argument in hexadecimal format, with  lead-
+          ing  '0x'; floating point formatted argument as hexade-
+          cimal rational fraction x / y.
+
+     bbbb    Format next argument in  binary  format,  with  leading
+          '0b';  floating  point  argument  formatted  as  binary
+          rational fraction x / y.
+
+     ssss    Format next argument as string.
+
+     cccc    Format next argument as single character value.
+
+     %%%%    Format single literal %.
+
+     OOOOtttthhhheeeerrrr cccchhhhaaaarrrraaaacccctttteeeerrrrssss iiiinnnn ffffoooorrrrmmmmaaaatttt ssssttttrrrriiiinnnngggg
+
+          Format ASCII newline.
+
+7          Format ASCII carriage return.
+
+
+          Format ASCII tab.
+
+
+
+Tcl                Last change: 8 January 1998                  8
+
+
+
+
+
+
+mpexpr(TCL)       Misc. Reference Manual Pages        mpexpr(TCL)
+
+
+
+          Format ASCII form feed.
+
+      Format ASCII vertical tab.
+
+     Format ASCII backspace.
+
+
+NNNNOOOOTTTTEEEESSSS
+     Mpexpr is based on Tcl  7.6  'tclExpr.c'  and  David  Bell's
+     'Calc'  program.  This man page is largely borrowed from Tcl
+     7.6 as well, as is the mpexpr test suite.
+
+     See the files README and INSTALL for additional information.
+
+     Tcl 7.6 is  Copyright  (c)  1987-1994  The  Regents  of  the
+     University   of   California  and  Copyright  (c)  1994  Sun
+     Microsystems, Inc.
+
+     Calc is Copyright (c) 1994 David I. Bell.
+
+
+AAAAUUUUTTTTHHHHOOOORRRR
+     Tom Poindexter, tpoindex@nyx.net, Talus Technologies,  Inc.,
+     Highlands Ranch, CO.  http://www.nyx.net/~tpoindex
+
+     Version 1.0 released November, 1998.
+
+     Copyright 1998 Tom Poindexter.  See the file 'LICENSE.TERMS'
+     for additional copyright and licensing terms.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tcl                Last change: 8 January 1998                  9
+
+
+

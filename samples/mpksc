@@ -1,0 +1,1103 @@
+#!/bin/sh
+# \
+exec /usr/bin/wish8.0 "$0" "$@"
+
+package require Mpexpr
+
+########################################################################
+# ksc - Ken's Scientific desktop Calculator, v0.15
+#
+# Copyright (c) 1997,1998 by Ken St-Cyr <kenstcyr@cs.pdx.edu>
+#
+# Permission to use, copy, modify, and distribute this software
+# for any purpose and without fee is hereby granted, provided
+# that the above copyright notice appear in all copies.
+#
+# The author makes no representations about the suitability of
+# this software for any purpose.  The software is provided "as is"
+# without express or implied warranty.
+#
+########################################################################
+#
+# Modifications by Tom Poindexter, November, 1998  tpoindex@nyx.net
+#  
+#    -use Mpexpr for calcuations
+#    -make stack into listbox
+#    -add scrollbars for accum, make window resizable
+#    -add precision pop up
+#    -add prime numbers pop up
+#    -add additional mpexpr functions
+#    -remove 'stat' pop up
+#    -replace some coded functions for mpexpr functions (pi, root, fact)
+#    -replace EXP key with POP
+#    -add binding to allow paste into accum; normal listbox binding allow select
+#    -try to make fonts portable to windows, mac; change error messages to upper
+#    -catch possible error when binding keypad keys on windows
+#
+
+wm title . MP:Calculator
+wm resizable . 1 0
+
+
+################################ GLOBALS ###############################
+
+set version "0.15"
+set mp_precision 17
+set mp_precision_shad 17
+
+if {"$tcl_platform(platform)" == "unix" } {
+   set fnt(display) "-*-terminal-medium-r-normal-*-18-*-*-*-*-*-*-*"
+   set fnt(smbutns) "-*-fixed-medium-r-normal-*-10-*-*-*-*-*-*-*"   
+   set fnt(buttons) "-*-fixed-bold-r-normal-*-12-*-*-*-*-*-*-*"  
+   set fnt(title)   "-*-helvetica-bold-r-normal-*-18-*-*-*-*-*-*-*"
+} else {
+   set fnt(display) [font create -family courier -size 14]
+   set fnt(smbutns) [font create -family courier -size 10]
+   set fnt(buttons) [font create -family courier -size 12 -weight bold]
+   set fnt(title)   [font create -family times   -size 16 -weight bold]
+}
+
+set stack {} ;# hold arguments to math functions
+set valx 0   ;# value to be pushed onto stack
+set frac 0   ;# fractional part of valx
+set loose 1  ;# whether or not valx has been pushed onto stack
+set last 0
+set mem1 0
+set pi [mpexpr pi()]
+set angle(rad) 1
+set angle(deg) [expr $pi / 180]
+set angle(grd) [expr $pi / 200]
+set mode(angle) "rad"
+# set mode(base)  "dec"
+
+######################### BUTTON DEFINITIONS ###########################
+
+set mods {{"CNST" "consts" "1"}
+          {"CVRT" "cvrt"   "1"}
+          {"PREC" "prec"   "1"}
+          {"PRIM" "prim"   "1"}
+          {"TRIG" "trig"   "1"}
+          {"USER" "about"  "1"}
+          {"HELP" "help"   "1"}}
+
+set funs {{{"Gcd(y,x)"  "fun2 gcd"  "1"}
+           {"Lcm(y,x)"  "fun2 lcm"  "1"}
+           {"Fib"       "fun1 fib"  "1"}
+           {"Perm(y,x)" "fun2 perm" "1"}
+           {"Comb(y,x)" "fun2 comb" "1"}}
+          {{"x root y"  "fun2 root"       "1"}
+           {"e^x"   "fun1 exp"   "1"}
+           {"LN"    "fun1 log"   "1"}
+           {"y^x"   "fun2 pow"   "1"}
+           {"LOG"   "fun1 log10" "1"}}
+          {{"pi"    {eval set valx [mpexpr pi()]; set loose 1} "1"}
+           {"HYP"   "fun2 hypot" "1"}                   
+           {"1/x"   "reciprocol" "1"}
+           {"x!"    "fun1 fact"  "1"}
+           {"POP"   "pop"        "1"}}
+          {{"ENTER" "push"       "2"}
+           {"LAST"  "getlast"    "1"}
+           {"STO"   "store"      "1"}
+           {"RCL"   "recall"     "1"}}}
+
+set nums {{"7" "accum 7" "1"}
+          {"8" "accum 8" "1"}
+          {"9" "accum 9" "1"}
+          {"4" "accum 4" "1"}
+          {"5" "accum 5" "1"}
+          {"6" "accum 6" "1"}
+          {"1" "accum 1" "1"}
+          {"2" "accum 2" "1"}
+          {"3" "accum 3" "1"}
+          {"0" "accum 0" "1"}
+          {"." "set frac 1" "1"}
+          {"\xB1" "revsign" "1"}}
+
+set ops1 {{"<->" "swap" "1"}
+          {"C"   "set valx 0; set frac 0" "1"}
+          {"CA"  "set valx 0; set stack {}; .st_frm.stack delete 0 end; set frac 0" "1"}
+          {"OFF" "exit" "1"}}
+
+set ops2 {{"\xF7" "arith /" "1"}
+          {"\xD7" "arith *" "1"}
+          {"-"    "arith -" "1"}
+          {"+"    "arith +" "1"}}
+
+
+######################### INTERFACE ROUTINES ###########################
+
+########################################################################
+# appMain
+#=======================================================================
+
+   proc appMain {} {
+      global fnt
+
+      #wm title . "Buttons"
+      . configure -bg gray50
+      frame .st_frm -bg gray50
+      listbox .st_frm.stack -height 5 -relief sunken -bg aquamarine3 \
+                     -font $fnt(display) -bd 4 \
+		     -xscrollcommand ".st_frm.bot.stack_scrx set" \
+		     -yscrollcommand ".st_frm.stack_scry set" 
+      frame .st_frm.bot -bg gray50
+      scrollbar .st_frm.bot.stack_scrx -orient horizontal \
+                  -command ".st_frm.stack xview"
+      scrollbar .st_frm.stack_scry -orient vertical \
+                  -command ".st_frm.stack yview"
+      set pad [expr [.st_frm.stack_scry cget -width] + 2* \
+              ([.st_frm.stack_scry cget -bd] + \
+               [.st_frm.stack_scry cget -highlightthickness])]
+      frame .st_frm.bot.pad -bg gray50 -width $pad -height $pad
+
+      pack .st_frm.bot.pad -side left
+      pack .st_frm.bot.stack_scrx -side right -fill x -expand 1
+      pack .st_frm.bot -side bottom -fill x
+      pack .st_frm.stack_scry -side left -fill y
+      pack .st_frm.stack -side right -fill both -expand 1
+
+      frame .sc_frm -bg gray50
+      entry .sc_frm.screen -textvariable valx -relief sunken -bg aquamarine3 \
+                    -justify left -font $fnt(display) -bd 4 \
+                    -xscrollcommand ".sc_frm.screen_scr set"
+      bindtags .sc_frm.screen ignore
+      scrollbar .sc_frm.screen_scr -orient horizontal \
+                	-command ".sc_frm.screen xview"
+      pack .sc_frm.screen .sc_frm.screen_scr -side top -fill x -expand 1
+      pack .st_frm .sc_frm -side top -fill x -padx 8 -pady 8 -expand 0
+      frame .main -bd 2 -relief raised
+      pack .main -side top  -anchor nw
+      makeModButs .main.fns
+      makeFunButs .main.ops
+      makeWorkArea .main.work
+   }
+
+
+
+########################################################################
+# makeModButs
+#=======================================================================
+
+   proc makeModButs {parent} {
+      global fnt
+      global mods
+
+      frame $parent -bd 2 -relief sunken -bg gray50
+      pack $parent -side top -fill both -expand 1 -anchor nw
+      # row of 7
+      for {set col 0} {$col < 7} {incr col} {
+         set elem [lindex $mods $col]
+         set txt [lindex $elem 0]
+         set cmd [lindex $elem 1]
+         set btn [button $parent.r0c${col}       \
+                     -highlightbackground gray30 \
+                     -font $fnt(smbutns)         \
+                     -text $txt                  \
+                     -width 4                    \
+                     -command $cmd]
+         grid $btn -column $col -row 0 -sticky news
+      }
+   }
+
+
+########################################################################
+# makeFunButs
+#=======================================================================
+
+   proc makeFunButs {parent} {
+      global fnt
+      global funs
+
+      frame $parent -bg gray50
+      pack $parent -side top -fill both -expand 1  -anchor nw
+      # 4 x 5 block
+      set nrows [llength $funs]
+      for {set row 0} {$row < $nrows} {incr row} {
+         set relem [lindex $funs $row]
+         set col 0
+         set idx 0
+         while {$col < 5} {
+            set elem [lindex $relem $idx]
+            set txt [lindex $elem 0]
+            set cmd [lindex $elem 1]
+            set spn [lindex $elem 2]
+            set btn [button $parent.r${row}c${col}  \
+                        -text $txt                  \
+                        -bg gray30                  \
+                        -fg ivory                   \
+                        -highlightbackground gray50 \
+                        -width 6                    \
+                        -command $cmd]
+            grid $btn -row $row -column $col -columnspan $spn -sticky news
+            incr col $spn
+            incr idx
+         }
+      }
+   }
+
+
+########################################################################
+# makeWorkArea
+#=======================================================================
+
+   proc makeWorkArea {parent} {
+      global ops1
+      global ops2
+
+      frame $parent -bg gray50
+      pack $parent -side top -fill both -expand 1  -anchor nw
+      makeOpButs $parent.op1 "left" $ops1
+      makeNumButs $parent.num
+      makeOpButs $parent.op2 "right" $ops2
+   }
+
+
+########################################################################
+# makeOpButs
+#=======================================================================
+
+   proc makeOpButs {parent pos ops} {
+      global fnt
+
+      frame $parent -bg gray50
+      pack $parent -side $pos -fill both -expand 1 -anchor nw
+      for {set row 0} {$row < 4} {incr row} {
+         set elem [lindex $ops $row]
+         set txt [lindex $elem 0]
+         set cmd [lindex $elem 1]
+         set btn [button $parent.r${row}c0 \
+                     -font $fnt(buttons)   \
+                     -text $txt            \
+                     -width 5              \
+                     -bg gray30            \
+                     -fg ivory             \
+                     -highlightbackground gray50 \
+                     -command $cmd]
+         grid $btn -column 0 -row $row -sticky news
+      }
+   }
+
+
+########################################################################
+# makeNumButs
+#=======================================================================
+
+   proc makeNumButs {parent} {
+      global fnt
+      global nums
+
+      frame $parent -bd 2 -relief groove -bg gray80
+      pack $parent -side left -fill both -expand 1 -anchor nw
+      # 3 x 4 block
+      for {set row 0} {$row < 4} {incr row} {
+         set col 0
+         set idx 0
+         while {$col < 3} {
+            set elem [lindex $nums [expr ($row*3)+$idx]]
+            set txt [lindex $elem 0]
+            set cmd [lindex $elem 1]
+            set spn [lindex $elem 2]
+            set btn [button $parent.r${row}c${col} \
+                        -font $fnt(buttons) \
+                        -text $txt          \
+                        -width 6            \
+                        -bg gray30          \
+                        -fg ivory           \
+                        -highlightbackground gray50 \
+                        -command $cmd]
+            grid $btn -row $row -column $col -columnspan $spn -sticky news
+            incr col $spn
+            incr idx
+         }
+      }
+   }
+
+
+######################## FUNCTIONAL ROUTINES ###########################
+
+
+########################################################################
+# pop - remove value from end of stack and return it
+#=======================================================================
+
+   proc pop {} {
+      global stack
+      global valx
+      if {[llength $stack] < 1} {
+         set valx "ERR: STACK EMPTY"
+         push
+         return "ERR"
+      }
+      set value [lindex $stack 0]
+      set stack [lreplace $stack 0 0]
+      .st_frm.stack delete 0
+      return $value
+   }
+
+########################################################################
+# push - append new value to end of stack
+#=======================================================================
+
+   proc push {} {
+      global stack
+      global valx
+      global loose
+      global last
+      global frac
+      set stack [linsert $stack 0 $valx]
+      .st_frm.stack insert 0 $valx
+      set last $valx
+      set valx 0
+      set loose 0
+      set frac 0
+   }
+
+########################################################################
+# accum - add new digit to current variable
+#=======================================================================
+
+   proc accum {n} {
+      global valx
+      global frac
+      global loose
+      set loose 1
+      if {$frac == 0} {
+         set valx [mpexpr $valx * 10 + $n]
+      } else {
+         set valx [mpexpr $valx + ($n  / pow(10, $frac))]
+         incr frac 1
+      }
+   }
+
+########################################################################
+# revsign - reverse sign of current variable
+#=======================================================================
+
+   proc revsign {} {
+      global valx
+      if {$valx < 0} {
+         set valx abs($valx)
+      } elseif {$valx > 0} {
+         set valx -$valx
+      }
+   }
+
+########################################################################
+# arith - perform arithmetic on top two elements of stack
+#=======================================================================
+
+   proc arith {op} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set y [pop]
+      set x [pop]
+      if {($y == "ERR") || ($x == "ERR")} {
+         return {}
+      }
+      if {$op == "/"} {
+         if {$y == 0} {
+            set valx "ERR: DIV BY 0"
+         } else {
+            set valx [mpexpr double($x) / $y]
+         }
+      } else {
+         set valx [mpexpr $x $op $y]
+      }
+      push
+   }
+
+########################################################################
+# fun1 - perform function of one variable
+#=======================================================================
+
+   proc fun1 {op} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      if {$x == "ERR"} {
+         return {}
+      }
+      set valx [mpexpr $op ($x)]
+      push
+   }
+
+########################################################################
+# fun2 - perform function of two variables
+#=======================================================================
+
+   proc fun2 {op} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      set y [pop]
+      if {($y == "ERR") || ($x == "ERR")} {
+         return {}
+      }
+      set valx [mpexpr $op ($y, $x)]
+      push
+   }
+
+########################################################################
+# fac - factorial function
+#=======================================================================
+
+   proc fac {} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set j [pop]
+      if {$j == "ERR"} {
+         return {}
+      }
+      for {set i 1} {$j > 1} {incr j -1} {
+         set i [mpexpr $i * $j]
+      }
+      set valx $i
+      push
+   }
+
+########################################################################
+# getlast - restores last value of valx
+#=======================================================================
+
+   proc getlast {} {
+      global valx
+      global last
+      set valx $last
+      push
+   }
+
+########################################################################
+# reciprocol - replace current variable with its reciprocol
+#=======================================================================
+
+   proc reciprocol {} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      if {$x == "ERR"} {
+         return {}
+      }
+      set valx [mpexpr 1.0 / $x]
+      push
+   }
+
+########################################################################
+# recall - restore value from memory 
+#=======================================================================
+
+   proc recall {} {
+      global valx
+      global mem1
+      set valx $mem1
+      push
+   }
+
+########################################################################
+# store - store current variable in memory
+#=======================================================================
+
+   proc store {} {
+      global valx
+      global mem1
+      set mem1 $valx
+      push
+   }
+
+########################################################################
+# swap - exchange current variable with top of stack
+#=======================================================================
+
+   proc swap {} {
+      global valx
+      global loose
+      set value [pop]
+      if {$value == "ERR"} {
+         return {}
+      }
+      push
+      set valx $value
+      set loose 1
+   }
+
+########################################################################
+# xrty - take xth root of y; x is current variable, y is top of stack
+#=======================================================================
+
+   proc xrty {} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      set y [pop]
+      if {($y == "ERR") || ($x == "ERR")} {
+         return {}
+      }
+      set x [mpexpr 1.0 / $x]
+      set valx [mpexpr pow ($y, $x)]
+      push
+   }
+
+
+############################# KEY BINDINGS #############################
+
+
+foreach i {1 2 3 4 5 6 7 8 9 0} {
+   bind all <KeyPress-$i> "accum $i"
+}
+
+foreach i {Insert End Down Next Left Begin Right Home Up Prior} {
+   catch { bind all <KeyPress-KP_$i> "accum %A" }
+}
+
+foreach i {plus minus asterisk slash} {
+   bind all <KeyPress-$i> "arith %A"
+}
+
+foreach i {Add Subtract Multiply Divide} {
+   catch { bind all <KeyPress-KP_$i> "arith %A" }
+}
+
+bind all <KeyPress-period> "set frac 1"
+catch { bind all <KeyPress-KP_Delete> "set frac 1" }
+bind all <KeyPress-Return> "push"
+catch { bind all <KeyPress-KP_Enter> "push" }
+bind all <KeyPress-asciitilde> "revsign"
+
+bind all <Button-2> {catch {set valx [selection get]}}
+bind all <Control-Key-v> {catch {set valx [selection get]}}
+
+
+################################ STARTUP ###############################
+
+appMain
+
+
+########################### MODULES DEFINITIONS ########################
+
+########################################################################
+# butnrow - create a row of n buttons
+#           blist contains text and command for each button
+#=======================================================================
+
+   proc butnrow {p n blist {bwidth 3}} {
+      for {set i 0} {$i < $n} {incr i} {
+         set curr [lindex $blist $i]
+         button $p.b$i -text [lindex $curr 0]    \
+                       -command [lindex $curr 1] \
+                       -width $bwidth            \
+                       -bg gray30                \
+                       -fg ivory                 \
+                       -highlightbackground gray50
+         pack $p.b$i -side left -fill x
+      }
+   }
+
+
+########################### CONSTANTS MODULE ###########################
+
+########################################################################
+# consts - main constants window
+#=======================================================================
+
+   proc consts {} {
+      if ([winfo exists .const]) {
+         raise .const
+         focus .const
+         return
+      }
+
+      toplevel .const
+      wm title .const Constants
+      wm resizable .const 0 0
+
+      set constd ""
+
+      frame .const.top -relief flat -bg gray50 -bd 2 \
+                       -highlightbackground gray50
+      pack .const.top -side top -fill x
+      label .const.top.l -textvariable constd -relief groove \
+                       -bg gray80 -bd 2
+      pack .const.top.l -side top -fill x -padx 2 -pady 2
+
+
+      # button definitions; use this section as a model for
+      # new constants
+         frame .const.a -bg gray80
+         pack .const.a -side top -fill x
+         butnrow .const.a 5 {
+            {"A" "set valx 6.0221367e23; set loose 1"}
+            {"c" "set valx 2.99792458e8; set loose 1"}
+            {"e" "set valx 2.718281828; set loose 1"}
+            {"h" "set valx 6.6260755e-34; set loose 1"}
+            {"g" "set valx 9.80665; set loose 1"}
+         }
+         bind .const.a.b0 <Enter> {set constd "Avogadro's Number, 1/mol"}
+         bind .const.a.b0 <Leave> {set constd ""}
+         bind .const.a.b1 <Enter> {set constd "Speed of Light, m/s"}
+         bind .const.a.b1 <Leave> {set constd ""}
+         bind .const.a.b2 <Enter> {set constd "The number e"}
+         bind .const.a.b2 <Leave> {set constd ""}
+         bind .const.a.b3 <Enter> {set constd "Planck's Constant, J-s"}
+         bind .const.a.b3 <Leave> {set constd ""}
+         bind .const.a.b4 <Enter> \
+                          {set constd "Gravitational acceleration, m/s^2"}
+         bind .const.a.b4 <Leave> {set constd ""}
+
+         frame .const.b -bg gray80
+         pack .const.b -side top -fill x
+         butnrow .const.b 5 {
+            {"R" "set valx 8.314510; set loose 1"}
+            {"V" "set valx 2.241409e-2; set loose 1"}
+            {"E" "set valx 1.60217738e-19; set loose 1"}
+            {"k" "set valx 1.380657e-23; set loose 1"}
+            {"G" "set valx 6.67260e-11; set loose 1"}
+         }
+         bind .const.b.b0 <Enter> \
+                          {set constd "Universal gas constant, J/mol*K"}
+         bind .const.b.b0 <Leave> {set constd ""}
+         bind .const.b.b1 <Enter> \
+            {set constd "Ideal gas at STP, m^3/mol"}
+         bind .const.b.b1 <Leave> {set constd ""}
+         bind .const.b.b2 <Enter> {set constd "Elementary charge, C"}
+         bind .const.b.b2 <Leave> {set constd ""}
+         bind .const.b.b3 <Enter> {set constd "Boltzmann constant, J/K"}
+         bind .const.b.b3 <Leave> {set constd ""}
+         bind .const.b.b4 <Enter> \
+                          {set constd "Gravitational constant, N*m^2/kg^2"}
+         bind .const.b.b4 <Leave> {set constd ""}
+
+      # end of button definitions
+
+
+      frame .const.bottom -relief flat -bg gray50 -bd 2 \
+                          -highlightbackground gray50
+      pack .const.bottom -side bottom -fill x
+      button .const.bottom.z -highlightbackground gray50 \
+                             -text Close -command "destroy .const"
+      pack .const.bottom.z -side right
+      }
+
+
+########################## CONVERSIONS MODULE ##########################
+
+########################################################################
+# convert - standard conversions of a single factor
+#=======================================================================
+
+   proc convert {factor} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      if {$x == "ERR"} {
+         return {}
+      }
+      set valx [mpexpr $x * $factor]
+      push
+   }
+
+########################################################################
+# f2c - convert fahrenheit to celsius
+#=======================================================================
+
+   proc f2c {} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      if {$x == "ERR"} {
+         return {}
+      }
+      set valx [mpexpr ($x - 32) * (5.0 / 9)]
+      push
+   }
+
+########################################################################
+# c2f - convert celsius to fahrenheit
+#=======================================================================
+
+   proc c2f {} {
+      global valx
+      global loose
+      if {$loose == 1} {push}
+      set x [pop]
+      if {$x == "ERR"} {
+         return {}
+      }
+      set valx [mpexpr ($x * (9.0 / 5)) + 32]
+      push
+   }
+
+########################################################################
+# cvrt - main conversions window
+#=======================================================================
+
+proc cvrt {} {
+   if ([winfo exists .cvrt]) {
+      raise .cvrt
+      focus .cvrt
+      return
+   }
+
+   toplevel .cvrt
+   wm title .cvrt Conversions
+   wm resizable .cvrt 0 0
+
+   frame .cvrt.a -bg gray80
+   pack .cvrt.a -side top -fill x
+   butnrow .cvrt.a 4 {
+      {"in>cm" "convert 2.54"}
+      {"cm>in" "convert 0.3937"}
+      {"lb>kg" "convert 0.4536"}
+      {"kg>lb" "convert 2.2046"}
+   }
+
+   frame .cvrt.b -bg gray80
+   pack .cvrt.b -side top -fill x
+   butnrow .cvrt.b 4 {
+      {"ft>m" "convert 0.3048"}
+      {"m>ft" "convert 3.2808"}
+      {"F>C" "f2c"}
+      {"C>F" "c2f"}
+   }
+
+   frame .cvrt.c -bg gray80
+   pack .cvrt.c -side top -fill x
+   butnrow .cvrt.c 4 {
+      {"mi>km" "convert 1.6093"}
+      {"km>mi" "convert 0.6214"}
+      {"L>gal" "convert 0.2642"}
+      {"gal>L" "convert 3.7853"}
+   }
+
+   frame .cvrt.bottom -relief flat -bg gray50 -bd 2 \
+                       -highlightbackground gray50
+   pack .cvrt.bottom -side bottom -fill x
+   button .cvrt.bottom.z -highlightbackground gray50 \
+                         -text Close -command "destroy .cvrt"
+   pack .cvrt.bottom.z -side right
+}
+
+
+###############################################################################
+# set mp precision
+#
+
+proc incr_prec {v} {
+   global mp_precision
+   global mp_precision_shad
+   if {[scan $mp_precision_shad %d x] != 1} {
+     set mp_precision_shad 17
+     set mp_precision      17
+     return 0
+   }
+   set mp_precision_shad $x
+   incr mp_precision_shad $v
+   if {$mp_precision_shad < 0}     {set mp_precision_shad 0}
+   if {$mp_precision_shad > 10000} {set mp_precision_shad 10000}
+   set mp_precision $mp_precision_shad
+   return 1
+}
+
+proc prec {} {
+   global mp_precision
+   global fnt
+   if ([winfo exists .prec]) {
+      raise .prec
+      focus .prec
+      return
+   }
+
+   toplevel .prec
+   wm title .prec Precision
+   wm resizable .prec 0 0
+
+   frame .prec.a -bg gray80
+   pack .prec.a -side top -fill x
+
+   button .prec.a.incr -text +    \
+                       -command "incr_prec 1" \
+                       -width 1                  \
+                       -bg gray30                \
+                       -fg ivory                 \
+                       -highlightbackground gray50
+   pack .prec.a.incr -side left -fill x -pady 2 -pady 2
+
+   entry .prec.a.prec  -textvariable mp_precision_shad \
+                       -justify right            \
+                       -width 7                  \
+                       -relief sunken            \
+                       -bg aquamarine3           \
+                       -font $fnt(display) -bd 4
+   pack .prec.a.prec -side left -fill x -pady 2 -pady 2
+   bind .prec.a.prec <Enter> "incr_prec 0"
+   bind .prec.a.prec <FocusOut> "incr_prec 0"
+   bindtags .prec.a.prec {.prec.a.prec Entry}
+
+   button .prec.a.decr -text -    \
+                       -command "incr_prec -1" \
+                       -width 1                  \
+                       -bg gray30                \
+                       -fg ivory                 \
+                       -highlightbackground gray50
+   pack .prec.a.decr -side left -fill x -pady 2 -pady 2
+
+   frame .prec.b -bg gray50
+   pack .prec.b -side top -fill x
+   button .prec.b.ok -text Close   \
+                         -highlightbackground gray50 \
+                         -command "if {[incr_prec 0]} {destroy .prec}"
+   bind .prec.b.ok <Enter> "incr_prec 0"
+   bindtags .prec.b.ok {.prec.b.ok Button}
+   pack .prec.b.ok -side right
+
+}
+
+###############################################################################
+# prime and associate funcs
+#
+
+proc prim {} {
+   if ([winfo exists .prim]) {
+      raise .prim
+      focus .prim
+      return
+   }
+
+   global valx
+
+   set constd ""
+
+   toplevel .prim
+   wm title .prim Prime
+   wm resizable .prim 0 0
+
+   frame .prim.top -relief flat -bg gray50 -bd 2 \
+                       -highlightbackground gray50
+   pack .prim.top -side top -fill x
+   label .prim.top.l -textvariable constd -relief groove \
+                       -bg gray80 -bd 2
+   pack .prim.top.l -side top -fill x -padx 2 -pady 2
+
+   frame .prim.a -bg gray80
+   pack .prim.a -side top -fill x
+
+   frame .prim.b -bg gray50
+   pack .prim.b -side top -fill x
+   butnrow .prim.b 3 {
+      {ProdPrime     {fun1 pfact}}
+      {IsPrime       {push; set valx 100; set loose 1; fun2 prime}}
+      {LowFact       {push; set valx 100; set loose 1; fun2 lfactor}}
+      {GcdRem(y,x)   {fun2 gcdrem}}
+      {RelPrime(y,x) {fun2 relprime}}
+   } 10
+
+   frame .prim.c -bg gray50
+   pack .prim.c -side top -fill x
+   butnrow .prim.c 2 {
+      {GcdRem(y,x)   {fun2 gcdrem}}
+      {RelPrime(y,x) {fun2 relprime}}
+   } 10
+
+   bind .prim.b.b0 <Enter> {set constd "product of primes up to x"}
+   bind .prim.b.b0 <Leave> {set constd ""}
+   bind .prim.b.b1 <Enter> {set constd "test is x prime"}
+   bind .prim.b.b1 <Leave> {set constd ""}
+   bind .prim.b.b2 <Enter> {set constd "lowest prime factor of x"}
+   bind .prim.b.b2 <Leave> {set constd ""}
+   bind .prim.c.b0 <Enter> {set constd "relatively prime gcd divisor of y & x"}
+   bind .prim.c.b0 <Leave> {set constd ""}
+   bind .prim.c.b1 <Enter> {set constd "y relatively prime to x"}
+   bind .prim.c.b1 <Leave> {set constd ""}
+
+   button .prim.c.z -highlightbackground gray50 \
+                         -text Close -command "destroy .prim"
+   pack .prim.c.z -side right -padx 10
+}
+
+######################### TRIGONOMETRY MODULE ##########################
+
+########################################################################
+# trig  - main trignometry window
+#=======================================================================
+
+proc trig {} {
+   if ([winfo exists .trig]) {
+      raise .trig
+      focus .trig
+      return
+   }
+
+   global mode
+   global angle
+   global valx
+
+   toplevel .trig
+   wm title .trig Trigonometry
+   wm resizable .trig 0 0
+
+   frame .trig.a -bg gray80
+   pack .trig.a -side top -fill x
+
+   frame .trig.b -bg gray50
+   pack .trig.b -side top -fill x
+   butnrow .trig.b 3 {
+      {COSH "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 cosh"}
+      {SINH "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 sinh"}
+      {TANH "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 tanh"}
+   }
+
+   frame .trig.c -bg gray50
+   pack .trig.c -side top -fill x
+   butnrow .trig.c 3 {
+      {ACOS "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 acos"}
+      {ASIN "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 asin"}
+      {ATAN "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 atan"}
+   }
+
+   frame .trig.d -bg gray50
+   pack .trig.d -side top -fill x
+   butnrow .trig.d 3 {
+      {"COS" "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 cos"}
+      {"SIN" "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 sin"}
+      {"TAN" "set valx [mpexpr $valx*$angle($mode(angle))]; fun1 tan"}
+   }
+
+   frame .trig.e -bg gray50
+   pack .trig.e -side top -fill x
+   butnrow .trig.e 3 {
+      {"DEG" "set mode(angle) deg"}
+      {"RAD" "set mode(angle) rad"}
+      {"GRD" "set mode(angle) grd"}
+   }
+
+   frame .trig.bottom -relief flat -bg gray50 -bd 2 \
+                       -highlightbackground gray50
+   pack .trig.bottom -side bottom -fill x
+   label .trig.bottom.y -textvariable mode(angle)
+   pack .trig.bottom.y -side left
+   button .trig.bottom.z -highlightbackground gray50 \
+                         -text Close -command "destroy .trig"
+   pack .trig.bottom.z -side right
+}
+
+
+########################################################################
+# stat  - main statistics window
+#=======================================================================
+proc stat {} {
+   if ([winfo exists .stat]) {
+      raise .stat
+      focus .stat
+      return
+   }
+
+   toplevel .stat
+   wm title .stat Statistics
+   wm resizable .stat 0 0
+
+   frame .stat.a -bg gray80
+   pack .stat.a -side top -fill x
+
+   frame .stat.bottom -relief flat -bg gray50 -bd 2 \
+                       -highlightbackground gray50
+   pack .stat.bottom -side bottom -fill x
+   button .stat.bottom.z -highlightbackground gray50 \
+                         -text Close -command "destroy .stat"
+   pack .stat.bottom.z -side right
+}
+
+
+########################################################################
+# help  - main help window
+#=======================================================================
+proc help {} {
+   if ([winfo exists .help]) {
+      raise .help
+      focus .help
+      return
+   }
+
+   toplevel .help
+   wm title .help Help
+   wm resizable .help 0 0
+
+   set helptext \
+"Ken's Scientific desktop Calculator performs its operations on a stack.
+Two arguments must be entered first, followed by an operation to perform
+on those arguments.
+
+The display area consists of two parts.  The top area is the stack.  The
+topmost element is designated by the variable y.  The bottom
+area of the display is the user workspace.  Its contents are designated
+by the variable x.
+
+Gcd(y,x)  greatest common divisor
+Lcm(y,x)  least common multiple
+Fib       Fibonnaci number
+Perm(y,x) permutations of y, x at a time
+Comb(y,x) combinations of y, x at a time
+x root y  get xth root of y.
+e^x       raise the number e to x
+LN        get natural log of x
+y^x       raise y to x
+LOG       get base-10 log of x
+pi        the number pi
+HYP       get hypotenuse from x and y
+1/x       get reciprocal of x
+x!        get x factorial
+EXP       removes top of stack
+LAST      recall last value of x
+STO       store current value of x
+RCL       recall stored value
+<->       exchange x for top of stack"
+
+   frame .help.a -bg gray80
+   pack .help.a -side top -fill x
+   message .help.a.m -text $helptext -bd 2
+   pack .help.a.m -side top -fill both
+
+   frame .help.bottom -relief flat -bg gray50 -bd 2 \
+                       -highlightbackground gray50
+   pack .help.bottom -side bottom -fill x
+   button .help.bottom.z -highlightbackground gray50 \
+                         -text Close -command "destroy .help"
+   pack .help.bottom.z -side right
+}
+
+
+
+########################################################################
+# about  - about box
+#=======================================================================
+proc about {} {
+  if {[winfo exists .about]} {
+    raise .about
+    focus .about
+    return
+  }
+
+  global version
+  global fnt
+
+  toplevel .about
+  wm title .about "About"
+  wm resizable .about 0 0
+
+  frame .about.text -relief groove -bd 2
+  label .about.text.title -text "Calculator $version" -font $fnt(title)
+  label .about.text.t -text "by Ken St-Cyr"
+  label .about.text.u -text "Mpexpr modifications by Tom Poindexter"
+  pack .about.text.title .about.text.t .about.text.u -side top -fill x
+  pack .about.text -side top -expand 1 -fill x
+  button .about.ok -command {destroy .about} -text "OK"
+  pack .about.ok -side top -expand 1
+
+  return
+}
+

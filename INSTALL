@@ -1,0 +1,65 @@
+
+Mpexpr INSTALL
+
+
+1. You will need to have Tcl already installed.  See the README
+   for where to get them.  You should have compiled, (or at least
+   configured) Tcl with '--enable-shared'.
+
+
+2. Run "./configure".  
+
+   You should specify the same --prefix and --exec-prefix as you did when 
+   you configured Tcl.  The defaults are /usr/local.
+
+   ./configure --prefix=/usr/local  --exec-prefix=/usr/local
+
+
+   Configure will use the --prefix= --exec-prefix= to 
+   find the Tcl library and config files (lib/tclX.Y and lib/tclConfig.sh).
+
+   ./configure has three options, 
+				--disable-shared
+				--with-tclx
+				--with-tk
+
+
+   When building the Mpexpr extension, the default is to build a shared 
+   library that can be loaded using 'package require Mpexpr'.  
+   Tcl MUST ALSO have been configured with '--enable-shared'.  The configure
+   script and Makefile uses information from the tclConfig.sh file that
+   deals with compiling and linking shared libraries.
+
+   You can build a static library and executable by specifing 
+   '--disable-shared' as a configure option.   If you noramlly use 
+   Extended Tcl, you can build an executable with Tcl, TclX, and Mpexpr
+   by using the configure option '--with-tclx'.
+   You can also build wish and wishx interpreters using the configure
+   option '--with-tk'.
+
+
+3. Run "make"
+
+   This will compile and build Mpexpr, either as a shared library or
+   static library and executables.
+
+   Again, your Tcl installation MUST HAVE BEEN BUILT with '--enable-shared'
+   if you have configured to build the shared library.
+
+
+4. Run "make test"
+
+   This will run through test scripts for mpexpr and mpformat.
+
+
+5. Run "make install".
+
+   This step will install Mpexpr shared library and pkgIndex.tcl or
+   static libraries and executables.
+   If you built the shared library, you can use Mpexpr in your Tcl
+   programs by using the 'package require Mpexpr' command.  
+
+
+Tom Poindexter
+tpoindex@nyx.net
+

@@ -1,0 +1,26 @@
+HISTORY FOR MPEXPR 
+
+jun-dec 1997	develop mpexpr using tcl 7.6 expr command and library
+		routines from calc.
+
+jan 1998	develop test suite and documentation, all adapted (stolen)
+		from tcl 7.6 distribution.
+
+jan 26 1998	release version 0.8
+
+oct-nov 1998	fix bug in integer divide/mod, where result is off by one
+		when remainder is zero,  report by John Baxter 
+		<baxter@math.umn.edu>, behavior should now entirely
+		mimic expr.  add test case to check for this conditon.
+		incorporate patch from Duncan Simpson <admin@io.stargate.co.uk>
+		to clean up output from calcendian.c  add test cases from
+		Marco Jacobs <marcoj@bops.com>.  Tracked down funky
+		ckalloc()/malloc()/free()/realloc() problems on Windows with
+		help of Alan Folsom <folsom@jmisoftware.com>; changed to
+		use Tcl's ckalloc/ckrealloc/ckfree everywhere.  Include
+		Windows .dll in distribution.
+
+nov 29 1998	modified Ken St-Cyr's <kenstcyr@cs.pdx.edu> calculator 
+		program 'ksc.tcl' for use as an Mpexpr sample program.
+
+dec 5 1998	release version 1.0
