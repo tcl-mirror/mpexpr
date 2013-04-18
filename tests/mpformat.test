@@ -61,7 +61,7 @@ test mpformat-2.8 {%f float}   {mpformat %.0f $mp_b} {12345678901234567891}
 test mpformat-3.1 {%e integer} {mpformat %e $mp_i} {1.23456789e19}
 test mpformat-3.2 {%e integer} {mpformat >%.40e< $mp_i} {>1.2345678901234567890000000000000000000000e19<}
 test mpformat-3.3 {%e float}   {mpformat %e $mp_s} {1.23456789e19}
-#test mpformat-3.4 {%e float}   {mpformat %.5e $mp_s} {1.23457e19}
+test mpformat-3.4 {%e float}   {mpformat %.5e $mp_s} {1.23457e19}
 test mpformat-3.5 {%e float}   {mpformat %e 40000} {4.00000000e4}
 test mpformat-3.6 {%e float}   {mpformat %e 3800000000} {3.80000000e9}
 

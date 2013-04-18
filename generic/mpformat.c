@@ -118,7 +118,7 @@ percent:	;
 		} else { 
 		    q = qlink(&_qzero_);
 		}
-    	    	qprintfe(q, width, precision);
+    	    	qprintfe_round(q, width, precision);
 		qfree(q);
     	    	break;
     	    case 'r':

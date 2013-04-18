@@ -37,6 +37,7 @@ extern void qprintnum MATH_PROTO((NUMBER *q, int mode));
 extern void qprintff MATH_PROTO((NUMBER *q, long width, long precision));
 extern void Qprintff MATH_PROTO((NUMBER *q, long width, long precision));
 extern void qprintfe MATH_PROTO((NUMBER *q, long width, long precision));
+extern void qprintfe_round MATH_PROTO((NUMBER *q, long width, long precision));
 extern void Qprintfe MATH_PROTO((NUMBER *q, long width, long precision));
 extern void qprintfr MATH_PROTO((NUMBER *q, long width, BOOL force));
 extern void qprintfd MATH_PROTO((NUMBER *q, long width));

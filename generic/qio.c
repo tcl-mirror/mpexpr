@@ -426,6 +426,75 @@ qprintfe(q, width, precision)
 
 /*
  * Print a number in exponential notation.
+ * Same as qprintfe, except the last digit is rounded instead of truncated.
+ * The rounding is that given by qround, i.e., it always rounds away from
+ * zero if the truncated value is exactly 0.5 relative to a unit in the
+ * last printed digit.
+ * Example: 4.1856e34
+ */
+/*ARGSUSED*/
+void
+qprintfe_round(q, width, precision)
+	register NUMBER *q;
+	long width;
+	long precision;
+{
+	long exponent;
+	NUMBER q2;
+	ZVALUE num, den, tenpow, tmp;
+
+	NUMBER* q2_round;
+
+	if (qiszero(q)) {
+		PUTSTR("0.0");
+		return;
+	}
+	num = q->num;
+	den = q->den;
+	num.sign = 0;
+	exponent = zdigits(num) - zdigits(den);
+	if (exponent > 0) {
+		ztenpow(exponent, &tenpow);
+		zmul(den, tenpow, &tmp);
+		zfree(tenpow);
+		den = tmp;
+	}
+	if (exponent < 0) {
+		ztenpow(-exponent, &tenpow);
+		zmul(num, tenpow, &tmp);
+		zfree(tenpow);
+		num = tmp;
+	}
+	if (zrel(num, den) < 0) {
+		zmuli(num, 10L, &tmp);
+		if (num.v != q->num.v)
+			zfree(num);
+		num = tmp;
+		exponent--;
+	}
+	q2.num = num;
+	q2.den = den;
+	q2.num.sign = q->num.sign;
+	q2.links = 1;  /* Needed for qround call */
+	q2_round = qround(&q2,precision);
+	if (qreli(q2_round,10)>=0 || qreli(q2_round,-10)<=0) {
+		NUMBER* tmp = qdivi(q2_round,(long)10);
+		qfree(q2_round);
+		q2_round = tmp;
+		exponent++;
+	}
+	qprintff(q2_round, 0L, precision);
+	qfree(q2_round);
+	if (exponent)
+		PRINTF1("e%ld", exponent);
+	if (num.v != q->num.v)
+		zfree(num);
+	if (den.v != q->den.v)
+		zfree(den);
+}
+
+/*
+ * Print a number in exponential notation.
  * Example: 4.1856e34
  */
 /*ARGSUSED*/
