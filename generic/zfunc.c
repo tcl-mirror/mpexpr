@@ -1400,13 +1400,14 @@ long
 zdigits(z1)
 	ZVALUE z1;
 {
-	long count, val;
+	long count;
+	FULL val;
 
 	z1.sign = 0;
 	if (zistiny(z1)) {	/* do small numbers ourself */
 		count = 1;
 		val = 10;
-		while (*z1.v >= (HALF)val) {
+		while ((FULL)(*z1.v) >= val) {
 			count++;
 			val *= 10;
 		}
