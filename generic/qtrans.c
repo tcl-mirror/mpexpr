@@ -225,11 +225,18 @@ qasin(q, epsilon)
 	qfree(q);
 	n = 1;
 	while (qrel(term, epsilon2) > 0) {
+		/*
+		 * Maximum value for n is 33207, which occurs at q == 0.5 and
+		 * mp_precision at the maximum value of 10000.  This value of
+		 * n is small enough that (n+1)*(n+2) will fit into two 16-bit
+		 * unsigned values, hence numval and denval don't need length
+		 * longer than 2.
+		 */
 		i = n * n;
 		numval[0] = i & BASE1;
 		if (i >= BASE) {
 			numval[1] = i / BASE;
-			mulnum.den.len = 2;
+			mulnum.num.len = 2;
 		}
 		i = (n + 1) * (n + 2);
 		denval[0] = i & BASE1;

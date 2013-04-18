@@ -773,7 +773,14 @@ test mpexpr-32.59 {math functions in expressions} {
     mpexpr pi()
 } {3.14159265358979324}
 
-
+# tests depending on precision:
+catch {set mp_precision_save $mp_precision}
+set mp_precision 145
+test mpexpr-32.60 {math functions in expressions} {
+    mpexpr asin(0.5)
+} {0.5235987755982988730771072305465838140328615665625176368291574320513027343810348331046724708903528446636913477522137177745156407682584303719542266}
+unset mp_precision
+catch {set mp_precision $mp_precision_save}
 
 test mpexpr-33.1 {conversions and fancy args to math functions} {
     mpexpr hypot ( 3 , 4 )
