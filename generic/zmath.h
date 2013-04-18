@@ -169,7 +169,7 @@ extern void freeh MATH_PROTO((HALF *));
  */
 extern void zcopy MATH_PROTO((ZVALUE z, ZVALUE *res));
 extern void itoz MATH_PROTO((long i, ZVALUE *res));
-extern void atoz MATH_PROTO((char *s, ZVALUE *res));
+extern void atoz MATH_PROTO((CONST char *s, ZVALUE *res));
 extern long ztoi MATH_PROTO((ZVALUE z));
 extern void zprintval MATH_PROTO((ZVALUE z, long decimals, long width));
 extern void Zprintval MATH_PROTO((ZVALUE z, long decimals, long width));
@@ -334,7 +334,7 @@ extern void zredcpower MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE z2, ZVALUE *res))
  * Output routines for either FILE handles or strings.
  */
 extern void math_chr MATH_PROTO((int ch));
-extern void math_str MATH_PROTO((char *str));
+extern void math_str MATH_PROTO((CONST char *str));
 extern void math_fill MATH_PROTO((char *str, long width));
 extern void math_flush MATH_PROTO((void));
 extern void math_divertio MATH_PROTO((void));

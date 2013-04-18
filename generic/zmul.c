@@ -1093,7 +1093,7 @@ zalloctemp(len)
 	len += 100;
 	if (buflen) {
 		buflen = 0;
-		ckfree(bufptr);
+		ckfree((char *)bufptr);
 	}
 	hp = (HALF *) ckalloc(len * sizeof(HALF));
 	if (hp == NULL)

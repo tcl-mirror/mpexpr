@@ -679,10 +679,10 @@ atoqnum(s)
  */
 long
 qparse(cp, flags)
+	register CONST char *cp;
 	int flags;
-	register char *cp;
 {
-	char *oldcp;
+        CONST char *oldcp;
 
 	oldcp = cp;
 	if ((*cp == '+') || (*cp == '-'))

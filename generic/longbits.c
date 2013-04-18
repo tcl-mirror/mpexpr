@@ -31,6 +31,9 @@
  * chongo was here	/\../\
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
 main()
 {
     printf("#undef LONG_BITS\n");

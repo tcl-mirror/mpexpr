@@ -26,10 +26,10 @@
  * Function prototypes for procedures local to this file:
  */
 
-static char *	QuoteEnd _ANSI_ARGS_((char *string, int term));
-static char *	ScriptEnd _ANSI_ARGS_((char *p, int nested));
-static char *	VarNameEnd _ANSI_ARGS_((char *string));
-static char *   MpWordEnd _ANSI_ARGS_((char *start, int nested, int *semiPtr));
+static CONST char *	QuoteEnd _ANSI_ARGS_((CONST char *string, int term));
+static CONST char *	ScriptEnd _ANSI_ARGS_((CONST char *p, int nested));
+static CONST char *	VarNameEnd _ANSI_ARGS_((CONST char *string));
+static CONST char *   MpWordEnd _ANSI_ARGS_((CONST char *start, int nested, int *semiPtr));
 
 
 
@@ -205,18 +205,20 @@ int
 MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
     Tcl_Interp *interp;		/* Interpreter to use for nested command
 				 * evaluations and error messages. */
-    char *string;		/* Character just after opening double-
+    CONST char *string;	/* Character just after opening double-
 				 * quote. */
     int termChar;		/* Character that terminates "quoted" string
 				 * (usually double-quote, but sometimes
 				 * right-paren or something else). */
     int flags;			/* Flags to pass to nested Tcl_Eval calls. */
-    char **termPtr;		/* Store address of terminating character
+    CONST char **termPtr;	/* Store address of terminating character
 				 * here. */
     ParseValue *pvPtr;		/* Information about where to place
 				 * fully-substituted result of parse. */
 {
-    register char *src, *dst, c;
+    register CONST char *src;
+    register char *dst;
+    register char c;
 
     src = string;
     dst = pvPtr->next;
@@ -246,7 +248,7 @@ MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
 	    continue;
 	} else if (c == '$') {
 	    int length;
-	    char *value;
+	    CONST char *value;
 
 	    value = Mp_ParseVar(interp, src-1, termPtr);
 	    if (value == NULL) {
@@ -324,9 +326,9 @@ int
 MpParseNestedCmd(interp, string, flags, termPtr, pvPtr)
     Tcl_Interp *interp;		/* Interpreter to use for nested command
 				 * evaluations and error messages. */
-    char *string;		/* Character just after opening bracket. */
+    CONST char *string;	/* Character just after opening bracket. */
     int flags;			/* Flags to pass to nested Tcl_Eval. */
-    char **termPtr;		/* Store address of terminating character
+    CONST char **termPtr;	/* Store address of terminating character
 				 * here. */
     register ParseValue *pvPtr;	/* Information about where to place
 				 * result of command. */
@@ -389,14 +391,14 @@ MpParseNestedCmd(interp, string, flags, termPtr, pvPtr)
  *----------------------------------------------------------------------
  */
 
-static char *
+static CONST char *
 QuoteEnd(string, term)
-    char *string;		/* Pointer to character just after opening
+    CONST char *string;	/* Pointer to character just after opening
 				 * "quote". */
     int term;			/* This character will terminate the
 				 * quoted string (e.g. '"' or ')'). */
 {
-    register char *p = string;
+    register CONST char *p = string;
     int count;
 
     while (*p != term) {
@@ -446,11 +448,11 @@ QuoteEnd(string, term)
  *----------------------------------------------------------------------
  */
 
-static char *
+static CONST char *
 VarNameEnd(string)
-    char *string;		/* Pointer to dollar-sign character. */
+    CONST char *string;	/* Pointer to dollar-sign character. */
 {
-    register char *p = string+1;
+    register CONST char *p = string+1;
 
     if (*p == '{') {
 	for (p++; (*p != '}') && (*p != 0); p++) {
@@ -488,9 +490,9 @@ VarNameEnd(string)
  *----------------------------------------------------------------------
  */
 
-static char *
+static CONST char *
 ScriptEnd(p, nested)
-    char *p;			/* Script to check. */
+    CONST char *p;		/* Script to check. */
     int nested;			/* Zero means this is a top-level command.
 				 * One means this is a nested command (the
 				 * last character of the script must be
@@ -564,21 +566,26 @@ ScriptEnd(p, nested)
  *----------------------------------------------------------------------
  */
 
-char *
+CONST char *
 Mp_ParseVar(interp, string, termPtr)
     Tcl_Interp *interp;			/* Context for looking up variable. */
-    register char *string;		/* String containing variable name.
+    register CONST char *string;	/* String containing variable name.
 					 * First character must be "$". */
-    char **termPtr;			/* If non-NULL, points to word to fill
+    CONST char **termPtr;		/* If non-NULL, points to word to fill
 					 * in with character just after last
 					 * one in the variable specifier. */
 
 {
-    char *name1, *name1End, c, *result;
-    register char *name2;
+    CONST char *name1;
+    CONST char *name1End;
+    CONST char *result;
+    register CONST char *name2;
 #define NUM_CHARS 200
     char copyStorage[NUM_CHARS];
     ParseValue pv;
+
+    char* name1_copy;
+    int offset;
 
     /*
      * There are three cases:
@@ -627,7 +634,7 @@ Mp_ParseVar(interp, string, termPtr)
 	}
 	name1End = string;
 	if (*string == '(') {
-	    char *end;
+            CONST char *end;
 
 	    /*
 	     * Perform substitutions on the array element name, just as
@@ -669,10 +676,15 @@ Mp_ParseVar(interp, string, termPtr)
     if (MpnoEval) {
 	return "";
     }
-    c = *name1End;
-    *name1End = 0;
-    result = Tcl_GetVar2(interp, name1, name2, TCL_LEAVE_ERR_MSG);
-    *name1End = c;
+    offset = (name1End - name1) + 1;
+    name1_copy = ckalloc(offset);
+    name1_copy[--offset] = '\0';
+    while(offset>0) {
+      --offset;
+      name1_copy[offset] = name1[offset];
+    }
+    result = Tcl_GetVar2(interp, name1_copy, name2, TCL_LEAVE_ERR_MSG);
+    ckfree(name1_copy);
 
     done:
     if ((name2 != NULL) && (pv.buffer != copyStorage)) {
@@ -701,9 +713,9 @@ Mp_ParseVar(interp, string, termPtr)
  *----------------------------------------------------------------------
  */
 
-char *
+CONST char *
 MpWordEnd(start, nested, semiPtr)
-    char *start;		/* Beginning of a word of a Tcl command. */
+    CONST char *start;	/* Beginning of a word of a Tcl command. */
     int nested;			/* Zero means this is a top-level command.
 				 * One means this is a nested command (close
 				 * bracket is a word terminator). */
@@ -711,7 +723,7 @@ MpWordEnd(start, nested, semiPtr)
 				 * terminating semi-colon, zero otherwise.
 				 * If NULL then ignored. */
 {
-    register char *p;
+    register CONST char *p;
     int count;
 
     if (semiPtr != NULL) {
@@ -920,14 +932,15 @@ int
 MpParseBraces(interp, string, termPtr, pvPtr)
     Tcl_Interp *interp;		/* Interpreter to use for nested command
 				 * evaluations and error messages. */
-    char *string;		/* Character just after opening bracket. */
-    char **termPtr;		/* Store address of terminating character
+    CONST char *string;	/* Character just after opening bracket. */
+    CONST char **termPtr;	/* Store address of terminating character
 				 * here. */
     register ParseValue *pvPtr;	/* Information about where to place
 				 * result of command. */
 {
     int level;
-    register char *src, *dst, *end;
+    register CONST char *src;
+    register char *dst, *end;
     register char c;
 
     src = string;
@@ -1030,11 +1043,12 @@ char *
 MpPrecTraceProc(clientData, interp, name1, name2, flags)
     ClientData clientData;      /* Not used. */
     Tcl_Interp *interp;         /* Interpreter containing variable. */
-    char *name1;                /* Name of variable. */
-    char *name2;                /* Second part of variable name. */
+    CONST84 char *name1;        /* Name of variable. */
+    CONST84 char *name2;        /* Second part of variable name. */
     int flags;                  /* Information about what happened. */
 {
-    char *value, *end;
+    CONST char *value;
+    char *end;
     char mp_buf[256];
     long prec;
  

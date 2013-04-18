@@ -105,9 +105,9 @@ typedef struct {
  */
 
 typedef struct {
-    char *originalExpr;		/* The entire expression, as originally
+    CONST char *originalExpr;	/* The entire expression, as originally
 				 * passed to Mp_ExprString et al. */
-    char *expr;			/* Position to the next character to be
+    CONST char *expr;		/* Position to the next character to be
 				 * scanned from the expression string. */
     int token;			/* Type of the last token to be parsed from
 				 * expr.  See below for definitions.
@@ -287,20 +287,20 @@ static int		ExprIntFunc _ANSI_ARGS_((ClientData clientData,
 			    Mp_Value *resultPtr));
 static int		ExprLex _ANSI_ARGS_((Tcl_Interp *interp,
 			    ExprInfo *infoPtr, Mp_Value *valuePtr));
-static int		ExprLooksLikeInt _ANSI_ARGS_((char *p));
+static int		ExprLooksLikeInt _ANSI_ARGS_((CONST char *p));
 static void		ExprMakeString _ANSI_ARGS_((Tcl_Interp *interp,
 			    Mp_Value *valuePtr));
 static int		ExprMathFunc _ANSI_ARGS_((Tcl_Interp *interp,
 			    ExprInfo *infoPtr, Mp_Value *valuePtr));
 static int		ExprParseString _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *string, Mp_Value *valuePtr));
+			    CONST char *string, Mp_Value *valuePtr));
 static int		ExprRoundFunc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Mp_Value *args,
 			    Mp_Value *resultPtr));
 static void		QZMathDeleteProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
 static int		ExprTopLevel _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *string, Mp_Value *valuePtr));
+			    CONST char *string, Mp_Value *valuePtr));
 static int		ExprUnaryFunc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Mp_Value *args,
 			    Mp_Value *resultPtr));
@@ -321,7 +321,7 @@ static int		ExprTertiaryZFunc _ANSI_ARGS_((ClientData clientData,
  * Helper zmath &  qmath funcitons: (implemented near end of file)
  */
 
-static void		Atoz       _ANSI_ARGS_ ((char *, ZVALUE *, char **));
+static void		Atoz       _ANSI_ARGS_ ((CONST char *, ZVALUE *, CONST char **));
 static NUMBER *		Afractoq   _ANSI_ARGS_ ((char *, char **));
 static NUMBER *		qceil      _ANSI_ARGS_ ((NUMBER *));
 static NUMBER *		qfloor     _ANSI_ARGS_ ((NUMBER *));
@@ -459,11 +459,11 @@ math_error TCL_VARARGS_DEF(char *, arg1)
 static int
 ExprParseString(interp, string, valuePtr)
     Tcl_Interp *interp;		/* Where to store error message. */
-    char *string;		/* String to turn into value. */
+    CONST char *string;	/* String to turn into value. */
     Mp_Value *valuePtr;		/* Where to store value information. 
 				 * Caller must have initialized pv field. */
 {
-    char *term, *p, *start;
+    CONST char *term, *p, *start;
 
     if (*string != 0) {
 	if (ExprLooksLikeInt(string)) {
@@ -557,8 +557,9 @@ ExprLex(interp, infoPtr, valuePtr)
 					 * must have initialized pv field
 					 * correctly. */
 {
-    register char *p;
-    char *var, *term;
+    register CONST char *p;
+    CONST char *var;
+    CONST char *term;
     int result;
 
     p = infoPtr->expr;
@@ -1797,7 +1798,7 @@ static int
 ExprTopLevel(interp, string, valuePtr)
     Tcl_Interp *interp;			/* Context in which to evaluate the
 					 * expression. */
-    char *string;			/* Expression to evaluate. */
+    CONST char *string;		/* Expression to evaluate. */
     Mp_Value *valuePtr;			/* Where to store result.  Should
 					 * not be initialized by caller. */
 {
@@ -1872,7 +1873,7 @@ int
 Mp_ExprString(interp, string)
     Tcl_Interp *interp;			/* Context in which to evaluate the
 					 * expression. */
-    char *string;			/* Expression to evaluate. */
+    CONST char *string;		/* Expression to evaluate. */
 {
     Mp_Value value;
     int result;
@@ -2066,7 +2067,9 @@ ExprMathFunc(interp, infoPtr, valuePtr)
     Mp_Value funcResult;		/* Result of function call. */
     Tcl_HashEntry *hPtr;
     Tcl_HashTable *ZQMathTablePtr;
-    char *p, *funcName, savedChar;
+    CONST char *p;
+    CONST char *funcName;
+    char *funcNameCopy;
     int i, result;
 
     funcResult.intValue    = _zero_;
@@ -2098,16 +2101,21 @@ ExprMathFunc(interp, infoPtr, valuePtr)
     if (infoPtr->token != OPEN_PAREN) {
 	goto syntaxError;
     }
-    savedChar = *p;
-    *p = 0;
-    hPtr = Tcl_FindHashEntry(ZQMathTablePtr, funcName);
+    i = (p - funcName) + 1;
+    funcNameCopy = ckalloc(i);
+    funcNameCopy[--i] = '\0';
+    while(i>0) {
+        --i;
+        funcNameCopy[i] = funcName[i];
+    }
+    hPtr = Tcl_FindHashEntry(ZQMathTablePtr, funcNameCopy);
     if (hPtr == NULL) {
-	Tcl_AppendResult(interp, "unknown math function \"", funcName,
-		"\"", (char *) NULL);
-	*p = savedChar;
+	Tcl_AppendResult(interp, "unknown math function \"", funcNameCopy,
+                         "\"", (char *) NULL);
+        ckfree(funcNameCopy);
 	return TCL_ERROR;
     }
-    *p = savedChar;
+    ckfree(funcNameCopy);
     mathFuncPtr = (Mp_MathFunc *) Tcl_GetHashValue(hPtr);
 
     /*
@@ -2525,7 +2533,7 @@ ExprRoundFunc(clientData, interp, args, resultPtr)
 
 static int
 ExprLooksLikeInt(p)
-    char *p;			/* Pointer to string. */
+    CONST char *p;			/* Pointer to string. */
 {
     while (isspace(UCHAR(*p))) {
 	p++;
@@ -2638,9 +2646,9 @@ qlog10 (q)
 
 static void
 Atoz (s, res, term)
-    register char *s;
+    register CONST char *s;
     ZVALUE *res;
-    char **term;
+    CONST char **term;
 {
     ZVALUE z, ztmp, digit;
     HALF digval;
@@ -2746,17 +2754,17 @@ Atoz (s, res, term)
 /* reimplement atoq to return terminating char pointer */
 NUMBER *
 Atoq (s, term)
-    register char *s;
-    char **term;
+    register CONST char *s;
+    CONST char **term;
 {
     register NUMBER *q;
-    register char *t;
+    register CONST char *t;
     ZVALUE div, newnum, newden, tmp;
     long decimals, exp;
     BOOL hex, negexp;
-    char *tmp_term = NULL;
+    CONST char *tmp_term = NULL;
     long valid_q;
-    char *org;
+    CONST char *org;
 
     decimals = 0;
     exp = 0;

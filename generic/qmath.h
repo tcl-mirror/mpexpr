@@ -31,7 +31,7 @@ extern NUMBER *iitoq MATH_PROTO((long i1, long i2));
 extern NUMBER *atoqnum MATH_PROTO((char *str));
 extern NUMBER *itoq MATH_PROTO((long i));
 extern long qtoi MATH_PROTO((NUMBER *q));
-extern long qparse MATH_PROTO((char *str, int flags));
+extern long qparse MATH_PROTO((CONST char *str, int flags));
 extern void qfreenum MATH_PROTO((NUMBER *q));
 extern void qprintnum MATH_PROTO((NUMBER *q, int mode));
 extern void qprintff MATH_PROTO((NUMBER *q, long width, long precision));

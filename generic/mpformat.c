@@ -20,13 +20,13 @@
 #include "mpexpr.h"
 
 
-EXTERN void			Qprintf _ANSI_ARGS_((int argc, char **argv));
+EXTERN void	Qprintf _ANSI_ARGS_((int argc, CONST char **argv));
 
 int
 Mp_FormatString(interp, argc, argv)
     Tcl_Interp *interp;
     int         argc;
-    char      **argv;
+    CONST char **argv;
 {
     char *string;
 
@@ -53,16 +53,14 @@ Mp_FormatString(interp, argc, argv)
 void
 Qprintf (argc, argv)
   int    argc;
-  char **argv;
-	
+  CONST char **argv;
 {
-    
-    char   *fmt = argv[0];
+    CONST char   *fmt = argv[0];
     NUMBER *q, *q2;
     int ch, sign;
     long width, precision;
     int i = 1;
-    char *term;
+    CONST char *term;
    
     argc--;  /* fmt string was first */
 

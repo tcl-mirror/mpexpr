@@ -37,6 +37,19 @@
 #include <ctype.h>
 
 #include <tcl.h>
+
+#if TCL_MAJOR_VERSION < 8
+# define Tcl_GetStringResult(interp) ((interp)->result)
+#endif
+
+#ifndef CONST
+# define CONST
+#endif
+
+#ifndef CONST84
+# define CONST84
+#endif
+
 #include "qmath.h"
 
 #define MPEXPR_VERSION   "1.0"
@@ -52,9 +65,9 @@ EXTERN NUMBER *mp_epsilon;
 EXTERN int MpnoEval;	/* flag to stop eval */
 
 EXTERN int		Mp_ExprString _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *string));
+			    CONST char *string));
 EXTERN int              Mp_FormatString _ANSI_ARGS_((Tcl_Interp *interp,
-			    int argc, char **argv));
+			    int argc, CONST char **argv));
 
 /* hacked tclParse routines that don't rely on Tcl internals */
 
@@ -73,24 +86,24 @@ typedef struct ParseValue {
 } ParseValue;
 
 EXTERN int              MpParseBraces _ANSI_ARGS_((Tcl_Interp *interp,
-                            char *string, char **termPtr, ParseValue *pvPtr));
+                            CONST char *string, CONST char **termPtr, ParseValue *pvPtr));
 EXTERN void             MpExpandParseValue _ANSI_ARGS_((ParseValue *pvPtr,
                             int needed));
 EXTERN int              MpParseQuotes _ANSI_ARGS_((Tcl_Interp *interp,
-                            char *string, int termChar, int flags,
-                            char **termPtr, ParseValue *pvPtr));
+                            CONST char *string, int termChar, int flags,
+                            CONST char **termPtr, ParseValue *pvPtr));
 EXTERN int              MpParseNestedCmd _ANSI_ARGS_((Tcl_Interp *interp,
-                            char *string, int flags, char **termPtr,
+                            CONST char *string, int flags, CONST char **termPtr,
                             ParseValue *pvPtr));
-EXTERN char *           Mp_ParseVar _ANSI_ARGS_((Tcl_Interp *interp,
-                            char *string, char **termPtr));
+EXTERN CONST char *   Mp_ParseVar _ANSI_ARGS_((Tcl_Interp *interp,
+                            CONST char *string, CONST char **termPtr));
 
 EXTERN char *           MpPrecTraceProc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, char *name1, char *name2,
+			    Tcl_Interp *interp, CONST84 char *name1, CONST84 char *name2,
 		 	    int flags));
 
 
-EXTERN NUMBER *		Atoq _ANSI_ARGS_((char *, char **));
+EXTERN NUMBER *		Atoq _ANSI_ARGS_((CONST char *, CONST char **));
 #define Qfree(q)  qfree(q); (q)=NULL
 
 

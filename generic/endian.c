@@ -29,6 +29,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 /* byte order array */
 char byte[8] = { (char)0x12, (char)0x36, (char)0x48, (char)0x59,

@@ -962,7 +962,7 @@ zgcd(z1, z2, res)
 	if (k) {
 		olen = u.len;
 		u.len += k / BASEB + 1;
-		u.v = (HALF *) ckrealloc(u.v, u.len * sizeof(HALF));
+		u.v = (HALF *) ckrealloc((char *)u.v, u.len * sizeof(HALF));
 		if (u.v == NULL) {
 		    math_error("Not enough memory to expand number");
 		}

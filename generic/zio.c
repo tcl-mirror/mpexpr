@@ -96,7 +96,7 @@ math_chr(ch)
  */
 void
 math_str(str)
-	char	*str;
+	CONST char	*str;
 {
 	char	*cp;
 	int	len;
@@ -237,7 +237,7 @@ math_getdivertedio()
 	outbufused = sp->outbufused;
 	outbuf = sp->outbuf;
 	outputisstring = sp->outputisstring;
-	ckfree(sp);		/* TP: fix memory leak */
+	ckfree((char *)sp);		/* TP: fix memory leak */
 	return cp;
 }
 
@@ -704,7 +704,7 @@ Zprintval(z, decimals, width)
  */
 void
 atoz(s, res)
-	register char *s;
+	register CONST char *s;
 	ZVALUE *res;
 {
 	ZVALUE z, ztmp, digit;

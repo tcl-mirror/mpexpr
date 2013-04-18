@@ -749,7 +749,7 @@ zredcfree(rp)
 	zfree(rp->mod);
 	zfree(rp->inv);
 	zfree(rp->one);
-	ckfree(rp);
+	ckfree((char *)rp);
 }
 
 
