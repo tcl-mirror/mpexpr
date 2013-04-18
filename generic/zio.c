@@ -346,7 +346,7 @@ zprintx(z, width)
 	hp = z.v + len;
 	PRINTF1("0x%x", (FULL) *hp--);
 	while (--len >= 0)
-		PRINTF1("%04x", (FULL) *hp--);
+		PRINTF2("%0*x", BASEB/4, (FULL) *hp--);
 }
 
 
@@ -414,9 +414,10 @@ zprinto(z, width)
 {
 	register HALF *hp;	/* current word to print */
 	int len;		/* number of halfwords to type */
-	int num1='0', num2='0';	/* numbers to type */
+	FULL num1='0', num2='0'; /* numbers to type */
 	int rem;		/* remainder number of halfwords */
 	char *str;
+	HALF mask;
 
 	if (width) {
 		math_divertio();
@@ -435,11 +436,12 @@ zprinto(z, width)
 		return;
 	}
 	hp = z.v + len - 1;
+	mask = (HALF)(BASE1 >> (BASEB/2));
 	rem = len % 3;
 	switch (rem) {	/* handle odd amounts first */
 		case 0:
-			num1 = (((FULL) hp[0]) << 8) + (((FULL) hp[-1]) >> 8);
-			num2 = (((FULL) (hp[-1] & 0xff)) << 16) + ((FULL) hp[-2]);
+			num1 = (((FULL) hp[0]) << (BASEB/2)) + (((FULL) hp[-1]) >> (BASEB/2));
+			num2 = (((FULL) (hp[-1] & mask)) << BASEB) + ((FULL) hp[-2]);
 			rem = 3;
 			break;
 		case 1:
@@ -447,20 +449,23 @@ zprinto(z, width)
 			num2 = (FULL) hp[0];
 			break;
 		case 2:
-			num1 = (((FULL) hp[0]) >> 8);
-			num2 = (((FULL) (hp[0] & 0xff)) << 16) + ((FULL) hp[-1]);
+			num1 = (((FULL) hp[0]) >> (BASEB/2));
+			num2 = (((FULL) (hp[0] & mask)) << BASEB) + ((FULL) hp[-1]);
 			break;
 	}
-	if (num1)
-		PRINTF2("0%o%08o", num1, num2);
-	else
-		PRINTF1("0%o", num2);
+	if (num1) {
+		PRINTF1("0%"FULLFMT"o", num1);
+		PRINTF2("%0*"FULLFMT"o", BASEB/2, num2);
+	} else {
+		PRINTF1("0%"FULLFMT"o", num2);
+	}
 	len -= rem;
 	hp -= rem;
 	while (len > 0) {	/* finish in groups of 3 halfwords */
-		num1 = (((FULL) hp[0]) << 8) + (((FULL) hp[-1]) >> 8);
-		num2 = (((FULL) (hp[-1] & 0xff)) << 16) + ((FULL) hp[-2]);
-		PRINTF2("%08o%08o", num1, num2);
+		num1 = (((FULL) hp[0]) << (BASEB/2)) + (((FULL) hp[-1]) >> (BASEB/2));
+		num2 = (((FULL) (hp[-1] & mask)) << BASEB) + ((FULL) hp[-2]);
+		PRINTF2("%0*"FULLFMT"o", BASEB/2, num1);
+		PRINTF2("%0*"FULLFMT"o", BASEB/2, num2);
 		hp -= 3;
 		len -= 3;
 	}

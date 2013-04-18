@@ -83,6 +83,7 @@ typedef long LEN;			/* unit of length storage */
 #define	TOPHALF	((FULL) 0x80000000)	/* highest bit in half value */
 #define	TOPFULL	((FULL) 0x8000000000000000)	/* highest bit in full value */
 #define MAXLEN	((LEN)	0x7fffffffffffffff)	/* longest value allowed */
+#define FULLFMT "l"                     /* printf length specifier for FULL */
 
 #else					/* for 32-bit machines */
 typedef unsigned short HALF;		/* unit of number storage */
@@ -99,6 +100,7 @@ typedef long LEN;			/* unit of length storage */
 #define	TOPHALF	((FULL) 0x8000)		/* highest bit in half value */
 #define	TOPFULL	((FULL) 0x80000000)	/* highest bit in full value */
 #define MAXLEN	((LEN)	0x7fffffff)	/* longest value allowed */
+#define FULLFMT "l"                     /* printf length specifier for FULL */
 #endif
 
 #define	MAXREDC	5			/* number of entries in REDC cache */
