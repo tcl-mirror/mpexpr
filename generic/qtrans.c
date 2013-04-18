@@ -574,7 +574,7 @@ qln(q, epsilon)
 		q = qinv(q);
 	} else
 		q = qlink(q);
-	j = 16;
+	j = BASEB;
 	k = zhighbit(q->num) - zhighbit(q->den) + 1;
 	while (k >>= 1)
 		j++;
