@@ -215,7 +215,10 @@ qasin(q, epsilon)
 	/*
 	 * Argument is between zero and .5, so use the series.
 	 */
-	epsilon = qscale(epsilon, -4L);
+	tmp = qscale(epsilon, -4L);
+	qfree(epsilon);
+	epsilon = tmp;
+	qfree(epsilon2);
 	epsilon2 = qscale(epsilon, -4L);
 	bits = qprecision(epsilon) + 1;
 	bits2 = bits + 10;
@@ -629,6 +632,7 @@ qln(q, epsilon)
 		qfree(tmp1);
 		qfree(sum);
 		sum = qbround(tmp2, bits2);
+		qfree(tmp2);
 	}
 	qfree(epsilon2);
 	qfree(term);

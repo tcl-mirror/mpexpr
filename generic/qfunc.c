@@ -848,6 +848,7 @@ qbround(q, places)
 	zquo(tmp2, q->den, &tmp1);
 	zfree(tmp2);
 	if (ziszero(tmp1)) {
+		qfree(r);
 		zfree(tmp1);
 		return qlink(&_qzero_);
 	}
