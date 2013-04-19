@@ -22,9 +22,28 @@
 
 if {[info commands mpexpr] == "mpexpr"} {
   puts "mpexpr statically compiled into [info nameofexecutable]"
+} elseif {![catch {package require Mpexpr} version]} {
+  puts "Mpexpr $version loaded via package require"
 } else {
   set extdll  ""
-  catch {set extdll [lindex [glob ./libMpexpr*[info sharedlibextension]] 0] }
+  global tcl_platform
+  if {[llength $argv]>0} {
+     set dllpat [lindex $argv 0]
+  } elseif {[string compare "windows" $tcl_platform(platform)]==0} {
+     set dllpat ./mpexpr*[info sharedlibextension]
+  } else {
+     set dllpat ./libMpexpr*[info sharedlibextension]
+  }
+  catch {set extdll [glob $dllpat] }
+  if {[llength $extdll]<1} {
+     puts "Can't find dynamic library using pattern: $dllpat"
+     exit
+  }
+  if {[llength $extdll]>1} {
+     puts "Multiple dynamic libraries found: $extdll"
+     exit
+  }
+  set extdll [lindex $extdll 0]
   if {[catch {load $extdll}]} {
          puts "can't load $extdll"
          exit

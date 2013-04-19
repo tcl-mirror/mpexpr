@@ -1,6 +1,6 @@
 # Makefile.vc
 #
-# This makefile is suitable for use with # Microsoft Visual C++ 2.x and 4.0.
+# This makefile is suitable for use with Microsoft Visual C++ 8 and 10
 #
 # This makefile was hacked from Sun's 'example.zip'
 # Copyright (c) 1996 Sun Microsystems, Inc.
@@ -15,10 +15,11 @@ PROJECT = mpexpr$(DLL_VERSION)
 
 #
 # Project directories -- these may need to be customized for your site
+# NOTE: vcvarsall.bat or equivalent should be run first to set up
+#       the environment for the VC++ tools.
 #
 # ROOT --       location of above this
 # TMPDIR --     location for .obj files.
-# TOOLS32 --    location of VC++ compiler installation.
 # TCL --        location where Tcl is installed.
 # TCLLIB --     define the Tcl lib (with correct version)
 
@@ -28,32 +29,30 @@ ROOT        = ..
 TMPDIR      = .
 GENERICDIR  = $(ROOT)\generic
 
-TOOLS32 = g:\msdev
-
 # point TCL and TCLLIB to your tcl distribution
 
-#TCL     = g:\tcl76
-#TCLLIB  = $(TCL)\lib\tcl76.lib
-
-TCL     = g:\tcl80
-TCLLIB  = $(TCL)\lib\tcl80vc.lib
-
+TCL     = C:\tcl
+TCLLIB  = $(TCL)\lib\tcl85.lib
+TCLSH   = tclsh
 
 # comment the following line to compile with symbols
 NODEBUG=1
 
-#
-# Visual C++ tools
-#
-
-PATH=$(TOOLS32)\bin;$(PATH)
-
-cc32    = $(TOOLS32)\bin\cl -I$(TOOLS32)\include
+cc      = cl
 CP      = copy
 RM      = del
 
-INCLUDES = -I$(TOOLS32)\include -I. -I$(GENERICDIR) -I$(TCL)\include  
-DEFINES = -nologo $(DEBUGDEFINES) 
+# Manifest tool.  The $(PROJECT).dll rule below only runs $(MT) if
+# the file $(PROJECT).dll.manifest exists.  Some versions of cl
+# construct $(PROJECT).dll.manifest by default.
+MT      = mt
+
+INCLUDES = -I. -I$(GENERICDIR) -I$(TCL)\include
+DEFINES = -nologo $(DEBUGDEFINES) -D_CRT_SECURE_NO_DEPRECATE -DBUILD_mpexpr
+
+# Compiler warning flags.  Use -wd# to disable warning #.
+#   Warning 4131 is old-style function declarations.
+WARNINGS = -wd4131
 
 !include <ntwin32.mak>
 
@@ -77,26 +76,37 @@ DLLOBJS = \
 	$(TMPDIR)\zmod.obj    \
 	$(TMPDIR)\zmul.obj 
 
-	
 
 # Targets
 
 all: $(PROJECT).dll
 
-
 $(PROJECT).dll: $(DLLOBJS)
 	$(link) $(linkdebug) $(dlllflags)  $(TCLLIB) \
 		$(guilibsdll) -out:$(PROJECT).dll $(DLLOBJS)
+	IF EXIST $(PROJECT).dll.manifest \
+          $(MT) -manifest $(PROJECT).dll.manifest \
+	        -outputresource:$(PROJECT).dll;#2
+
 
 # Implicit Targets
 
 {$(GENERICDIR)}.c{$(TMPDIR)}.obj:
-	$(cc32) $(cdebug) $(cflags) $(cvarsdll) $(INCLUDES) \
-		$(DEFINES) -Fo$(TMPDIR)\ $<
+	$(cc) $(cdebug) $(cflags) $(cvarsdll) $(INCLUDES) \
+		$(DEFINES) $(WARNINGS) -Fo$(TMPDIR)\ $<
+
+install: $(PROJECT).dll
+	$(TCLSH) install.tcl
+
+tests: test
+
+test:
+	$(TCLSH) ..\tests\mpexpr.test $(PROJECT).dll
+	$(TCLSH) ..\tests\mpformat.test $(PROJECT).dll
 
 clean:
 	-$(RM) $(TMPDIR)\*.obj
 	-$(RM) $(PROJECT).dll
+	-IF EXIST $(PROJECT).dll.manifest $(RM) $(PROJECT).dll.manifest
 	-$(RM) $(PROJECT).lib
 	-$(RM) $(PROJECT).exp
-					      

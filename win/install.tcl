@@ -64,15 +64,10 @@ if {! [regexp "${ws}DLL_VERSION${ws}=${ws}(${dl})"      $mf match dllvers] } {
 set tclver [info tclversion]
 regsub -all {\.} $tclver "" tclver
 
-# just works for Tcl 8.0 currently, change this when 8.1+ is supported
-if {"$tclver" > "80"} {
-  set tclver 80
-}
-
 # set directory for pkgIndex.tcl, set required dll, and install dll name
 
 set proj_dir ${project}${dllvers}
-set proj_dll ${project}${dllvers}${tclver}${dll}
+set proj_dll ${project}${dllvers}${dll}
 set inst_dll ${project}${dllvers}${dll}
 
 # set package name, assumes that shared lib Xxx_Init is first letter caps

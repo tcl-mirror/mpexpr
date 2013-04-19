@@ -2,47 +2,28 @@ Mpexpr for Windows
 
 BEFORE YOU BEGIN
 
-Mpexpr has been ported to WindowsNT.  Mpexpr also works under Windows95.
-It has been tested with the latest version of Tcl, 8.0.3.  
+Mpexpr has been ported to WindowsNT.
+It has been tested with the latest version of Tcl, 8.6.0
 
 
 INSTALLING MPEXPR FOR WINDOWS
 
-Easy install:
+Binary install:
  
-I've written a tiny install script.  It figures out which of the two
-DLLs to install based on your Tcl version, copies that file to your
-Tcl library, makes a pkgIndex.tcl and installs it into a project directory.
-First, copy all files in this directory to some directory on your Windows
-PC.  e.g., c:\mpexpr
-
-To install, copy ALL of the files in the Mpexpr ./win directory to your PC, 
-and simply run the install.tcl file with your tclsh:
- 
-	tclsh80 install.tcl
-        answer 'yes' when prompted.
- 
-Manual installation instructions:
-
-
-1.  Copy the mpexpr.dll to your Tcl .\lib directory.  
+1. Copy mpexpr.dll to your Tcl .\lib directory.  
     
-    copy mpexpr1080.dll  c:\program files\tcl\lib\mpexpr10.dll
+    copy mpexpr10.dll  c:\tcl\lib\mpexpr10.dll
 
+2. Copy or add pkgIndex.tcl to your Tcl lib directory.  This is so the
+   'package unknown' scripts can resolve the 'package ifneeded' to load the
+   dll.
 
-2.  Copy or add pkgIndex.tcl to your Tcl lib directory.  This is so
-    the 'package unknown' scripts can resolve the 'package ifneeded' to
-    load the dll.  
-    
-    The 'install.tcl' script makes a directory adjacent to your Tcl lib
-    called 'mpexpr10', and creates the pkgIndex.tcl there.
+    mkdir c:\tcl\lib\mpexpr10
+    copy pkgIndex.tcl c:\tcl\lib\mpexpr10
 
-    mkdir c:\program files\tcl\lib\mpexpr10
-    copy pkgIndex.tcl c:\program files\tcl\lib\mpexpr10
+3. Try it out!
 
-3.  Try it out!
-
-    c:\> tclsh80
+    c:\> tclsh
     % package require Mpexpr
     1.0 
     % mpexpr fib(34)
@@ -52,37 +33,40 @@ Manual installation instructions:
     If 'package require' says it can't find package Mpexpr:
 	    -make sure you've installed the pkgIndex.tcl.
 	    -or just load the mpexpr.dll manually
-		    % load "c:/program files/tcl/lib/mpexpr10.dll"
+		    % load "c:/tcl/lib/mpexpr10.dll"
 		    (or wherever you put it)
 
-RUNNING TESTS
-    
-You can run the Mpexpr tests manually by:
-        Start tclsh80   (or appropriate version)
-          cd to_your_mpexpr_tests_directory
-          source mpexpr.test
-          source mpformat.test
- 
 
 BUILDING MPEXPR FOR WINDOWS
 
-My development environment is:
-	Windows NT 4.0
-	Microsoft Visual C++ 4.0
-	Tcl 8.0.3 for Windows
+The test development environment is
+	Windows 7
+	Microsoft Visual C++ 11.0
+	Tcl 8.5.13 for Windows
 
-
-1.  Get and unpack the Tcl 8.0.3 (or higher) distribution.  The 'binary'
-    Tcl distribution contains the include and library files needed by
-    Mpexpr.  Alternatively, you can get the full source Tcl distribution.
+1.  Install Tcl.  The 'binary' Tcl distributions contain all the include
+    and library files needed by Mpexpr.  Alternatively, you can build
+    and install from the full source Tcl distribution.
 
 2.  Modify the makefile as needed.  You'll probably have to change the
-    values for the TCL defines to suit.
+    values for the TCL defines to suit, or else set these on the nmake
+    command line (see next step).
 
 3.  Make it!  
-	C:\mpexpr> nmake -f makefile.vc
+	C:\mpexpr\win> nmake -f makefile.vc
+    or
+        C:\mpexpr\win> nmake -f makefile.vc TCL=C:\tcl TCLLIB=C:\tcl\lib\tcl85.lib
 
-4.  Install it as noted above.
+    If you get an error about ntwin32.mak not found, look for the
+    ntwin32.mak file in the Windows SDK directories, and add an extended
+    INCLUDE list, e.g.,
 
+       INCLUDE="%INCLUDE%;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include"
 
+    to the nmake command line.
 
+4.  Test
+	C:\mpexpr> nmake -f makefile.vc test
+
+5.  Install
+	C:\mpexpr> nmake -f makefile.vc install

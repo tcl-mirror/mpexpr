@@ -38,6 +38,17 @@
 
 #include <tcl.h>
 
+#undef TCL_STORAGE_CLASS
+#ifdef BUILD_mpexpr
+# define TCL_STORAGE_CLASS DLLEXPORT
+#else
+# ifdef USE_TCL_STUBS
+#  define TCL_STORAGE_CLASS
+# else
+#  define TCL_STORAGE_CLASS DLLIMPORT
+# endif
+#endif
+
 #if TCL_MAJOR_VERSION < 8
 # define Tcl_GetStringResult(interp) ((interp)->result)
 #endif

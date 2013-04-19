@@ -17,12 +17,12 @@ SHELL = /bin/sh
 #
 # set the following defines as needed: 
 
-prefix       = @TCL_PREFIX@
-exec_prefix  = @TCL_EXEC_PREFIX@
+#prefix       = @TCL_PREFIX@
+#exec_prefix  = @TCL_EXEC_PREFIX@
 
 # alternative defs
-#prefix      = @prefix@
-#exec_prefix = @exec_prefix@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
 
 #------------------------------------------------------------------------------
 # define where Mpexpr should put binaries, libraries, and mapages

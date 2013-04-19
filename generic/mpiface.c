@@ -23,7 +23,7 @@
 #   undef WIN32_LEAN_AND_MEAN
 
 #   if defined(_MSC_VER)
-#       define EXPORT(a,b) __declspec(dllexport) a b
+#       define EXPORT(a,b) a b
 #       define DllEntryPoint DllMain
 #   else
 #       if defined(__BORLANDC__)
