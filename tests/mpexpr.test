@@ -874,4 +874,4 @@ test mpexpr-36.10 {ExprLooksLikeInt procedure} {nonPortable unixOnly} {
     list [catch {mpexpr 78e} msg] $msg
 } {1 {syntax error in expression "78e"}}
 
-
+puts "mpexpr tests complete"

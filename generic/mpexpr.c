@@ -1243,7 +1243,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	     */
 
 	    default:
-		interp->result = "unknown operator in expression";
+		Tcl_SetResult(interp,"unknown operator in expression",TCL_STATIC);
 		result = TCL_ERROR;
 		goto done;
 	}
@@ -1273,9 +1273,10 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 
 		    if (ziszero(value2.intValue)) {
 			divideByZero:
-			interp->result = "divide by zero";
+			Tcl_SetResult(interp,"divide by zero",TCL_STATIC);
 			Tcl_SetErrorCode(interp, "ARITH", "DIVZERO",
-				interp->result, (char *) NULL);
+					 Tcl_GetStringResult(interp),
+					 (char *) NULL);
 			result = TCL_ERROR;
 			goto done;
 		    }
@@ -1638,7 +1639,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		break;
 
 	    case COLON:
-		interp->result = "can't have : operator without ? first";
+		Tcl_SetResult(interp,"can't have : operator without ? first",TCL_STATIC);
 		result = TCL_ERROR;
 		goto done;
 	}
@@ -1931,8 +1932,7 @@ Mp_ExprString(interp, string)
 	    ckfree(math_io);
 	} else {
 	    if (value.pv.buffer != value.staticSpace) {
-		interp->result = value.pv.buffer;
-		interp->freeProc = TCL_DYNAMIC;
+		Tcl_SetResult(interp,value.pv.buffer,TCL_DYNAMIC);
 		value.pv.buffer = value.staticSpace;
 	    } else {
 		Tcl_SetResult(interp, value.pv.buffer, TCL_VOLATILE);
@@ -2141,8 +2141,9 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 		ExprFreeMathArgs(args);
         	zfree(funcResult.intValue);
         	Qfree(funcResult.doubleValue);
-		interp->result =
-			"argument to math function didn't have numeric value";
+		Tcl_SetResult(interp,
+			"argument to math function didn't have numeric value",
+			TCL_STATIC);
 		return TCL_ERROR;
 	    }
     
@@ -2185,7 +2186,9 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 		    break;
 		}
 		if (infoPtr->token == COMMA) {
-		    interp->result = "too many arguments for math function";
+		    Tcl_SetResult(interp,
+				  "too many arguments for math function",
+				  TCL_STATIC);
 		    ExprFreeMathArgs(args);
         	    zfree(funcResult.intValue);
         	    Qfree(funcResult.doubleValue);
@@ -2196,7 +2199,9 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 	    }
 	    if (infoPtr->token != COMMA) {
 		if (infoPtr->token == CLOSE_PAREN) {
-		    interp->result = "too few arguments for math function";
+		    Tcl_SetResult(interp,
+				  "too few arguments for math function",
+				  TCL_STATIC);
 		    ExprFreeMathArgs(args);
         	    zfree(funcResult.intValue);
         	    Qfree(funcResult.doubleValue);

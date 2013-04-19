@@ -284,8 +284,9 @@ MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
 	    src += numRead;
 	    continue;
 	} else if (c == '\0') {
-	    Tcl_ResetResult(interp);
-	    sprintf(interp->result, "missing %c", termChar);
+	    char errbuf[16];
+	    sprintf(errbuf, "missing %c", termChar);
+	    Tcl_SetResult(interp,errbuf,TCL_VOLATILE);
 	    *termPtr = string-1;
 	    return TCL_ERROR;
 	} else {
@@ -351,12 +352,12 @@ MpParseNestedCmd(interp, string, flags, termPtr, pvPtr)
         if (result != TCL_OK) {
 	    return result;
         }
-        length = strlen(interp->result);
+        length = strlen(Tcl_GetStringResult(interp));
         shortfall = length + 1 - (pvPtr->end - pvPtr->next);
         if (shortfall > 0) {
 	    (*pvPtr->expandProc)(pvPtr, shortfall);
         }
-        strcpy(pvPtr->next, interp->result);
+        strcpy(pvPtr->next, Tcl_GetStringResult(interp));
         pvPtr->next += length;
         Tcl_ResetResult(interp);
     } else {
