@@ -48,7 +48,7 @@ RM      = del
 MT      = mt
 
 INCLUDES = -I. -I$(GENERICDIR) -I$(TCL)\include
-DEFINES = -nologo $(DEBUGDEFINES) -D_CRT_SECURE_NO_DEPRECATE -DBUILD_mpexpr
+DEFINES = -nologo $(DEBUGDEFINES) -DUSE_TCLALLOC -D_CRT_SECURE_NO_DEPRECATE -DBUILD_mpexpr
 
 # Compiler warning flags.  Use -wd# to disable warning #.
 #   Warning 4131 is old-style function declarations.

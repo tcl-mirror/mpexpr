@@ -82,7 +82,7 @@ CC                = @TCL_CC@
 OPT_FLAG          = -O
 #OPT_FLAG          = -g
 
-TCL_DEFS          = $(OPT_FLAG) @TCL_DEFS@   @DEFS@
+TCL_DEFS          = $(OPT_FLAG) -DUSE_TCLALLOC @TCL_DEFS@   @DEFS@
 TCL_LD_FLAGS      = @TCL_LD_FLAGS@
 TCL_SHLIB_SUFFIX  = @TCL_SHLIB_SUFFIX@
 TCL_SHLIB_CFLAGS  = @TCL_SHLIB_CFLAGS@
