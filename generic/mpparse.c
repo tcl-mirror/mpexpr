@@ -580,7 +580,7 @@ Mp_ParseVar(interp, string, termPtr)
     CONST char *name1;
     CONST char *name1End;
     CONST char *result;
-    register CONST char *name2;
+    register char *name2;
 #define NUM_CHARS 200
     char copyStorage[NUM_CHARS];
     ParseValue pv;

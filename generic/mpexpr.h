@@ -78,7 +78,7 @@ EXTERN int MpnoEval;	/* flag to stop eval */
 EXTERN int		Mp_ExprString _ANSI_ARGS_((Tcl_Interp *interp,
 			    CONST char *string));
 EXTERN int              Mp_FormatString _ANSI_ARGS_((Tcl_Interp *interp,
-			    int argc, CONST char **argv));
+			    int argc, CONST84 char **argv));
 
 /* hacked tclParse routines that don't rely on Tcl internals */
 
