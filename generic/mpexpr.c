@@ -231,14 +231,6 @@ static char *operatorStrings[] = {
 int Mp_MathInProgress = 0;
 
 /*
- * saved copy of current Tcl interp
- *
- */
-
-static Tcl_Interp *mp_interp;
-
-
-/*
  * precision and epsilon value for rounding and error allowance
  *
  */
@@ -1704,8 +1696,6 @@ ExprMakeString(interp, valuePtr)
     char *math_io;
     NUMBER *q_rounded;
 
-    mp_interp = interp;
-
     if (valuePtr->type == MP_INT) {
         shortfall = zdigits(valuePtr->intValue) - 
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
@@ -1887,7 +1877,6 @@ Mp_ExprString(interp, string)
     value.doubleValue = qlink(&_qzero_);
     value.type        = MP_UNDEF;
 
-    mp_interp = interp;
     Tcl_DStringInit(&mp_error_string);
 
     inMpExpr++;
@@ -2767,7 +2756,6 @@ Atoq (s, term)
     ZVALUE div, newnum, newden, tmp;
     long decimals, exp;
     BOOL hex, negexp;
-    CONST char *tmp_term = NULL;
     long valid_q;
     CONST char *org;
 
@@ -2831,7 +2819,6 @@ Atoq (s, term)
 		    }
 
 	    }
-	    tmp_term = t;
 	    *term = t;
 	    ztenpow(decimals, &q->den);
     }
