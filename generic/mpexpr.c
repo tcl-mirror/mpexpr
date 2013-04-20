@@ -1921,8 +1921,8 @@ Mp_ExprString(interp, string)
 	    ckfree(math_io);
 	} else {
 	    if (value.pv.buffer != value.staticSpace) {
-		Tcl_SetResult(interp,value.pv.buffer,TCL_DYNAMIC);
 		value.pv.buffer = value.staticSpace;
+		Tcl_SetResult(interp,value.pv.buffer,TCL_DYNAMIC);
 	    } else {
 		Tcl_SetResult(interp, value.pv.buffer, TCL_VOLATILE);
 	    }
