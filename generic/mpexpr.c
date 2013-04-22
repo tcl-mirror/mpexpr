@@ -21,7 +21,7 @@
  *	This implementation of floating-point support was modelled
  *	after an initial implementation by Bill Carpenter.
  *
- * 
+ *
  * Copyright (c) 1987-1994 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
  *
@@ -57,7 +57,7 @@ MODIFICATIONS.
 
 GOVERNMENT USE: If you are acquiring this software on behalf of the
 U.S. government, the Government shall have only "Restricted Rights"
-in the software and related documentation as defined in the Federal 
+in the software and related documentation as defined in the Federal
 Acquisition Regulations (FARs) in Clause 52.227.19 (c) (2).  If you
 are acquiring the software on behalf of the Department of Defense, the
 software shall be classified as "Commercial Computer Software" and the
@@ -65,7 +65,7 @@ Government shall have only "Restricted Rights" as defined in Clause
 252.227-7013 (c) (1) of DFARs.  Notwithstanding the foregoing, the
 authors grant the U.S. Government and others acting in its behalf
 permission to use and distribute the software in accordance with the
-terms specified in this license. 
+terms specified in this license.
 
  *
  */
@@ -116,19 +116,19 @@ typedef struct {
 } ExprInfo;
 
 /* make defines for easy stuff that is missing or different name */
- 
+
 #define zneg(z)         ((z).sign = (z).sign==0?1:0)
- 
- 
+
+
 typedef int (Mp_MathProc) _ANSI_ARGS_((ClientData clientData,
 	Tcl_Interp *interp, Mp_Value *args, Mp_Value *resultPtr));
- 
+
 
 /*
  * The data structure below defines a math function (e.g. sin or hypot)
  * for use in Tcl expressions.
  */
- 
+
 #define MP_MAX_MATH_ARGS 5
 typedef struct Mp_MathFunc {
     int numArgs;                /* Number of arguments for function. */
@@ -231,6 +231,14 @@ static char *operatorStrings[] = {
 int Mp_MathInProgress = 0;
 
 /*
+ * saved copy of current Tcl interp
+ *
+ */
+
+static Tcl_Interp *mp_interp;
+
+
+/*
  * precision and epsilon value for rounding and error allowance
  *
  */
@@ -299,7 +307,7 @@ static int		ExprUnaryFunc _ANSI_ARGS_((ClientData clientData,
 static int		ExprUnaryZFunc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Mp_Value *args,
 			    Mp_Value *resultPtr));
-static void             Mp_CreateMathFunc _ANSI_ARGS_ ((Tcl_Interp *interp, 
+static void             Mp_CreateMathFunc _ANSI_ARGS_ ((Tcl_Interp *interp,
 			    char *name, int numArgs, Mp_ValueType *argTypes,
 			    Mp_MathProc *proc, ClientData clientData));
 static void             ExprFreeMathArgs _ANSI_ARGS_ ((Mp_Value *args));
@@ -408,20 +416,20 @@ static BuiltinFunc funcTable[] = {
  *
  *----------------------------------------------------------------------
  */
- 
+
         /* VARARGS2 */
 void
 math_error TCL_VARARGS_DEF(char *, arg1)
- 
+
 {
     va_list argList;
     char *string;
- 
- 
+
+
     string = TCL_VARARGS_START(char *,arg1,argList);
     Tcl_DStringAppend(&mp_error_string, string, -1);
     va_end(argList);
- 
+
     longjmp(mp_jump_buffer,1);
 }
 
@@ -452,7 +460,7 @@ static int
 ExprParseString(interp, string, valuePtr)
     Tcl_Interp *interp;		/* Where to store error message. */
     CONST char *string;	/* String to turn into value. */
-    Mp_Value *valuePtr;		/* Where to store value information. 
+    Mp_Value *valuePtr;		/* Where to store value information.
 				 * Caller must have initialized pv field. */
 {
     CONST char *term, *p, *start;
@@ -460,7 +468,7 @@ ExprParseString(interp, string, valuePtr)
     if (*string != 0) {
 	if (ExprLooksLikeInt(string)) {
 	    valuePtr->type = MP_INT;
-    
+
 	    for (p = string; isspace(UCHAR(*p)); p++) {
 		/* Empty loop body. */
 	    }
@@ -526,7 +534,7 @@ ExprParseString(interp, string, valuePtr)
  * Results:
  *	TCL_OK is returned unless an error occurred while doing lexical
  *	analysis or executing an embedded command.  In that case a
- *	standard Tcl error is returned, using interp->result to hold
+ *	standard Tcl error is returned, using the interpreter result to hold
  *	an error message.  In the event of a successful return, the token
  *	and field in infoPtr is updated to refer to the next symbol in
  *	the expression string, and the expr field is advanced past that
@@ -796,7 +804,7 @@ static void
 ExprConvIntToDouble(valuePtr)
     Mp_Value *valuePtr;			
 {
-    Qfree(valuePtr->doubleValue); 
+    Qfree(valuePtr->doubleValue);
     valuePtr->doubleValue = qalloc();
     zcopy(valuePtr->intValue, &(valuePtr->doubleValue->num));
     valuePtr->type = MP_DOUBLE;
@@ -820,10 +828,10 @@ ExprConvDoubleToInt(valuePtr)
 
     neg = qisneg(valuePtr->doubleValue);
     q = qint(valuePtr->doubleValue);
-    zfree(valuePtr->intValue); 
+    zfree(valuePtr->intValue);
     zcopy(q->num, &valuePtr->intValue);
     Qfree(q);
-    if (neg && !zisneg(valuePtr->intValue)) {  
+    if (neg && !zisneg(valuePtr->intValue)) {
       zneg(valuePtr->intValue);
     }
     valuePtr->type = MP_INT;
@@ -838,7 +846,7 @@ ExprConvDoubleToInt(valuePtr)
  *
  * Results:
  *	Normally TCL_OK is returned.  The value of the expression is
- *	returned in *valuePtr.  If an error occurred, then interp->result
+ *	returned in *valuePtr.  If an error occurred, then the interpreter result
  *	contains an error message and TCL_ERROR is returned.
  *	InfoPtr->token will be left pointing to the token AFTER the
  *	expression, and infoPtr->expr will point to the character just
@@ -951,14 +959,14 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 			} else {
 			    badType = valuePtr->type;
 			    goto illegalType;
-			} 
+			}
 			break;
 		    case UNARY_PLUS:
 			if ((valuePtr->type != MP_INT)
 				&& (valuePtr->type != MP_DOUBLE)) {
 			    badType = valuePtr->type;
 			    goto illegalType;
-			} 
+			}
 			break;
 		    case NOT:
 			if (valuePtr->type == MP_INT) {
@@ -1038,7 +1046,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	if ((operator == AND) || (operator == OR) || (operator == QUESTY)) {
 	    if (valuePtr->type == MP_DOUBLE) {
 		zfree(valuePtr->intValue);
-		valuePtr->intValue = qiszero(valuePtr->doubleValue) ? 
+		valuePtr->intValue = qiszero(valuePtr->doubleValue) ?
 							_zero_ : _one_;
 		valuePtr->type = MP_INT;
 	    } else if (valuePtr->type == MP_STRING) {
@@ -1201,7 +1209,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		    }
 		} else if (value2.type == MP_DOUBLE) {
 		    if (valuePtr->type == MP_INT) {
-		        ExprConvIntToDouble(valuePtr); 
+		        ExprConvIntToDouble(valuePtr);
 		    }
 		}
 		break;
@@ -1235,7 +1243,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	     */
 
 	    default:
-		Tcl_SetResult(interp,"unknown operator in expression",TCL_STATIC);
+		Tcl_SetResult(interp, "unknown operator in expression", TCL_STATIC);
 		result = TCL_ERROR;
 		goto done;
 	}
@@ -1265,16 +1273,15 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 
 		    if (ziszero(value2.intValue)) {
 			divideByZero:
-			Tcl_SetResult(interp,"divide by zero",TCL_STATIC);
+			Tcl_SetResult(interp, "divide by zero", TCL_STATIC);
 			Tcl_SetErrorCode(interp, "ARITH", "DIVZERO",
-					 Tcl_GetStringResult(interp),
-					 (char *) NULL);
+				Tcl_GetStringResult(interp), (char *) NULL);
 			result = TCL_ERROR;
 			goto done;
 		    }
 
 		    /* follow Tcl conventions: remainder is always a smaller
-		     * absolute value and same sign as divisor 
+		     * absolute value and same sign as divisor
 		     */
 
 		    if (ziszero(valuePtr->intValue)) {
@@ -1287,7 +1294,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		    if (zisneg(valuePtr->intValue)) {
 		        zneg(valuePtr->intValue);
 			negative1 = 1;
-		    } 
+		    }
 
 		    zcopy(value2.intValue, &z_div);
 		    negative2 = 0;
@@ -1373,7 +1380,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		math_cleardiversions();
 		l_shift = atol(math_io);
 		ckfree(math_io);
-		zshift(valuePtr->intValue, l_shift, &z_tmp); 
+		zshift(valuePtr->intValue, l_shift, &z_tmp);
 		zfree(valuePtr->intValue);
 		zcopy(z_tmp, &valuePtr->intValue);
 		zfree(z_tmp);
@@ -1385,7 +1392,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		math_cleardiversions();
 		l_shift = atol(math_io);
 		ckfree(math_io);
-		zshift(valuePtr->intValue, (-l_shift), &z_tmp); 
+		zshift(valuePtr->intValue, (-l_shift), &z_tmp);
 		zfree(valuePtr->intValue);
 		zcopy(z_tmp, &valuePtr->intValue);
 		zfree(z_tmp);
@@ -1631,7 +1638,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		break;
 
 	    case COLON:
-		Tcl_SetResult(interp,"can't have : operator without ? first",TCL_STATIC);
+		Tcl_SetResult(interp, "can't have : operator without ? first", TCL_STATIC);
 		result = TCL_ERROR;
 		goto done;
 	}
@@ -1696,10 +1703,12 @@ ExprMakeString(interp, valuePtr)
     char *math_io;
     NUMBER *q_rounded;
 
+    mp_interp = interp;
+
     if (valuePtr->type == MP_INT) {
-        shortfall = zdigits(valuePtr->intValue) - 
+        shortfall = zdigits(valuePtr->intValue) -
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
-	total = zdigits(valuePtr->intValue) + 
+	total = zdigits(valuePtr->intValue) +
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
     } else {
 	q_rounded = qround(valuePtr->doubleValue, mp_precision);
@@ -1709,13 +1718,13 @@ ExprMakeString(interp, valuePtr)
         if (precision < 0) {
 	    precision = mp_precision;
 	} else {
-	    precision  = (precision > mp_precision) ? mp_precision : 
+	    precision  = (precision > mp_precision) ? mp_precision :
 		 (precision == 0) ? 1 : precision;
 	}
-	 
-        shortfall = (qdigits(valuePtr->doubleValue) + precision) - 
+	
+        shortfall = (qdigits(valuePtr->doubleValue) + precision) -
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
-	total = (qdigits(valuePtr->doubleValue) + precision) + 
+	total = (qdigits(valuePtr->doubleValue) + precision) +
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
     }
     total += 4;
@@ -1730,7 +1739,7 @@ ExprMakeString(interp, valuePtr)
 	math_cleardiversions();
 	strncpy(valuePtr->pv.buffer, math_io, total);
     } else if (valuePtr->type == MP_DOUBLE) {
-	Qprintff(valuePtr->doubleValue, 0L, precision); 
+	Qprintff(valuePtr->doubleValue, 0L, precision);
 	math_io = math_getdivertedio();
 	math_cleardiversions();
 	strncpy(valuePtr->pv.buffer, math_io, total);
@@ -1740,7 +1749,7 @@ ExprMakeString(interp, valuePtr)
 }
 
 /*
- * QZMathDeleteProc -- 
+ * QZMathDeleteProc --
  *
  * Delete the QZMathTable and free mp_epsilon if set
  *
@@ -1772,7 +1781,7 @@ QZMathDeleteProc(clientData, interp)
  *
  * Results:
  *	The result is a standard Tcl return value.  If an error
- *	occurs then an error message is left in interp->result.
+ *	occurs then an error message is left in the interpreter result.
  *	The value of the expression is returned in *valuePtr, in
  *	whatever form it ends up in (could be string or integer
  *	or double).  Caller may need to convert result.  Caller
@@ -1802,15 +1811,15 @@ ExprTopLevel(interp, string, valuePtr)
      * evaluated.
      */
 
-    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp, 
+    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp,
 			MATH_TABLE_NAME, NULL);
     if (ZQMathTablePtr == NULL) {
 
 	BuiltinFunc *funcPtr;
 
-	ZQMathTablePtr = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable)); 
+	ZQMathTablePtr = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
 	Tcl_InitHashTable(ZQMathTablePtr, TCL_STRING_KEYS);
-	(void) Tcl_SetAssocData(interp, MATH_TABLE_NAME, 
+	(void) Tcl_SetAssocData(interp, MATH_TABLE_NAME,
 		  QZMathDeleteProc, (ClientData) ZQMathTablePtr);
 
 	for (funcPtr = funcTable; funcPtr->name != NULL;
@@ -1851,7 +1860,7 @@ ExprTopLevel(interp, string, valuePtr)
  * Results:
  *	A standard Tcl result.  If the result is TCL_OK, then the
  *	interpreter's result is set to the string value of the
- *	expression.  If the result is TCL_OK, then interp->result
+ *	expression.  If the result is TCL_OK, then the interpreter result
  *	contains an error message.
  *
  * Side effects:
@@ -1877,6 +1886,7 @@ Mp_ExprString(interp, string)
     value.doubleValue = qlink(&_qzero_);
     value.type        = MP_UNDEF;
 
+    mp_interp = interp;
     Tcl_DStringInit(&mp_error_string);
 
     inMpExpr++;
@@ -1910,19 +1920,19 @@ Mp_ExprString(interp, string)
             if (precision < 0) {
 	        precision = mp_precision;
 	    } else {
-	        precision  = (precision > mp_precision) ? mp_precision : 
+	        precision  = (precision > mp_precision) ? mp_precision :
 		     (precision == 0) ? 1 : precision;
 	    }
             math_divertio();
-	    Qprintff(value.doubleValue, 0L, precision); 
+	    Qprintff(value.doubleValue, 0L, precision);
 	    math_io = math_getdivertedio();
 	    math_cleardiversions();
 	    Tcl_SetResult(interp, math_io, TCL_VOLATILE);
 	    ckfree(math_io);
 	} else {
 	    if (value.pv.buffer != value.staticSpace) {
+		Tcl_SetResult(interp, value.pv.buffer, TCL_DYNAMIC);
 		value.pv.buffer = value.staticSpace;
-		Tcl_SetResult(interp,value.pv.buffer,TCL_DYNAMIC);
 	    } else {
 		Tcl_SetResult(interp, value.pv.buffer, TCL_VOLATILE);
 	    }
@@ -1978,7 +1988,7 @@ Mp_CreateMathFunc(interp, name, numArgs, argTypes, proc, clientData)
     Mp_MathFunc *mathFuncPtr;
     int new, i;
 
-    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp, 
+    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp,
 			MATH_TABLE_NAME, NULL);
     hPtr = Tcl_CreateHashEntry(ZQMathTablePtr, name, &new);
 
@@ -2027,7 +2037,7 @@ ExprFreeMathArgs (args)
  * Results:
  *	TCL_OK is returned if all went well and the function's value
  *	was computed successfully.  If an error occurred, TCL_ERROR
- *	is returned and an error message is left in interp->result.
+ *	is returned and an error message is left in the interpreter result.
  *	After a successful return infoPtr has been updated to refer
  *	to the character just after the function call, the token is
  *	set to VALUE, and the value is stored in valuePtr.
@@ -2071,7 +2081,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 	args[i].doubleValue = qlink(&_qzero_);
     }
 
-    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp, 
+    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp,
 			MATH_TABLE_NAME, NULL);
     /*
      * Find the end of the math function's name and lookup the MathFunc
@@ -2130,17 +2140,15 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 		ExprFreeMathArgs(args);
         	zfree(funcResult.intValue);
         	Qfree(funcResult.doubleValue);
-		Tcl_SetResult(interp,
-			"argument to math function didn't have numeric value",
-			TCL_STATIC);
+		Tcl_SetResult(interp, "argument to math function didn't have numeric value", TCL_STATIC);
 		return TCL_ERROR;
 	    }
-    
+
 	    /*
 	     * Copy the value to the argument record, converting it if
 	     * necessary.
 	     */
-    
+
 	    if (valuePtr->type == MP_INT) {
 		if (mathFuncPtr->argTypes[i] == MP_DOUBLE) {
 		    args[i].type = MP_DOUBLE;
@@ -2152,7 +2160,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 		    zcopy(valuePtr->intValue, &(args[i].intValue));
 		    args[i].doubleValue = qlink(&_qzero_);
 		}
-	    } else { 
+	    } else {
 		if (mathFuncPtr->argTypes[i] == MP_INT) {
 		    args[i].type = MP_INT;
 		    args[i].doubleValue = qcopy(valuePtr->doubleValue);
@@ -2164,20 +2172,18 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 		    args[i].doubleValue = qcopy(valuePtr->doubleValue);
 		}
 	    }
-    
+
 	    /*
 	     * Check for a comma separator between arguments or a close-paren
 	     * to end the argument list.
 	     */
-    
+
 	    if (i == (mathFuncPtr->numArgs-1)) {
 		if (infoPtr->token == CLOSE_PAREN) {
 		    break;
 		}
 		if (infoPtr->token == COMMA) {
-		    Tcl_SetResult(interp,
-				  "too many arguments for math function",
-				  TCL_STATIC);
+		    Tcl_SetResult(interp, "too many arguments for math function", TCL_STATIC);
 		    ExprFreeMathArgs(args);
         	    zfree(funcResult.intValue);
         	    Qfree(funcResult.doubleValue);
@@ -2188,9 +2194,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 	    }
 	    if (infoPtr->token != COMMA) {
 		if (infoPtr->token == CLOSE_PAREN) {
-		    Tcl_SetResult(interp,
-				  "too few arguments for math function",
-				  TCL_STATIC);
+		    Tcl_SetResult(interp, "too few arguments for math function", TCL_STATIC);
 		    ExprFreeMathArgs(args);
         	    zfree(funcResult.intValue);
         	    Qfree(funcResult.doubleValue);
@@ -2220,7 +2224,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
     result = (*mathFuncPtr->proc)(mathFuncPtr->clientData, interp, args,
 	    &funcResult);
     Mp_MathInProgress--;
-    
+
     ExprFreeMathArgs(args);
 
     if (result != TCL_OK) {
@@ -2261,7 +2265,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
  * Results:
  *	Each procedure returns TCL_OK if it succeeds and places result
  *	information at *resultPtr.  If it fails it returns TCL_ERROR
- *	and leaves an error message in interp->result.
+ *	and leaves an error message in the interpreter result.
  *
  * Side effects:
  *	None.
@@ -2278,7 +2282,7 @@ ExprUnaryFunc(clientData, interp, args, resultPtr)
     Mp_Value *args;
     Mp_Value *resultPtr;
 {
-    NUMBER *(*func) _ANSI_ARGS_((NUMBER *, NUMBER *)) = 
+    NUMBER *(*func) _ANSI_ARGS_((NUMBER *, NUMBER *)) =
 		  (NUMBER *(*) _ANSI_ARGS_((NUMBER *,NUMBER *))) clientData;
     NUMBER *q_tmp;
 
@@ -2298,7 +2302,7 @@ ExprUnaryZFunc(clientData, interp, args, resultPtr)
     Mp_Value *args;
     Mp_Value *resultPtr;
 {
-    void (*func) _ANSI_ARGS_((ZVALUE, ZVALUE *)) = 
+    void (*func) _ANSI_ARGS_((ZVALUE, ZVALUE *)) =
 		  (void(*) _ANSI_ARGS_((ZVALUE,ZVALUE *))) clientData;
 
     resultPtr->type = MP_INT;
@@ -2624,7 +2628,7 @@ qlog10 (q)
     NUMBER *q2, *q3, *q4, *q5, *q_res;
 
     q2 = itoq(10);
-    q3 = qln(q,mp_epsilon); 
+    q3 = qln(q,mp_epsilon);
     q4 = qln(q2,mp_epsilon);
     q5 = qdiv(q3,q4);
     q_res = qround(q5, mp_precision);
@@ -2700,7 +2704,7 @@ Atoz (s, res, term)
 		  break;
 
 	      case 4:
-		  if (!( (*s >= '0' && *s <= '9') || 
+		  if (!( (*s >= '0' && *s <= '9') ||
 		         (*s >= 'a' && *s <= 'f') ||
 		         (*s >= 'A' && *s <= 'F')  ) ) {
 		    goto badnum;
@@ -2756,6 +2760,7 @@ Atoq (s, term)
     ZVALUE div, newnum, newden, tmp;
     long decimals, exp;
     BOOL hex, negexp;
+    CONST char *tmp_term = NULL;
     long valid_q;
     CONST char *org;
 
@@ -2765,7 +2770,7 @@ Atoq (s, term)
     hex = FALSE;
     org = s;
     t = s;
-    
+
     /* eliminate any leading zeros and/or hex & binary characters */
     while (*t) {
         if (*t == '0' || *t == 'x' || *t == 'X' || *t == 'b' || *t == 'B' ) {
@@ -2819,6 +2824,7 @@ Atoq (s, term)
 		    }
 
 	    }
+	    tmp_term = t;
 	    *term = t;
 	    ztenpow(decimals, &q->den);
     }
@@ -2978,7 +2984,7 @@ Qfree(q)
 */
 
 static void
-Zlowfactor(z1, z2, res) 
+Zlowfactor(z1, z2, res)
     ZVALUE z1;
     ZVALUE z2;
     ZVALUE *res;
@@ -2993,11 +2999,11 @@ Zlowfactor(z1, z2, res)
 
 
 static void
-Zprimetest(z1, z2, res) 
+Zprimetest(z1, z2, res)
     ZVALUE z1;
     ZVALUE z2;
     ZVALUE *res;
-{   
+{
     long   count;
 
     count = ztoi(z2);
@@ -3011,7 +3017,7 @@ Zprimetest(z1, z2, res)
 
 
 static void
-Zrelprime(z1, z2, res) 
+Zrelprime(z1, z2, res)
     ZVALUE z1;
     ZVALUE z2;
     ZVALUE *res;
