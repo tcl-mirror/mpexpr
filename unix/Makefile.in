@@ -387,7 +387,7 @@ man-formatted: $(SRC_DIR)/../doc/mpexpr.man
 
 tests: test
 
-test:
+test: $(LIB_SH_MPEXPR)
 	@if test -x "$(T_EXEC)" ; then \
 	    echo running tests with ./$(T_EXEC) ; \
 	    ./$(T_EXEC)  ../tests/mpexpr.test ; \
@@ -451,6 +451,7 @@ clean:
 really-clean:	clean
 	rm -f Makefile config.status install pkgIndex.tcl
 
+distclean:	really-clean
 
 ###############################################################################
 # end of Makefile
