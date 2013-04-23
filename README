@@ -12,10 +12,9 @@ See the file 'LICENSE.TERMS' for details.
 
 WHERE TO GET IT
 
-http://www.neosoft.com/tcl/ftparchive/sorted/math/mpexpr-1.0/mpexpr-1.0.tar.gz
-ftp://ftp.neosoft.com/pub/tcl/sorted/math/mpexpr-1.0/mpexpr-1.0.tar.gz
+http://sourceforge.net/projects/mpexpr/files/mpexpr/
 
-see http://www.nyx.net/~tpoindex for web info
+see http://mpexpr.sourceforge.net/ for web info
 
 
 WHAT IS MPEXPR ?
@@ -65,25 +64,7 @@ nested evaluation, just like 'expr':
 The trade-off for 'mpepxr' is in execution time.  Since 'mpepxr' doesn't
 use native integer or floating point machine instructions, execution
 times can be much greater.  Larger precision values (set with 'mp_precision')
-also require more execution time that of smaller values.  (timings from a
-lightly loaded Linux/Intel 233mHz)
-
-	% expr atan(1.0)*4
-	3.14159265359
-	% set mp_precision 11
-	11
-	% mpexpr atan(1.0)*4
-	3.14159265359
-	% time {expr atan(1.0)*4} 10		;# native expr floating point
-	45 microseconds per iteration
-	% time {mpexpr atan(1.0)*4} 10		;# mpexpr at 11 digits precision
-	12047 microseconds per iteration
-	% set mp_precision 50
-	50
-	% time {mpexpr atan(1.0)*4} 10		;# mpexpr at 50 digits precision
-	123132 microseconds per iteration
-
-
+also require more execution time that of smaller values.
 
 ACKNOWLEDGEMENTS:
 
@@ -132,13 +113,8 @@ Here are the original copyright notices:
 
 REQUIREMENTS:
 
- Tcl 8.0 
-	tcl8.0p2.tar.gz or newer
-	http://www.scriptics.com
-	ftp://ftp.scriptics.com
-
- Mpexpr should build with Tcl 7.6.  As of version 1.0, I'm testing only 
- with Tcl 8.0.
+ Mpexpr should build with Tcl 7.5 through Tcl 8.6. 
+	http://www.tcl.tk/
 
  Mpexpr builds as a shared library by default, or builds a static library
  and executables (--disable-shared).
@@ -151,7 +127,7 @@ REQUIREMENTS:
 	package require Mpexpr
 
 
-WINDOWS & MACINTOSH
+WINDOWS BINARIES
 
 A Windows DLL is included, compiled with Tcl 8.0.  To install, unpack
 all the files in the ./win directory, and run:
@@ -161,10 +137,6 @@ Please note!!  	I'm not suppling a .zip file for Windows.
 		The popular WinZip program can unpack .tar.gz files.  Save the
 	  	distribution file on your Windows machine, 
 		using .tgz instead of .tar.gz for best results. 
-
-Macintosh -  I'm afraid it's a Sad Mac.  Mpexpr compiles and links,
-but dies in the tests.  See the ./mac directory for more details.
-
 
 INSTALLATION
 See the file INSTALL.  Really.
@@ -195,8 +167,9 @@ file for other changes.
 
 Thanks to Ken St-Cyr for writing and sharing his fine calculator.
 
-
 BUG REPORTS, FIXES, COMMENTS, & SUGGESTIONS
-Please mail to me at: tpoindex@nyx.net
 
+Please submit to the SourceForge Tracker:
+
+http://sourceforge.net/p/mpexpr/_list/tickets
 
