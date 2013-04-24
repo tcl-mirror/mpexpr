@@ -220,16 +220,6 @@ static char *operatorStrings[] = {
     "-", "+", "!", "~"
 };
 
-
-/*
- * The following global variable is use to signal matherr that Tcl
- * is responsible for the arithmetic, so errors can be handled in a
- * fashion appropriate for Tcl.  Zero means no Tcl math is in
- * progress;  non-zero means Tcl is doing math.
- */
-
-int Mp_MathInProgress = 0;
-
 /*
  * precision and epsilon value for rounding and error allowance
  *
@@ -2206,10 +2196,8 @@ ExprMathFunc(interp, infoPtr, valuePtr)
      * Invoke the function and copy its result back into valuePtr.
      */
 
-    Mp_MathInProgress++;
     result = (*mathFuncPtr->proc)(mathFuncPtr->clientData, interp, args,
 	    &funcResult);
-    Mp_MathInProgress--;
 
     ExprFreeMathArgs(args);
 
