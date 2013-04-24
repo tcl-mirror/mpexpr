@@ -896,5 +896,20 @@ test mpexpr-36.10 {ExprLooksLikeInt procedure} {nonPortable unixOnly} {
 test mpexpr-37.1 {nesting failure} {
     mpexpr {2*[catch {mpexpr acos(2)}]}
 } 2
+test mpexpr-37.2 {multi-interp check} {
+    interp create slave
+    foreach pair [info loaded] {
+	foreach {f n} $pair break
+	if {$n == "Mpexpr"} {
+	    load $f $n slave
+	    break
+	}
+    }
+    interp alias {} foo slave mpexpr acos(2)
+    set result [mpexpr {2*[catch foo]}]
+    rename foo {}
+    interp delete slave
+    set result
+} 2
 
 puts "mpexpr tests complete"

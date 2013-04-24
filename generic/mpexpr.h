@@ -53,6 +53,14 @@
 # define Tcl_GetStringResult(interp) ((interp)->result)
 #endif
 
+#if (TCL_MAJOR_VERSION < 8) || ((TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION == 0))
+typedef void * Tcl_ThreadDataKey;
+
+/* Leaks size bytes per process -- do not care */
+#define Tcl_GetThreadData(keyPtr, size) \
+    (*(keyPtr) == NULL) ? *(keyPtr) = ckalloc(size) : *(keyPtr)
+#endif
+
 #ifndef CONST
 # define CONST
 #endif

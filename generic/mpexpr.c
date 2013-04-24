@@ -239,12 +239,14 @@ long    mp_precision = MP_PRECISION_DEF;
 NUMBER *mp_epsilon    = NULL;
 
 /*
- * longjmp buffer and error string to pass errors back to interp
- *
+ * Data support for setjmp/longjmp use.
  */
 
-jmp_buf     mp_jump_buffer;
-Tcl_DString mp_error_string;
+static Tcl_ThreadDataKey mp_jdKey;
+typedef struct {
+    Tcl_Interp *interp;
+    jmp_buf jb;
+} JumpData;
 
 int  MpnoEval = 0;
 
@@ -412,17 +414,17 @@ static BuiltinFunc funcTable[] = {
         /* VARARGS2 */
 void
 math_error TCL_VARARGS_DEF(char *, arg1)
-
 {
+    JumpData **jdPtrPtr = Tcl_GetThreadData(&mp_jdKey, sizeof(JumpData *));
+    JumpData *jdPtr = *jdPtrPtr;
+    Tcl_Interp *interp = jdPtr->interp;
     va_list argList;
-    char *string;
 
-
-    string = TCL_VARARGS_START(char *,arg1,argList);
-    Tcl_DStringAppend(&mp_error_string, string, -1);
+    Tcl_ResetResult(interp);
+    Tcl_SetResult(interp, TCL_VARARGS_START(char *,arg1,argList),
+	    TCL_VOLATILE);
     va_end(argList);
-
-    longjmp(mp_jump_buffer,1);
+    longjmp(jdPtr->jb, 1);
 }
 
 
@@ -1870,29 +1872,24 @@ Mp_ExprString(interp, string)
     long precision;
     char *math_io;
     NUMBER *q_rounded;
-    static int inMpExpr = 0;
+    JumpData jd;
+    JumpData **jdPtrPtr = Tcl_GetThreadData(&mp_jdKey, sizeof(JumpData *));
+    JumpData *savePtr = *jdPtrPtr;
+
+    jd.interp = interp;
+    *jdPtrPtr = &jd;
 
     value.intValue    = _zero_;
     value.doubleValue = qlink(&_qzero_);
     value.type        = MP_UNDEF;
 
-    Tcl_DStringInit(&mp_error_string);
-
-    inMpExpr++;
-    if (inMpExpr == 1) {
-	if (setjmp(mp_jump_buffer) == 1) {
-    	    inMpExpr = 0;
-            zfree(value.intValue);
-            Qfree(value.doubleValue);
-	    Tcl_ResetResult(interp);
-	    Tcl_DStringResult(interp, &mp_error_string);
-	    return TCL_ERROR;
-	}
+    if (setjmp(jd.jb) == 1) {
+	result = TCL_ERROR;
+	goto done;
     }
 
     result = ExprTopLevel(interp, string, &value);
 
-    inMpExpr--;
     if (result == TCL_OK) {
 	if (value.type == MP_INT) {
     	    math_divertio();
@@ -1931,12 +1928,12 @@ Mp_ExprString(interp, string)
 	ckfree(value.pv.buffer);
     }
 
-    zfree(value.intValue);
-    Qfree(value.doubleValue);
-    Tcl_DStringFree(&mp_error_string);
-
     math_cleardiversions();
 
+  done:
+    zfree(value.intValue);
+    Qfree(value.doubleValue);
+    *jdPtrPtr = savePtr;
     return result;
 }
 
