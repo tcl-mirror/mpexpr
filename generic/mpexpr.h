@@ -100,6 +100,7 @@ typedef struct ParseValue {
                                  * it will make more space. */
     ClientData clientData;      /* Arbitrary information for use of
                                  * expandProc. */
+    int noEval;			/* Whether parsing should include evaluation */
 } ParseValue;
 
 EXTERN int              MpParseBraces _ANSI_ARGS_((Tcl_Interp *interp,
@@ -108,12 +109,12 @@ EXTERN void             MpExpandParseValue _ANSI_ARGS_((ParseValue *pvPtr,
                             int needed));
 EXTERN int              MpParseQuotes _ANSI_ARGS_((Tcl_Interp *interp,
                             CONST char *string, int termChar, int flags,
-                            CONST char **termPtr, ParseValue *pvPtr, int eval));
+                            CONST char **termPtr, ParseValue *pvPtr));
 EXTERN int              MpParseNestedCmd _ANSI_ARGS_((Tcl_Interp *interp,
                             CONST char *string, int flags, CONST char **termPtr,
-                            ParseValue *pvPtr, int eval));
+                            ParseValue *pvPtr));
 EXTERN CONST char *   Mp_ParseVar _ANSI_ARGS_((Tcl_Interp *interp,
-                            CONST char *string, CONST char **termPtr, int eval));
+                            CONST char *string, CONST char **termPtr, int noEval));
 
 EXTERN char *           MpPrecTraceProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, CONST84 char *name1, CONST84 char *name2,
