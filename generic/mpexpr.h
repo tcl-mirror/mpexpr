@@ -113,13 +113,8 @@ EXTERN int              MpParseQuotes _ANSI_ARGS_((Tcl_Interp *interp,
 EXTERN int              MpParseNestedCmd _ANSI_ARGS_((Tcl_Interp *interp,
                             CONST char *string, int flags, CONST char **termPtr,
                             ParseValue *pvPtr));
-EXTERN CONST char *   Mp_ParseVar _ANSI_ARGS_((Tcl_Interp *interp,
+EXTERN CONST char *     Mp_ParseVar _ANSI_ARGS_((Tcl_Interp *interp,
                             CONST char *string, CONST char **termPtr, int noEval));
-
-EXTERN char *           MpPrecTraceProc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, CONST84 char *name1, CONST84 char *name2,
-		 	    int flags));
-
 
 EXTERN NUMBER *		Atoq _ANSI_ARGS_((CONST char *, CONST char **));
 #define Qfree(q)  qfree(q); (q)=NULL
@@ -128,11 +123,5 @@ EXTERN NUMBER *		Atoq _ANSI_ARGS_((CONST char *, CONST char **));
 /* include declares from tclInt.h, so we won't have to find Tcl source dir */
 
 #define UCHAR(c) ((unsigned char) (c))
-
-/* mpexpr  tcl command procs */
-
-EXTERN Tcl_CmdProc      Mp_ExprCmd;
-EXTERN Tcl_CmdProc      Mp_FormatCmd;
-
 
 #endif 

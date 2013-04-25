@@ -49,7 +49,9 @@ LPVOID reserved;            /* Not used. */
 
 #endif
 
-
+static Tcl_CmdProc ExprCmd;
+static Tcl_CmdProc FormatCmd;
+static Tcl_VarTraceProc PrecTrace;
 
 /*
  *----------------------------------------------------------------------
@@ -81,11 +83,11 @@ Mpexpr_Init (interp)
     /* set up trace on mp_precision */
     Tcl_TraceVar2(interp, MP_PRECISION_VAR, (char *) NULL,
             TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-            MpPrecTraceProc, (ClientData) NULL);
+            PrecTrace, (ClientData) NULL);
 
-    Tcl_CreateCommand (interp, "mpexpr",   Mp_ExprCmd, (ClientData)NULL,
+    Tcl_CreateCommand (interp, "mpexpr",   ExprCmd, (ClientData)NULL,
 		  (Tcl_CmdDeleteProc *) NULL);
-    Tcl_CreateCommand (interp, "mpformat", Mp_FormatCmd, (ClientData)NULL,
+    Tcl_CreateCommand (interp, "mpformat", FormatCmd, (ClientData)NULL,
 		  (Tcl_CmdDeleteProc *) NULL);
 
     if (Tcl_PkgProvide(interp, "Mpexpr", MPEXPR_VERSION) != TCL_OK) {
@@ -100,7 +102,7 @@ Mpexpr_Init (interp)
 /*
  *----------------------------------------------------------------------
  *
- * Mp_ExprCmd --
+ * ExprCmd --
  *
  * interface to Mp_ExprString
  *
@@ -108,8 +110,8 @@ Mpexpr_Init (interp)
  */
 
 	
-int
-Mp_ExprCmd(dummy, interp, argc, argv)
+static int
+ExprCmd(dummy, interp, argc, argv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int argc;				/* Number of arguments. */
@@ -144,7 +146,7 @@ Mp_ExprCmd(dummy, interp, argc, argv)
 /*
  *----------------------------------------------------------------------
  *
- * Mp_FormatCmd --
+ * FormatCmd --
  *
  * interface to Qformat
  *
@@ -152,8 +154,8 @@ Mp_ExprCmd(dummy, interp, argc, argv)
  */
 
 	
-int
-Mp_FormatCmd(dummy, interp, argc, argv)
+static int
+FormatCmd(dummy, interp, argc, argv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int argc;				/* Number of arguments. */
@@ -170,4 +172,82 @@ Mp_FormatCmd(dummy, interp, argc, argv)
 
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * PrecTrace --
+ *
+ *      This procedure is invoked whenever the variable "mp_precision"
+ *      is written.
+ *
+ * Results:
+ *      Returns NULL if all went well, or an error message if the
+ *      new value for the variable doesn't make sense.
+ *
+ * Side effects:
+ *      If the new value doesn't make sense then this procedure
+ *      undoes the effect of the variable modification.  Otherwise
+ *      it modifies the 'mp_precision' value, and the
+ *      'mp_epsilon' q value.
+ *
+ *----------------------------------------------------------------------
+ */
+
+        /* ARGSUSED */
+
+static char *
+PrecTrace(clientData, interp, name1, name2, flags)
+    ClientData clientData;      /* Not used. */
+    Tcl_Interp *interp;         /* Interpreter containing variable. */
+    CONST84 char *name1;        /* Name of variable. */
+    CONST84 char *name2;        /* Second part of variable name. */
+    int flags;                  /* Information about what happened. */
+{
+    CONST char *value;
+    char *end;
+    char mp_buf[256];
+    long prec;
+
+    /*
+     * If the variable is unset, then recreate the trace and restore
+     * the default value of the format string.
+     */
+    if (flags & TCL_TRACE_UNSETS) {
+        if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
+            Tcl_TraceVar2(interp, name1, name2,
+                    TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+                    PrecTrace, clientData);
+        }
+
+        mp_precision = MP_PRECISION_DEF;
+        if (mp_epsilon != NULL) {
+            qfree(mp_epsilon);
+        }
+        sprintf(mp_buf,"1e-%ld",mp_precision);
+        mp_epsilon = atoqnum(mp_buf);
+        return (char *) NULL;
+    }
+
+    value = Tcl_GetVar2(interp, name1, name2, flags & TCL_GLOBAL_ONLY);
+    if (value == NULL) {
+        value = "";
+    }
+    prec = strtoul(value, &end, 10);
+    if ((prec < 0) || (prec > MP_PRECISION_MAX) ||
+            (end == value) || (*end != 0)) {
+
+        sprintf(mp_buf, "%ld", mp_precision);
+        Tcl_SetVar2(interp, name1, name2, mp_buf, flags & TCL_GLOBAL_ONLY);
+        return "improper value for mp_precision";
+    }
+
+    mp_precision = prec;
+    if (mp_epsilon != NULL) {
+        Qfree(mp_epsilon);
+    }
+    sprintf(mp_buf,"1e-%ld",mp_precision);
+    mp_epsilon = atoqnum(mp_buf);
+
+    return (char *) NULL;
+}
 
