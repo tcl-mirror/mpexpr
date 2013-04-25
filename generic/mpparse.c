@@ -202,7 +202,7 @@ static char MpTypeTable[] = {
  */
 
 int
-MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
+MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr, eval)
     Tcl_Interp *interp;		/* Interpreter to use for nested command
 				 * evaluations and error messages. */
     CONST char *string;	/* Character just after opening double-
@@ -215,6 +215,7 @@ MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
 				 * here. */
     ParseValue *pvPtr;		/* Information about where to place
 				 * fully-substituted result of parse. */
+    int eval;
 {
     register CONST char *src;
     register char *dst;
@@ -250,7 +251,7 @@ MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
 	    int length;
 	    CONST char *value;
 
-	    value = Mp_ParseVar(interp, src-1, termPtr);
+	    value = Mp_ParseVar(interp, src-1, termPtr, eval);
 	    if (value == NULL) {
 		return TCL_ERROR;
 	    }
@@ -268,7 +269,7 @@ MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
 	    int result;
 
 	    pvPtr->next = dst;
-	    result = MpParseNestedCmd(interp, src, flags, termPtr, pvPtr);
+	    result = MpParseNestedCmd(interp, src, flags, termPtr, pvPtr, eval);
 	    if (result != TCL_OK) {
 		return result;
 	    }
@@ -324,7 +325,7 @@ MpParseQuotes(interp, string, termChar, flags, termPtr, pvPtr)
  */
 
 int
-MpParseNestedCmd(interp, string, flags, termPtr, pvPtr)
+MpParseNestedCmd(interp, string, flags, termPtr, pvPtr, eval)
     Tcl_Interp *interp;		/* Interpreter to use for nested command
 				 * evaluations and error messages. */
     CONST char *string;	/* Character just after opening bracket. */
@@ -333,13 +334,14 @@ MpParseNestedCmd(interp, string, flags, termPtr, pvPtr)
 				 * here. */
     register ParseValue *pvPtr;	/* Information about where to place
 				 * result of command. */
+    int eval;
 {
     int result, length, shortfall;
     char *evalstr;
     
     *termPtr = ScriptEnd(string, flags);
 
-    if (!MpnoEval) {
+    if (eval) {
         length = *termPtr - string;
         evalstr = ckalloc(length + 1);
         strncpy(evalstr, string, length);
@@ -568,13 +570,14 @@ ScriptEnd(p, nested)
  */
 
 CONST char *
-Mp_ParseVar(interp, string, termPtr)
+Mp_ParseVar(interp, string, termPtr, eval)
     Tcl_Interp *interp;			/* Context for looking up variable. */
     register CONST char *string;	/* String containing variable name.
 					 * First character must be "$". */
     CONST char **termPtr;		/* If non-NULL, points to word to fill
 					 * in with character just after last
 					 * one in the variable specifier. */
+    int eval;
 
 {
     CONST char *name1;
@@ -646,7 +649,7 @@ Mp_ParseVar(interp, string, termPtr)
 	    pv.end = copyStorage + NUM_CHARS - 1;
 	    pv.expandProc = MpExpandParseValue;
 	    pv.clientData = (ClientData) NULL;
-	    if (MpParseQuotes(interp, string+1, ')', 0, &end, &pv)
+	    if (MpParseQuotes(interp, string+1, ')', 0, &end, &pv, eval)
 		    != TCL_OK) {
 		char msg[200];
 		int length;
@@ -674,7 +677,7 @@ Mp_ParseVar(interp, string, termPtr)
 	*termPtr = string;
     }
 
-    if (MpnoEval) {
+    if (!eval) {
 	return "";
     }
     offset = (name1End - name1) + 1;

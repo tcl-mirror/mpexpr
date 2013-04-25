@@ -81,8 +81,6 @@ typedef void * Tcl_ThreadDataKey;
 EXTERN long    mp_precision;
 EXTERN NUMBER *mp_epsilon;
  
-EXTERN int MpnoEval;	/* flag to stop eval */
-
 EXTERN int		Mp_ExprString _ANSI_ARGS_((Tcl_Interp *interp,
 			    CONST char *string));
 EXTERN int              Mp_FormatString _ANSI_ARGS_((Tcl_Interp *interp,
@@ -110,12 +108,12 @@ EXTERN void             MpExpandParseValue _ANSI_ARGS_((ParseValue *pvPtr,
                             int needed));
 EXTERN int              MpParseQuotes _ANSI_ARGS_((Tcl_Interp *interp,
                             CONST char *string, int termChar, int flags,
-                            CONST char **termPtr, ParseValue *pvPtr));
+                            CONST char **termPtr, ParseValue *pvPtr, int eval));
 EXTERN int              MpParseNestedCmd _ANSI_ARGS_((Tcl_Interp *interp,
                             CONST char *string, int flags, CONST char **termPtr,
-                            ParseValue *pvPtr));
+                            ParseValue *pvPtr, int eval));
 EXTERN CONST char *   Mp_ParseVar _ANSI_ARGS_((Tcl_Interp *interp,
-                            CONST char *string, CONST char **termPtr));
+                            CONST char *string, CONST char **termPtr, int eval));
 
 EXTERN char *           MpPrecTraceProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, CONST84 char *name1, CONST84 char *name2,

@@ -238,8 +238,6 @@ typedef struct {
     jmp_buf jb;
 } JumpData;
 
-int  MpnoEval = 0;
-
 /*
  * Declarations for local procedures to this file:
  */
@@ -265,17 +263,17 @@ static int		ExprDoubleFunc _ANSI_ARGS_((ClientData clientData,
 static void		ExprConvIntToDouble _ANSI_ARGS_((Mp_Value *valuePtr));
 static void		ExprConvDoubleToInt _ANSI_ARGS_((Mp_Value *valuePtr));
 static int		ExprGetValue _ANSI_ARGS_((Tcl_Interp *interp,
-			    ExprInfo *infoPtr, int prec, Mp_Value *valuePtr));
+			    ExprInfo *infoPtr, int prec, Mp_Value *valuePtr, int eval));
 static int		ExprIntFunc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Mp_Value *args,
 			    Mp_Value *resultPtr));
 static int		ExprLex _ANSI_ARGS_((Tcl_Interp *interp,
-			    ExprInfo *infoPtr, Mp_Value *valuePtr));
+			    ExprInfo *infoPtr, Mp_Value *valuePtr, int eval));
 static int		ExprLooksLikeInt _ANSI_ARGS_((CONST char *p));
 static void		ExprMakeString _ANSI_ARGS_((Tcl_Interp *interp,
 			    Mp_Value *valuePtr));
 static int		ExprMathFunc _ANSI_ARGS_((Tcl_Interp *interp,
-			    ExprInfo *infoPtr, Mp_Value *valuePtr));
+			    ExprInfo *infoPtr, Mp_Value *valuePtr, int eval));
 static int		ExprParseString _ANSI_ARGS_((Tcl_Interp *interp,
 			    CONST char *string, Mp_Value *valuePtr));
 static int		ExprRoundFunc _ANSI_ARGS_((ClientData clientData,
@@ -532,7 +530,7 @@ ExprParseString(interp, string, valuePtr)
  */
 
 static int
-ExprLex(interp, infoPtr, valuePtr)
+ExprLex(interp, infoPtr, valuePtr, eval)
     Tcl_Interp *interp;			/* Interpreter to use for error
 					 * reporting. */
     register ExprInfo *infoPtr;		/* Describes the state of the parse. */
@@ -540,6 +538,7 @@ ExprLex(interp, infoPtr, valuePtr)
 					 * what's parsed from string.  Caller
 					 * must have initialized pv field
 					 * correctly. */
+    int eval;
 {
     register CONST char *p;
     CONST char *var;
@@ -591,12 +590,12 @@ ExprLex(interp, infoPtr, valuePtr)
 	     * as an integer or floating-point number.
 	     */
 	    infoPtr->token = VALUE;
-	    var = Mp_ParseVar(interp, p, &infoPtr->expr);
+	    var = Mp_ParseVar(interp, p, &infoPtr->expr, eval);
 	    if (var == NULL) {
 		return TCL_ERROR;
 	    }
 	    Tcl_ResetResult(interp);
-	    if (MpnoEval) {
+	    if (!eval) {
 		valuePtr->type = MP_INT;
 		zfree(valuePtr->intValue);
 		valuePtr->intValue = _zero_;
@@ -606,7 +605,7 @@ ExprLex(interp, infoPtr, valuePtr)
 
 	case '[':
 	    infoPtr->token = VALUE;
-	    result= MpParseNestedCmd(interp, p+1, 1, &term, &valuePtr->pv);
+	    result= MpParseNestedCmd(interp, p+1, 1, &term, &valuePtr->pv, eval);
 	    infoPtr->expr = term;
 	    if (result != TCL_OK) {
 		valuePtr->type = MP_INT;
@@ -614,7 +613,7 @@ ExprLex(interp, infoPtr, valuePtr)
 		valuePtr->intValue = _zero_;
 		return result;
 	    }
-	    if (MpnoEval) {
+	    if (!eval) {
 		valuePtr->type = MP_INT;
 		zfree(valuePtr->intValue);
 		valuePtr->intValue = _zero_;
@@ -631,7 +630,7 @@ ExprLex(interp, infoPtr, valuePtr)
 	case '"':
 	    infoPtr->token = VALUE;
 	    result = MpParseQuotes(interp, infoPtr->expr, '"', 1,
-		        &infoPtr->expr, &valuePtr->pv);
+		        &infoPtr->expr, &valuePtr->pv, eval);
 	    if (result != TCL_OK) {
 		return result;
 	    }
@@ -767,7 +766,7 @@ ExprLex(interp, infoPtr, valuePtr)
 	default:
 	    if (isalpha(UCHAR(*p))) {
 		infoPtr->expr = p;
-		return ExprMathFunc(interp, infoPtr, valuePtr);
+		return ExprMathFunc(interp, infoPtr, valuePtr, eval);
 	    }
 	    infoPtr->expr = p+1;
 	    infoPtr->token = UNKNOWN;
@@ -843,7 +842,7 @@ ExprConvDoubleToInt(valuePtr)
  */
 
 static int
-ExprGetValue(interp, infoPtr, prec, valuePtr)
+ExprGetValue(interp, infoPtr, prec, valuePtr, eval)
     Tcl_Interp *interp;			/* Interpreter to use for error
 					 * reporting. */
     register ExprInfo *infoPtr;		/* Describes the state of the parse
@@ -856,6 +855,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
     Mp_Value *valuePtr;			/* Where to store the value of the
 					 * expression.   Caller must have
 					 * initialized pv field. */
+    int eval;
 {
     Mp_Value value2;			/* Second operand for current
 					 * operator.  */
@@ -892,7 +892,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
     value2.pv.end = value2.pv.buffer + STATIC_STRING_SPACE - 1;
     value2.pv.expandProc = MpExpandParseValue;
     value2.pv.clientData = (ClientData) NULL;
-    result = ExprLex(interp, infoPtr, valuePtr);
+    result = ExprLex(interp, infoPtr, valuePtr, eval);
     if (result != TCL_OK) {
 	goto done;
     }
@@ -902,7 +902,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	 * Parenthesized sub-expression.
 	 */
 
-	result = ExprGetValue(interp, infoPtr, -1, valuePtr);
+	result = ExprGetValue(interp, infoPtr, -1, valuePtr, eval);
 	if (result != TCL_OK) {
 	    goto done;
 	}
@@ -927,11 +927,11 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 
 	    operator = infoPtr->token;
 	    result = ExprGetValue(interp, infoPtr, precTable[infoPtr->token],
-		    valuePtr);
+		    valuePtr, eval);
 	    if (result != TCL_OK) {
 		goto done;
 	    }
-	    if (!MpnoEval) {
+	    if (eval) {
 		switch (operator) {
 		    case UNARY_MINUS:
 			if (valuePtr->type == MP_INT) {
@@ -999,7 +999,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
      */
 
     if (!gotOp) {
-	result = ExprLex(interp, infoPtr, &value2);
+	result = ExprLex(interp, infoPtr, &value2, eval);
 	if (result != TCL_OK) {
 	    goto done;
 	}
@@ -1034,7 +1034,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 							_zero_ : _one_;
 		valuePtr->type = MP_INT;
 	    } else if (valuePtr->type == MP_STRING) {
-		if (!MpnoEval) {
+		if (eval) {
 		    badType = MP_STRING;
 		    goto illegalType;
 		}
@@ -1050,10 +1050,8 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	    }
 	    if ( ((operator == AND) && ziszero(valuePtr->intValue))
 		    || ((operator == OR) && !(ziszero(valuePtr->intValue)))) {
-		MpnoEval++;
 		result = ExprGetValue(interp, infoPtr, precTable[operator],
-			&value2);
-		MpnoEval--;
+			&value2, 0);
 		if (result != TCL_OK) {
 		    goto done;
 		}
@@ -1072,7 +1070,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		if (! ziszero(valuePtr->intValue)) {
 		    valuePtr->pv.next = valuePtr->pv.buffer;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, valuePtr);
+			    precTable[QUESTY] - 1, valuePtr, eval);
 		    if (result != TCL_OK) {
 			goto done;
 		    }
@@ -1080,15 +1078,11 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 			goto syntaxError;
 		    }
 		    value2.pv.next = value2.pv.buffer;
-		    MpnoEval++;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, &value2);
-		    MpnoEval--;
+			    precTable[QUESTY] - 1, &value2, 0);
 		} else {
-		    MpnoEval++;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, &value2);
-		    MpnoEval--;
+			    precTable[QUESTY] - 1, &value2, 0);
 		    if (result != TCL_OK) {
 			goto done;
 		    }
@@ -1097,7 +1091,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		    }
 		    valuePtr->pv.next = valuePtr->pv.buffer;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, valuePtr);
+			    precTable[QUESTY] - 1, valuePtr, eval);
 		    if (result != TCL_OK) {
 			goto done;
 		    }
@@ -1105,11 +1099,11 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		continue;
 	    } else {
 		result = ExprGetValue(interp, infoPtr, precTable[operator],
-			&value2);
+			&value2, eval);
 	    }
 	} else {
 	    result = ExprGetValue(interp, infoPtr, precTable[operator],
-		    &value2);
+		    &value2, eval);
 	}
 	if (result != TCL_OK) {
 	    goto done;
@@ -1120,7 +1114,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	    goto syntaxError;
 	}
 
-	if (MpnoEval) {
+	if (!eval) {
 	    continue;
 	}
 
@@ -1818,7 +1812,7 @@ ExprTopLevel(interp, string, valuePtr)
     valuePtr->pv.expandProc = MpExpandParseValue;
     valuePtr->pv.clientData = (ClientData) NULL;
 
-    result = ExprGetValue(interp, &info, -1, valuePtr);
+    result = ExprGetValue(interp, &info, -1, valuePtr, 1);
 
     if (result != TCL_OK) {
 	return result;
@@ -2025,7 +2019,7 @@ ExprFreeMathArgs (args)
  */
 
 static int
-ExprMathFunc(interp, infoPtr, valuePtr)
+ExprMathFunc(interp, infoPtr, valuePtr, eval)
     Tcl_Interp *interp;			/* Interpreter to use for error
 					 * reporting. */
     register ExprInfo *infoPtr;		/* Describes the state of the parse.
@@ -2036,6 +2030,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 					 * what's parsed from string.  Caller
 					 * must have initialized pv field
 					 * correctly. */
+    int eval;
 {
     Mp_MathFunc *mathFuncPtr;		/* Info about math function. */
     Mp_Value args[MP_MAX_MATH_ARGS];	/* Arguments for function call. */
@@ -2069,7 +2064,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 	p++;
     }
     infoPtr->expr = p;
-    result = ExprLex(interp, infoPtr, valuePtr);
+    result = ExprLex(interp, infoPtr, valuePtr, eval);
     if (result != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -2098,14 +2093,14 @@ ExprMathFunc(interp, infoPtr, valuePtr)
      */
 
     if (mathFuncPtr->numArgs == 0) {
-	result = ExprLex(interp, infoPtr, valuePtr);
+	result = ExprLex(interp, infoPtr, valuePtr, eval);
 	if ((result != TCL_OK) || (infoPtr->token != CLOSE_PAREN)) {
 	    goto syntaxError;
 	}
     } else {
 	for (i = 0; ; i++) {
 	    valuePtr->pv.next = valuePtr->pv.buffer;
-	    result = ExprGetValue(interp, infoPtr, -1, valuePtr);
+	    result = ExprGetValue(interp, infoPtr, -1, valuePtr, eval);
 	    if (result != TCL_OK) {
 		ExprFreeMathArgs(args);
         	zfree(funcResult.intValue);
@@ -2181,7 +2176,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 	    }
 	}
     }
-    if (MpnoEval) {
+    if (!eval) {
 	ExprFreeMathArgs(args);
         zfree(funcResult.intValue);
         Qfree(funcResult.doubleValue);
