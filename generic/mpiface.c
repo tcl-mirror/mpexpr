@@ -67,8 +67,17 @@ Mpexpr_Init (interp)
     Tcl_Interp *interp;
 {
     char mp_buf[256];
-	
-    initmasks();		/* initialize math shift bits */
+    static initialized = 0;
+    TCL_DECLARE_MUTEX(mpMutex)
+
+    if (!initialized) {
+	Tcl_MutexLock(&mpMutex);
+	if (!initialized) {
+	    initmasks();		/* initialize math shift bits */
+	    initialized = 1;
+	}
+	Tcl_MutexUnlock(&mpMutex);
+    }
 
     /* set mp_precision tcl var */
     (void) Tcl_SetVar(interp, MP_PRECISION_VAR, MP_PRECISION_DEF_STR, 

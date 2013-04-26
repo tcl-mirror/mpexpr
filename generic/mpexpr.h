@@ -59,6 +59,10 @@ typedef void * Tcl_ThreadDataKey;
 /* Leaks size bytes per process -- do not care */
 #define Tcl_GetThreadData(keyPtr, size) \
     (*(keyPtr) == NULL) ? *(keyPtr) = ckalloc(size) : *(keyPtr)
+
+#define TCL_DECLARE_MUTEX(name)
+#define Tcl_MutexLock(mutexPtr)
+#define Tcl_MutexUnlock(mutexPtr)
 #endif
 
 #ifndef CONST
