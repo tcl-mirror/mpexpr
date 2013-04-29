@@ -42,10 +42,16 @@
 #ifndef ALLOCTEST
 # if defined(CALC_MALLOC)
 #  define freeh(p) (((void *)p == (void *)_zeroval_) ||			\
-		    ((void *)p == (void *)_oneval_) || ckfree((void *)p))
+		    ((void *)p == (void *)_oneval_) || 			\
+		    ((void *)p == (void *)_twoval_) || 			\
+		    ((void *)p == (void *)_tenval_) || 			\
+		    ckfree((void *)p))
 # else
 #  define freeh(p) { if (((void *)p != (void *)_zeroval_) &&		\
-			 ((void *)p != (void *)_oneval_)) ckfree((void *)p); }
+			 ((void *)p != (void *)_oneval_) &&		\
+			 ((void *)p != (void *)_twoval_) &&		\
+			 ((void *)p != (void *)_tenval_)		\
+			) ckfree((void *)p); }
 # endif
 #endif
 

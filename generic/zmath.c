@@ -60,7 +60,8 @@ void
 freeh(h)
 	HALF *h;
 {
-	if ((h != _zeroval_) && (h != _oneval_)) {
+	if ((h != _zeroval_) && (h != _oneval_)
+	    (h != _twoval_)  && (h != _tenval_)) {
 		ckfree(h);
 		++nfree;
 	}
