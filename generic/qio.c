@@ -230,7 +230,7 @@ qprintnum(q, outmode)
 	long prec, exp;
 
 	if (outmode == MODE_DEFAULT)
-		outmode = _outmode_;
+		outmode = MODE_INITIAL;
 	if ((outmode == MODE_FRAC) || ((outmode == MODE_REAL) && qisint(q))) {
 		qprintfr(q, 0L, FALSE);
 		return;

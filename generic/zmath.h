@@ -341,7 +341,6 @@ extern void math_divertio MATH_PROTO((void));
 extern void math_cleardiversions MATH_PROTO((void));
 extern void math_setfp MATH_PROTO((FILE *fp));
 extern char *math_getdivertedio MATH_PROTO((void));
-extern int math_setmode MATH_PROTO((int mode));
 extern long math_setdigits MATH_PROTO((long digits));
 
 
@@ -370,7 +369,6 @@ extern ZVALUE _zero_, _one_, _ten_;
 
 extern BOOL _math_abort_;	/* nonzero to abort calculations */
 extern ZVALUE _tenpowers_[2 * BASEB];	/* table of 10^2^n */
-extern int _outmode_;		/* current output mode */
 extern LEN _mul2_;		/* size of number to use multiply algorithm 2 */
 extern LEN _sq2_;		/* size of number to use square algorithm 2 */
 extern LEN _pow2_;		/* size of modulus to use REDC for powers */

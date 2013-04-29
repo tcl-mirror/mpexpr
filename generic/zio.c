@@ -19,8 +19,6 @@
 
 
 long	_outdigits_ = 20;		/* default digits for output */
-int	_outmode_ = MODE_INITIAL;	/* default output mode */
-
 
 /*
  * Output state that has been saved when diversions are done.
@@ -29,7 +27,6 @@ typedef struct iostate IOSTATE;
 struct iostate {
 	IOSTATE *oldiostates;		/* previous saved state */
 	long outdigits;			/* digits for output */
-	int outmode;			/* output mode */
 	FILE *outfp;			/* file unit for output (if any) */
 	char *outbuf;			/* output string buffer (if any) */
 	long outbufsize;		/* current size of string buffer */
@@ -194,7 +191,6 @@ math_divertio()
 		math_error("No memory for diverting output");
 	sp->oldiostates = oldiostates;
 	sp->outdigits = _outdigits_;
-	sp->outmode = _outmode_;
 	sp->outfp = outfp;
 	sp->outbuf = outbuf;
 	sp->outbufsize = outbufsize;
@@ -230,7 +226,6 @@ math_getdivertedio()
 	cp[outbufused] = '\0';
 	oldiostates = sp->oldiostates;
 	_outdigits_ = sp->outdigits;
-	_outmode_ = sp->outmode;
 	outfp = sp->outfp;
 	outbuf = sp->outbuf;
 	outbufsize = sp->outbufsize;
@@ -271,25 +266,6 @@ math_setfp(newfp)
 	outfp = newfp;
 	outputisstring = (oldiostates && (newfp == stdout));
 }
-
-
-/*
- * Set the output mode for numeric output.
- * This also returns the previous mode.
- */
-int
-math_setmode(newmode)
-	int newmode;
-{
-	int oldmode;
-
-	if ((newmode <= MODE_DEFAULT) || (newmode > MODE_MAX))
-		math_error("Setting illegal output mode");
-	oldmode = _outmode_;
-	_outmode_ = newmode;
-	return oldmode;
-}
-
 
 /*
  * Set the number of digits for float or exponential output.

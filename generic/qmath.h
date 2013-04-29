@@ -221,7 +221,6 @@ extern BOOL _sinisneg_;		/* whether sin(x) < 0 (set by cos(x)) */
 extern long _epsilonprec_;	/* binary precision of epsilon */
 extern NUMBER *_epsilon_;	/* default error for real functions */
 extern long _outdigits_;	/* current output digits for float or exp */
-extern int _outmode_;		/* current output mode */
 
 #endif
 
