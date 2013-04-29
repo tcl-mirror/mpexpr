@@ -26,7 +26,6 @@ ZVALUE _ten_ = { _tenval_, 1, 0 };
  * bitmask[i] 	 (1 << (i-1)),  for  -BASEB*4<=i<=BASEB*4
  */
 static HALF *bmask;		/* actual rotation thru 8 cycles */
-static HALF **rmask;		/* actual rotation pointers thru 2 cycles */
 HALF *bitmask;			/* bit rotation, norm 0 */
 
 static void dadd MATH_PROTO((ZVALUE z1, ZVALUE z2, long y, long n));
@@ -1653,14 +1652,6 @@ initmasks()
 	bmask = alloc((long)((8*BASEB)+1));
 	for (i=0; i < (8*BASEB)+1; ++i) {
 		bmask[i] = 1 << (i%BASEB);
-	}
-
-	/*
-	 * setup the rmask pointers
-	 */
-	rmask = (HALF **)ckalloc(sizeof(HALF *)*((BASEB*4)+2));
-	for (i = 0; i <= (4*BASEB)+1; ++i) {
-		rmask[i] = &bmask[(2*BASEB)+i];
 	}
 
 	/*
