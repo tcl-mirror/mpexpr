@@ -373,6 +373,20 @@ extern void math_error MATH_PROTO((char *, ...));
 extern HALF _zeroval_[], _oneval_[], _twoval_[], _tenval_[];
 extern ZVALUE _zero_, _one_, _ten_;
 
+/* Note the shared use of a global _tenpowers_ array by all threads creates
+   the possibility of overlapping initialization of it by mulitple threads.
+   As the initialization is constructed, this does not appear to be able to
+   compute incorrect table entries.  It merely consumes greater effort and
+   leaks more memory than is necessary.
+
+   An attempt was made to make a single initialization pass by one master
+   thread on startup, but that's not a good idea because the on-demand
+   initializations currently in place make sure we only init the entries
+   in the table we actually need to perform a requested calculation.
+   Since the cost to add another entry to the table increases (exponentially?)
+   as the table fills, the ability to avoid filling the entries we do not
+   need is a practical necessity.
+*/
 extern ZVALUE _tenpowers_[2 * BASEB];	/* table of 10^2^n */
 extern HALF *bitmask;		/* bit rotation, norm 0 */
 
