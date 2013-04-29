@@ -1270,7 +1270,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 
 		    if (ziszero(valuePtr->intValue)) {
   			zfree(valuePtr->intValue);
-  			zcopy(_zero_, &valuePtr->intValue);
+			valuePtr->intValue = _zero_;
 			break;
 		    }
 
@@ -2981,9 +2981,9 @@ Zprimetest(z1, z2, res)
 
     count = ztoi(z2);
     if ( zprimetest(z1, count) ) {
-	zcopy(_one_, res);
+	*res = _one_;
     } else {
-	zcopy(_zero_, res);
+	*res = _zero_;
     }
 }
 
@@ -2997,9 +2997,9 @@ Zrelprime(z1, z2, res)
 {
 
     if ( zrelprime(z1, z2) ) {
-	zcopy(_one_, res);
+	*res = _one_;
     } else {
-	zcopy(_zero_, res);
+	*res = _zero_;
     }
 }
 
