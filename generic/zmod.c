@@ -20,8 +20,8 @@
 #define	POWNUMS	(1<<POWBITS)	/* number of powers needed in table */
 
 
-LEN _pow2_ = POW_ALG2;		/* modulo size to use REDC for powers */
-LEN _redc2_ = REDC_ALG2;	/* modulo size to use second REDC algorithm */
+static CONST LEN _pow2_ = POW_ALG2;	/* modulo size to use REDC for powers */
+static CONST LEN _redc2_ = REDC_ALG2;	/* modulo size to use second REDC algorithm */
 
 static REDC *powermodredc = NULL;	/* REDC info for raising to power */
 

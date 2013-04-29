@@ -29,9 +29,6 @@ static HALF *bmask;		/* actual rotation thru 8 cycles */
 static HALF **rmask;		/* actual rotation pointers thru 2 cycles */
 HALF *bitmask;			/* bit rotation, norm 0 */
 
-BOOL _math_abort_;		/* nonzero to abort calculations */
-
-
 static void dadd MATH_PROTO((ZVALUE z1, ZVALUE z2, long y, long n));
 static BOOL dsub MATH_PROTO((ZVALUE z1, ZVALUE z2, long y, long n));
 static void dmul MATH_PROTO((ZVALUE z, FULL x, ZVALUE *dest));
@@ -49,8 +46,6 @@ alloc(len)
 {
 	HALF *hp;
 
-	if (_math_abort_)
-		math_error("Calculation aborted");
 	hp = (HALF *) ckalloc((len+1) * sizeof(HALF));
 	if (hp == 0)
 		math_error("Not enough memory");

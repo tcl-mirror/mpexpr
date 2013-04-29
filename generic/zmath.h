@@ -367,12 +367,7 @@ extern void math_error MATH_PROTO((char *, ...));
 extern HALF _zeroval_[], _oneval_[], _twoval_[], _tenval_[];
 extern ZVALUE _zero_, _one_, _ten_;
 
-extern BOOL _math_abort_;	/* nonzero to abort calculations */
 extern ZVALUE _tenpowers_[2 * BASEB];	/* table of 10^2^n */
-extern LEN _mul2_;		/* size of number to use multiply algorithm 2 */
-extern LEN _sq2_;		/* size of number to use square algorithm 2 */
-extern LEN _pow2_;		/* size of modulus to use REDC for powers */
-extern LEN _redc2_;		/* size of modulus to use REDC algorithm 2 */
 extern HALF *bitmask;		/* bit rotation, norm 0 */
 
 #endif

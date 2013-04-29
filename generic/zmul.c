@@ -15,8 +15,8 @@
 #include "zmath.h"
 
 
-LEN _mul2_ = MUL_ALG2;		/* size of number to use multiply algorithm 2 */
-LEN _sq2_ = SQ_ALG2;		/* size of number to use square algorithm 2 */
+static CONST LEN _mul2_ = MUL_ALG2;	/* size of number to use multiply algorithm 2 */
+static CONST LEN _sq2_ = SQ_ALG2;	/* size of number to use square algorithm 2 */
 
 
 static HALF *tempbuf;		/* temporary buffer for multiply and square */
