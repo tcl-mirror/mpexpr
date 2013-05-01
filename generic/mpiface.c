@@ -88,6 +88,7 @@ Mpexpr_Init (interp)
     mdPtr->epsilon = NULL;
     mdPtr->exprCmd = Tcl_CreateCommand (interp, "mpexpr", ExprCmd,
 	    (ClientData) mdPtr, ExprDelete);
+    mdPtr->funcTable = NULL;
     mdPtr->fmtCmd = Tcl_CreateCommand (interp, "mpformat", FormatCmd,
 	    (ClientData) mdPtr, FormatDelete);
 
@@ -156,6 +157,18 @@ ExprDelete(clientData)
 {
     Mp_Data *mdPtr = (Mp_Data *)clientData;
 
+    if (mdPtr->funcTable) {
+	Tcl_HashEntry *hPtr;
+	Tcl_HashSearch search;
+
+	for (hPtr = Tcl_FirstHashEntry(mdPtr->funcTable, &search); hPtr;
+		hPtr = Tcl_NextHashEntry(&search)) {
+	    ckfree((char *) Tcl_GetHashValue(hPtr));
+	}
+	Tcl_DeleteHashTable(mdPtr->funcTable);
+	ckfree((char *)mdPtr->funcTable);
+	mdPtr->funcTable = NULL;
+    }
     mdPtr->exprCmd = NULL;
     if (mdPtr->fmtCmd == NULL) {
 	DestroyMeData(mdPtr);

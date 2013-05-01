@@ -87,6 +87,7 @@ typedef struct Mp_Data {
     long precision;
     NUMBER *epsilon;
     Tcl_Command exprCmd;
+    Tcl_HashTable *funcTable;
     Tcl_Command fmtCmd;
 } Mp_Data;
 

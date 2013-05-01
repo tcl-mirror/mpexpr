@@ -288,9 +288,6 @@ static int		ExprUnaryFunc _ANSI_ARGS_((ClientData clientData,
 static int		ExprUnaryZFunc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
-static void             Mp_CreateMathFunc _ANSI_ARGS_ ((Tcl_Interp *interp,
-			    char *name, int numArgs, Mp_ValueType *argTypes,
-			    Mp_MathProc *proc, ClientData clientData));
 static void             ExprFreeMathArgs _ANSI_ARGS_ ((Mp_Value *args));
 /* EFP */
 static int		ExprTertiaryZFunc _ANSI_ARGS_((ClientData clientData,
@@ -320,8 +317,6 @@ static void		Zrelprime  _ANSI_ARGS_ ((ZVALUE, ZVALUE, ZVALUE *));
  * Built-in math functions:
  */
 
-#define MATH_TABLE_NAME "tclQZMathTable"
-
 typedef struct {
     char *name;			/* Name of function. */
     int numArgs;		/* Number of arguments for function. */
@@ -331,6 +326,9 @@ typedef struct {
     ClientData clientData;	/* Additional argument to pass to the function
 				 * when invoking it. */
 } BuiltinFunc;
+
+static void             CreateMathFunc _ANSI_ARGS_ ((Tcl_HashTable *table,
+			    BuiltinFunc *funcPtr));
 
 static BuiltinFunc funcTable[] = {
     {"acos", 1, {MP_DOUBLE}, (Mp_MathProc *)ExprUnaryFunc, (ClientData) qacos},
@@ -1739,28 +1737,6 @@ DeterminePrecision(valuePtr, precRequest)
     }
     return precision;
 }
-
-/*
- * QZMathDeleteProc --
- *
- * Delete the QZMathTable
- *
- */
-
-static void
-QZMathDeleteProc(clientData, interp)
-    ClientData  clientData;
-    Tcl_Interp *interp;
-{
-    Tcl_HashTable *ZQMathTablePtr;
-
-
-    ZQMathTablePtr = (Tcl_HashTable *) clientData;
-    Tcl_DeleteHashTable(ZQMathTablePtr);
-    ckfree((char *) ZQMathTablePtr);
-
-    math_cleardiversions();
-}
 
 
 /*
@@ -1797,28 +1773,20 @@ ExprTopLevel(interp, string, valuePtr, mdPtr)
 {
     ExprInfo info;
     int result;
-    Tcl_HashTable *ZQMathTablePtr;
 
     /*
      * Create the math functions the first time an expression is
      * evaluated.
      */
 
-    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp,
-			MATH_TABLE_NAME, NULL);
-    if (ZQMathTablePtr == NULL) {
-
+    if (mdPtr->funcTable == NULL) {
 	BuiltinFunc *funcPtr;
 
-	ZQMathTablePtr = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
-	Tcl_InitHashTable(ZQMathTablePtr, TCL_STRING_KEYS);
-	(void) Tcl_SetAssocData(interp, MATH_TABLE_NAME,
-		  QZMathDeleteProc, (ClientData) ZQMathTablePtr);
+	mdPtr->funcTable = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
+	Tcl_InitHashTable(mdPtr->funcTable, TCL_STRING_KEYS);
 
-	for (funcPtr = funcTable; funcPtr->name != NULL;
-		funcPtr++) {
-	    Mp_CreateMathFunc(interp, funcPtr->name, funcPtr->numArgs,
-		    funcPtr->argTypes, funcPtr->proc, funcPtr->clientData);
+	for (funcPtr = funcTable; funcPtr->name != NULL; funcPtr++) {
+	    CreateMathFunc(mdPtr->funcTable, funcPtr);
 	}
     }
 
@@ -1934,7 +1902,7 @@ Mp_ExprString(interp, string, mdPtr)
 /*
  *----------------------------------------------------------------------
  *
- * Mp_CreateMathFunc --
+ * CreateMathFunc --
  *
  *	Creates a new math function for expressions in a given
  *	interpreter.
@@ -1949,28 +1917,17 @@ Mp_ExprString(interp, string, mdPtr)
  *----------------------------------------------------------------------
  */
 
-void
-Mp_CreateMathFunc(interp, name, numArgs, argTypes, proc, clientData)
-    Tcl_Interp *interp;			/* Interpreter in which function is
-					 * to be available. */
-    char *name;				/* Name of function (e.g. "sin"). */
-    int numArgs;			/* Nnumber of arguments required by
-					 * function. */
-    Mp_ValueType *argTypes;		/* Array of types acceptable for
-					 * each argument. */
-    Mp_MathProc *proc;			/* Procedure that implements the
-					 * math function. */
-    ClientData clientData;		/* Additional value to pass to the
-					 * function. */
+static void
+CreateMathFunc(table, funcPtr)
+    Tcl_HashTable *table;
+    BuiltinFunc *funcPtr;
 {
     Tcl_HashEntry *hPtr;
-    Tcl_HashTable *ZQMathTablePtr;
     Mp_MathFunc *mathFuncPtr;
     int new, i;
+    int numArgs = funcPtr->numArgs;
 
-    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp,
-			MATH_TABLE_NAME, NULL);
-    hPtr = Tcl_CreateHashEntry(ZQMathTablePtr, name, &new);
+    hPtr = Tcl_CreateHashEntry(table, funcPtr->name, &new);
 
     if (new) {
 	Tcl_SetHashValue(hPtr, ckalloc(sizeof(Mp_MathFunc)));
@@ -1981,10 +1938,10 @@ Mp_CreateMathFunc(interp, name, numArgs, argTypes, proc, clientData)
     }
     mathFuncPtr->numArgs = numArgs;
     for (i = 0; i < numArgs; i++) {
-	mathFuncPtr->argTypes[i] = argTypes[i];
+	mathFuncPtr->argTypes[i] = funcPtr->argTypes[i];
     }
-    mathFuncPtr->proc = proc;
-    mathFuncPtr->clientData = clientData;
+    mathFuncPtr->proc = funcPtr->proc;
+    mathFuncPtr->clientData = funcPtr->clientData;
 }
 
 /*
@@ -2046,7 +2003,6 @@ ExprMathFunc(interp, infoPtr, valuePtr, mdPtr)
     Mp_Value args[MP_MAX_MATH_ARGS];	/* Arguments for function call. */
     Mp_Value funcResult;		/* Result of function call. */
     Tcl_HashEntry *hPtr;
-    Tcl_HashTable *ZQMathTablePtr;
     CONST char *p;
     CONST char *funcName;
     char *funcNameCopy;
@@ -2062,8 +2018,6 @@ ExprMathFunc(interp, infoPtr, valuePtr, mdPtr)
 	args[i].doubleValue = qlink(&_qzero_);
     }
 
-    ZQMathTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp,
-			MATH_TABLE_NAME, NULL);
     /*
      * Find the end of the math function's name and lookup the MathFunc
      * record for the function.
@@ -2088,7 +2042,7 @@ ExprMathFunc(interp, infoPtr, valuePtr, mdPtr)
         --i;
         funcNameCopy[i] = funcName[i];
     }
-    hPtr = Tcl_FindHashEntry(ZQMathTablePtr, funcNameCopy);
+    hPtr = Tcl_FindHashEntry(mdPtr->funcTable, funcNameCopy);
     if (hPtr == NULL) {
 	Tcl_AppendResult(interp, "unknown math function \"", funcNameCopy,
                          "\"", (char *) NULL);
