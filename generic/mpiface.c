@@ -12,9 +12,7 @@
  *
  */
 
-
 #include "mpexpr.h"
-
 
 #ifdef __WIN32__
 #if defined(__WIN32__)
@@ -52,6 +50,11 @@ LPVOID reserved;            /* Not used. */
 static Tcl_CmdProc ExprCmd;
 static Tcl_CmdProc FormatCmd;
 static Tcl_VarTraceProc PrecTrace;
+static Tcl_CmdDeleteProc ExprDelete;
+static Tcl_CmdDeleteProc FormatDelete;
+
+static void DestroyMeData(Mp_Data *mdPtr);
+static void UpdateEpsilon(Mp_Data *mdPtr);
 
 /*
  *----------------------------------------------------------------------
@@ -61,12 +64,11 @@ static Tcl_VarTraceProc PrecTrace;
  *    add the mpexpr, mpformat commands and mp_precision variable
  */
 
-
 int 
 Mpexpr_Init (interp)
     Tcl_Interp *interp;
 {
-    char mp_buf[256];
+    Mp_Data *mdPtr;
     static initialized = 0;
     TCL_DECLARE_MUTEX(mpMutex)
 
@@ -79,25 +81,23 @@ Mpexpr_Init (interp)
 	Tcl_MutexUnlock(&mpMutex);
     }
 
-    /* set mp_precision tcl var */
-    (void) Tcl_SetVar(interp, MP_PRECISION_VAR, MP_PRECISION_DEF_STR, 
-			TCL_GLOBAL_ONLY);
-
-    /* set mp_precision and mp_epsilon */
-    mp_precision = MP_PRECISION_DEF;
-
-    sprintf(mp_buf,"1e-%ld",mp_precision); 
-    mp_epsilon = atoqnum(mp_buf);
+    mdPtr = (Mp_Data *) ckalloc(sizeof(Mp_Data));
+    mdPtr->interp = interp;
+    mdPtr->precVarName = MP_PRECISION_VAR;
+    mdPtr->precision = 0;
+    mdPtr->epsilon = NULL;
+    mdPtr->exprCmd = Tcl_CreateCommand (interp, "mpexpr", ExprCmd,
+	    (ClientData) mdPtr, ExprDelete);
+    mdPtr->fmtCmd = Tcl_CreateCommand (interp, "mpformat", FormatCmd,
+	    (ClientData) mdPtr, FormatDelete);
 
     /* set up trace on mp_precision */
-    Tcl_TraceVar2(interp, MP_PRECISION_VAR, (char *) NULL,
-            TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-            PrecTrace, (ClientData) NULL);
+    Tcl_TraceVar(interp, mdPtr->precVarName,
+            TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_TRACE_READS,
+            PrecTrace, (ClientData) mdPtr);
 
-    Tcl_CreateCommand (interp, "mpexpr",   ExprCmd, (ClientData)NULL,
-		  (Tcl_CmdDeleteProc *) NULL);
-    Tcl_CreateCommand (interp, "mpformat", FormatCmd, (ClientData)NULL,
-		  (Tcl_CmdDeleteProc *) NULL);
+    /* Trigger the trace to initialize */
+    (void) Tcl_UnsetVar(interp, mdPtr->precVarName, TCL_GLOBAL_ONLY);
 
     if (Tcl_PkgProvide(interp, "Mpexpr", MPEXPR_VERSION) != TCL_OK) {
 	return TCL_ERROR;
@@ -105,8 +105,6 @@ Mpexpr_Init (interp)
 
     return TCL_OK;
 }
-
-
 
 /*
  *----------------------------------------------------------------------
@@ -120,14 +118,15 @@ Mpexpr_Init (interp)
 
 	
 static int
-ExprCmd(dummy, interp, argc, argv)
-    ClientData dummy;			/* Not used. */
+ExprCmd(clientData, interp, argc, argv)
+    ClientData clientData;		/* Client Data. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int argc;				/* Number of arguments. */
     CONST84 char **argv;		/* Argument strings. */
 {
     Tcl_DString buffer;
     int i, result;
+    Mp_Data *mdPtr = (Mp_Data *) clientData;
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -136,7 +135,7 @@ ExprCmd(dummy, interp, argc, argv)
     }
 
     if (argc == 2) {
-        result = Mp_ExprString(interp, argv[1]);
+        result = Mp_ExprString(interp, argv[1], mdPtr);
 	return result;
     }
     Tcl_DStringInit(&buffer);
@@ -145,12 +144,23 @@ ExprCmd(dummy, interp, argc, argv)
 	Tcl_DStringAppend(&buffer, " ", 1);
 	Tcl_DStringAppend(&buffer, argv[i], -1);
     }
-    result = Mp_ExprString(interp, buffer.string);
+    result = Mp_ExprString(interp, buffer.string, mdPtr);
     Tcl_DStringFree(&buffer);
     return result;
 
 }
 
+static void
+ExprDelete(clientData)
+    ClientData clientData;
+{
+    Mp_Data *mdPtr = (Mp_Data *)clientData;
+
+    mdPtr->exprCmd = NULL;
+    if (mdPtr->fmtCmd == NULL) {
+	DestroyMeData(mdPtr);
+    }
+}
 
 /*
  *----------------------------------------------------------------------
@@ -161,7 +171,6 @@ ExprCmd(dummy, interp, argc, argv)
  *
  *----------------------------------------------------------------------
  */
-
 	
 static int
 FormatCmd(dummy, interp, argc, argv)
@@ -170,7 +179,6 @@ FormatCmd(dummy, interp, argc, argv)
     int argc;				/* Number of arguments. */
     CONST84 char **argv;		/* Argument strings. */
 {
-
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 		" arg ?arg ...?\"", (char *) NULL);
@@ -178,7 +186,28 @@ FormatCmd(dummy, interp, argc, argv)
     }
 
     return (Mp_FormatString(interp, argc, argv));
+}
 
+static void
+FormatDelete(clientData)
+    ClientData clientData;
+{
+    Mp_Data *mdPtr = (Mp_Data *)clientData;
+
+    mdPtr->fmtCmd = NULL;
+    if (mdPtr->exprCmd == NULL) {
+	DestroyMeData(mdPtr);
+    }
+}
+
+static void
+DestroyMeData(mdPtr)
+    Mp_Data *mdPtr;
+{
+    Tcl_UntraceVar(mdPtr->interp, mdPtr->precVarName,
+            TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_TRACE_READS,
+            PrecTrace, (ClientData) mdPtr);
+    ckfree((char *)mdPtr);
 }
 
 /*
@@ -214,49 +243,59 @@ PrecTrace(clientData, interp, name1, name2, flags)
 {
     CONST char *value;
     char *end;
-    char mp_buf[256];
+    char mp_buf[6];
     long prec;
+    char *result = NULL;
 
-    /*
-     * If the variable is unset, then recreate the trace and restore
-     * the default value of the format string.
-     */
+    Mp_Data *mdPtr = (Mp_Data *)clientData;
+
     if (flags & TCL_TRACE_UNSETS) {
-        if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-            Tcl_TraceVar2(interp, name1, name2,
-                    TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-                    PrecTrace, clientData);
-        }
+	/*
+	 * If the variable is unset, then recreate the trace and restore
+	 * the default precision value, unless the interp is dying.
+	 */
+	if (Tcl_InterpDeleted(interp)) {
+	    return result;
+	}
+	Tcl_TraceVar(interp, mdPtr->precVarName, TCL_GLOBAL_ONLY|
+		TCL_TRACE_WRITES|TCL_TRACE_UNSETS|TCL_TRACE_READS,
+		PrecTrace, clientData);
+	mdPtr->precision = MP_PRECISION_DEF;
+	UpdateEpsilon(mdPtr);
+    } else if (flags & TCL_TRACE_WRITES) {
+	CONST84 char *sVal;
+	int iVal;
 
-        mp_precision = MP_PRECISION_DEF;
-        if (mp_epsilon != NULL) {
-            qfree(mp_epsilon);
-        }
-        sprintf(mp_buf,"1e-%ld",mp_precision);
-        mp_epsilon = atoqnum(mp_buf);
-        return (char *) NULL;
+	result = "improper precision value";
+
+	sVal = Tcl_GetVar(interp, mdPtr->precVarName, TCL_GLOBAL_ONLY);
+	if (sVal) {
+	    /* Avoid Octal problem */
+	    while (*sVal == '0' && sVal[1] != '\0') {
+		sVal++;
+	    }
+	    if ((TCL_OK == Tcl_GetInt(interp, sVal, &iVal))
+		    && (iVal >= 0) && (iVal <= MP_PRECISION_MAX)) {
+
+		mdPtr->precision = iVal;
+		UpdateEpsilon(mdPtr);
+		result = NULL;
+	    }
+	}
     }
 
-    value = Tcl_GetVar2(interp, name1, name2, flags & TCL_GLOBAL_ONLY);
-    if (value == NULL) {
-        value = "";
-    }
-    prec = strtoul(value, &end, 10);
-    if ((prec < 0) || (prec > MP_PRECISION_MAX) ||
-            (end == value) || (*end != 0)) {
-
-        sprintf(mp_buf, "%ld", mp_precision);
-        Tcl_SetVar2(interp, name1, name2, mp_buf, flags & TCL_GLOBAL_ONLY);
-        return "improper value for mp_precision";
-    }
-
-    mp_precision = prec;
-    if (mp_epsilon != NULL) {
-        Qfree(mp_epsilon);
-    }
-    sprintf(mp_buf,"1e-%ld",mp_precision);
-    mp_epsilon = atoqnum(mp_buf);
-
-    return (char *) NULL;
+    sprintf(mp_buf, "%ld", mdPtr->precision);
+    Tcl_SetVar(interp, mdPtr->precVarName, mp_buf, TCL_GLOBAL_ONLY);
+    return result;
 }
 
+static void
+UpdateEpsilon(mdPtr)
+    Mp_Data *mdPtr;
+{
+    if (mdPtr->epsilon) {
+	qfree(mdPtr->epsilon);
+    }
+    mdPtr->epsilon = qalloc();
+    ztenpow(mdPtr->precision, &(mdPtr->epsilon->den));
+}

@@ -78,15 +78,20 @@ typedef void * Tcl_ThreadDataKey;
 #define MPEXPR_VERSION   "1.0"
 
 #define MP_PRECISION_DEF      17
-#define MP_PRECISION_DEF_STR "17"
 #define MP_PRECISION_VAR      "mp_precision"
 #define MP_PRECISION_MAX      10000
 
-EXTERN long    mp_precision;
-EXTERN NUMBER *mp_epsilon;
- 
+typedef struct Mp_Data {
+    Tcl_Interp *interp;
+    char *precVarName;
+    long precision;
+    NUMBER *epsilon;
+    Tcl_Command exprCmd;
+    Tcl_Command fmtCmd;
+} Mp_Data;
+
 EXTERN int		Mp_ExprString _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *string));
+			    CONST char *string, Mp_Data *mdPtr));
 EXTERN int              Mp_FormatString _ANSI_ARGS_((Tcl_Interp *interp,
 			    int argc, CONST84 char **argv));
 

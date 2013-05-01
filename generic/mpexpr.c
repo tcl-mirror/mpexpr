@@ -121,7 +121,8 @@ typedef struct {
 
 
 typedef int (Mp_MathProc) _ANSI_ARGS_((ClientData clientData,
-	Tcl_Interp *interp, Mp_Value *args, Mp_Value *resultPtr));
+	Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
+	Mp_Value *resultPtr));
 
 
 /*
@@ -221,14 +222,6 @@ static char *operatorStrings[] = {
 };
 
 /*
- * precision and epsilon value for rounding and error allowance
- *
- */
-
-long    mp_precision = MP_PRECISION_DEF;
-NUMBER *mp_epsilon    = NULL;
-
-/*
  * Data support for setjmp/longjmp use.
  */
 
@@ -242,52 +235,58 @@ typedef struct {
  * Declarations for local procedures to this file:
  */
 
+static long		DeterminePrecision _ANSI_ARGS_((Mp_Value *valuePtr,
+			    long precRequest));
 static int		ExprAbsFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprPiFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprBinaryFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprBinary2Func _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprBinaryZFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprDoubleFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static void		ExprConvIntToDouble _ANSI_ARGS_((Mp_Value *valuePtr));
 static void		ExprConvDoubleToInt _ANSI_ARGS_((Mp_Value *valuePtr));
 static int		ExprGetValue _ANSI_ARGS_((Tcl_Interp *interp,
-			    ExprInfo *infoPtr, int prec, Mp_Value *valuePtr));
+			    ExprInfo *infoPtr, int prec, Mp_Value *valuePtr,
+			    Mp_Data *mdPtr));
 static int		ExprIntFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprLex _ANSI_ARGS_((Tcl_Interp *interp,
-			    ExprInfo *infoPtr, Mp_Value *valuePtr));
+			    ExprInfo *infoPtr, Mp_Value *valuePtr,
+			    Mp_Data *mdPtr));
 static int		ExprLooksLikeInt _ANSI_ARGS_((CONST char *p));
-static void		ExprMakeString _ANSI_ARGS_((Tcl_Interp *interp,
+static void		ExprMakeString _ANSI_ARGS_((long precRequest,
 			    Mp_Value *valuePtr));
 static int		ExprMathFunc _ANSI_ARGS_((Tcl_Interp *interp,
-			    ExprInfo *infoPtr, Mp_Value *valuePtr));
+			    ExprInfo *infoPtr, Mp_Value *valuePtr,
+			    Mp_Data *mdPtr));
 static int		ExprParseString _ANSI_ARGS_((Tcl_Interp *interp,
 			    CONST char *string, Mp_Value *valuePtr));
 static int		ExprRoundFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static void		QZMathDeleteProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
 static int		ExprTopLevel _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *string, Mp_Value *valuePtr));
+			    CONST char *string, Mp_Value *valuePtr,
+			    Mp_Data *mdPtr));
 static int		ExprUnaryFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static int		ExprUnaryZFunc _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, Mp_Value *args,
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
 			    Mp_Value *resultPtr));
 static void             Mp_CreateMathFunc _ANSI_ARGS_ ((Tcl_Interp *interp,
 			    char *name, int numArgs, Mp_ValueType *argTypes,
@@ -295,8 +294,8 @@ static void             Mp_CreateMathFunc _ANSI_ARGS_ ((Tcl_Interp *interp,
 static void             ExprFreeMathArgs _ANSI_ARGS_ ((Mp_Value *args));
 /* EFP */
 static int		ExprTertiaryZFunc _ANSI_ARGS_((ClientData clientData,
-                                           Tcl_Interp *interp, Mp_Value *args,
-                                           Mp_Value *resultPtr));
+			    Tcl_Interp *interp, Mp_Value *args, Mp_Data *mdPtr,
+			    Mp_Value *resultPtr));
 
 
 /*
@@ -305,10 +304,9 @@ static int		ExprTertiaryZFunc _ANSI_ARGS_((ClientData clientData,
 
 static void		Atoz       _ANSI_ARGS_ ((CONST char *, ZVALUE *, CONST char **));
 static NUMBER *		Afractoq   _ANSI_ARGS_ ((char *, char **));
-static NUMBER *		qceil      _ANSI_ARGS_ ((NUMBER *));
-static NUMBER *		qfloor     _ANSI_ARGS_ ((NUMBER *));
-static NUMBER *		qlog       _ANSI_ARGS_ ((NUMBER *));
-static NUMBER *		qlog10     _ANSI_ARGS_ ((NUMBER *));
+static NUMBER *		qceil      _ANSI_ARGS_ ((NUMBER *, NUMBER *));
+static NUMBER *		qfloor     _ANSI_ARGS_ ((NUMBER *, NUMBER *));
+static NUMBER *		qlog10     _ANSI_ARGS_ ((NUMBER *, NUMBER *));
 /*
 static void		Qfree      _ANSI_ARGS_ ((NUMBER *));
 */
@@ -346,7 +344,7 @@ static BuiltinFunc funcTable[] = {
     {"floor", 1, {MP_DOUBLE}, (Mp_MathProc *)ExprUnaryFunc, (ClientData) qfloor},
     {"fmod", 2, {MP_DOUBLE, MP_DOUBLE}, (Mp_MathProc *)ExprBinaryFunc, (ClientData) qmod},
     {"hypot", 2, {MP_DOUBLE, MP_DOUBLE}, (Mp_MathProc *)ExprBinaryFunc, (ClientData) qhypot},
-    {"log", 1, {MP_DOUBLE}, (Mp_MathProc *)ExprUnaryFunc, (ClientData) qlog},
+    {"log", 1, {MP_DOUBLE}, (Mp_MathProc *)ExprUnaryFunc, (ClientData) qln},
     {"log10", 1, {MP_DOUBLE}, (Mp_MathProc *)ExprUnaryFunc, (ClientData) qlog10},
     {"pow", 2, {MP_DOUBLE, MP_DOUBLE}, (Mp_MathProc *)ExprBinaryFunc, (ClientData) qpower},
     {"sin", 1, {MP_DOUBLE}, (Mp_MathProc *)ExprUnaryFunc, (ClientData) qsin},
@@ -530,7 +528,7 @@ ExprParseString(interp, string, valuePtr)
  */
 
 static int
-ExprLex(interp, infoPtr, valuePtr)
+ExprLex(interp, infoPtr, valuePtr, mdPtr)
     Tcl_Interp *interp;			/* Interpreter to use for error
 					 * reporting. */
     register ExprInfo *infoPtr;		/* Describes the state of the parse. */
@@ -538,6 +536,7 @@ ExprLex(interp, infoPtr, valuePtr)
 					 * what's parsed from string.  Caller
 					 * must have initialized pv field
 					 * correctly. */
+    Mp_Data *mdPtr;
 {
     register CONST char *p;
     CONST char *var;
@@ -765,7 +764,7 @@ ExprLex(interp, infoPtr, valuePtr)
 	default:
 	    if (isalpha(UCHAR(*p))) {
 		infoPtr->expr = p;
-		return ExprMathFunc(interp, infoPtr, valuePtr);
+		return ExprMathFunc(interp, infoPtr, valuePtr, mdPtr);
 	    }
 	    infoPtr->expr = p+1;
 	    infoPtr->token = UNKNOWN;
@@ -841,7 +840,7 @@ ExprConvDoubleToInt(valuePtr)
  */
 
 static int
-ExprGetValue(interp, infoPtr, prec, valuePtr)
+ExprGetValue(interp, infoPtr, prec, valuePtr, mdPtr)
     Tcl_Interp *interp;			/* Interpreter to use for error
 					 * reporting. */
     register ExprInfo *infoPtr;		/* Describes the state of the parse
@@ -854,6 +853,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
     Mp_Value *valuePtr;			/* Where to store the value of the
 					 * expression.   Caller must have
 					 * initialized pv field. */
+    Mp_Data *mdPtr;
 {
     Mp_Value value2;			/* Second operand for current
 					 * operator.  */
@@ -892,7 +892,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
     value2.pv.expandProc = MpExpandParseValue;
     value2.pv.clientData = (ClientData) NULL;
     value2.pv.noEval = valuePtr->pv.noEval;
-    result = ExprLex(interp, infoPtr, valuePtr);
+    result = ExprLex(interp, infoPtr, valuePtr, mdPtr);
     if (result != TCL_OK) {
 	goto done;
     }
@@ -902,7 +902,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	 * Parenthesized sub-expression.
 	 */
 
-	result = ExprGetValue(interp, infoPtr, -1, valuePtr);
+	result = ExprGetValue(interp, infoPtr, -1, valuePtr, mdPtr);
 	if (result != TCL_OK) {
 	    goto done;
 	}
@@ -927,7 +927,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 
 	    operator = infoPtr->token;
 	    result = ExprGetValue(interp, infoPtr, precTable[infoPtr->token],
-		    valuePtr);
+		    valuePtr, mdPtr);
 	    if (result != TCL_OK) {
 		goto done;
 	    }
@@ -999,7 +999,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
      */
 
     if (!gotOp) {
-	result = ExprLex(interp, infoPtr, &value2);
+	result = ExprLex(interp, infoPtr, &value2, mdPtr);
 	if (result != TCL_OK) {
 	    goto done;
 	}
@@ -1052,7 +1052,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		    || ((operator == OR) && !(ziszero(valuePtr->intValue)))) {
 		value2.pv.noEval++;
 		result = ExprGetValue(interp, infoPtr, precTable[operator],
-			&value2);
+			&value2, mdPtr);
 		value2.pv.noEval--;
 		if (result != TCL_OK) {
 		    goto done;
@@ -1072,7 +1072,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		if (! ziszero(valuePtr->intValue)) {
 		    valuePtr->pv.next = valuePtr->pv.buffer;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, valuePtr);
+			    precTable[QUESTY] - 1, valuePtr, mdPtr);
 		    if (result != TCL_OK) {
 			goto done;
 		    }
@@ -1082,12 +1082,12 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		    value2.pv.next = value2.pv.buffer;
 		    value2.pv.noEval++;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, &value2);
+			    precTable[QUESTY] - 1, &value2, mdPtr);
 		    value2.pv.noEval--;
 		} else {
 		    value2.pv.noEval++;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, &value2);
+			    precTable[QUESTY] - 1, &value2, mdPtr);
 		    value2.pv.noEval--;
 		    if (result != TCL_OK) {
 			goto done;
@@ -1097,7 +1097,7 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		    }
 		    valuePtr->pv.next = valuePtr->pv.buffer;
 		    result = ExprGetValue(interp, infoPtr,
-			    precTable[QUESTY] - 1, valuePtr);
+			    precTable[QUESTY] - 1, valuePtr, mdPtr);
 		    if (result != TCL_OK) {
 			goto done;
 		    }
@@ -1105,11 +1105,11 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 		continue;
 	    } else {
 		result = ExprGetValue(interp, infoPtr, precTable[operator],
-			&value2);
+			&value2, mdPtr);
 	    }
 	} else {
 	    result = ExprGetValue(interp, infoPtr, precTable[operator],
-		    &value2);
+		    &value2, mdPtr);
 	}
 	if (result != TCL_OK) {
 	    goto done;
@@ -1181,11 +1181,11 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
 	    case EQUAL: case NEQ:
 		if (valuePtr->type == MP_STRING) {
 		    if (value2.type != MP_STRING) {
-			ExprMakeString(interp, &value2);
+			ExprMakeString(mdPtr->precision, &value2);
 		    }
 		} else if (value2.type == MP_STRING) {
 		    if (valuePtr->type != MP_STRING) {
-			ExprMakeString(interp, valuePtr);
+			ExprMakeString(mdPtr->precision, valuePtr);
 		    }
 		} else if (valuePtr->type == MP_DOUBLE) {
 		    if (value2.type == MP_INT) {
@@ -1676,9 +1676,8 @@ ExprGetValue(interp, infoPtr, prec, valuePtr)
  */
 
 static void
-ExprMakeString(interp, valuePtr)
-    Tcl_Interp *interp;			/* Interpreter to use for precision
-					 * information. */
+ExprMakeString(precRequest, valuePtr)
+    long precRequest;
     register Mp_Value *valuePtr;	/* Value to be converted. */
 {
     int shortfall;
@@ -1693,16 +1692,7 @@ ExprMakeString(interp, valuePtr)
 	total = zdigits(valuePtr->intValue) +
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
     } else {
-	q_rounded = qround(valuePtr->doubleValue, mp_precision);
-	Qfree(valuePtr->doubleValue);
-	valuePtr->doubleValue = q_rounded;
-	precision  = qplaces(valuePtr->doubleValue);
-        if (precision < 0) {
-	    precision = mp_precision;
-	} else {
-	    precision  = (precision > mp_precision) ? mp_precision :
-		 (precision == 0) ? 1 : precision;
-	}
+	precision = DeterminePrecision(valuePtr, precRequest);
 	
         shortfall = (qdigits(valuePtr->doubleValue) + precision) -
 		   (valuePtr->pv.end - valuePtr->pv.buffer);
@@ -1729,11 +1719,31 @@ ExprMakeString(interp, valuePtr)
     ckfree(math_io);
     valuePtr->type = MP_STRING;
 }
+
+static long
+DeterminePrecision(valuePtr, precRequest)
+    Mp_Value *valuePtr;
+    long precRequest;
+{
+    long precision;
+    NUMBER *q_rounded = qround(valuePtr->doubleValue, precRequest);
+
+    Qfree(valuePtr->doubleValue);
+    valuePtr->doubleValue = q_rounded;
+    precision = qplaces(valuePtr->doubleValue);
+    if (precision < 0) {
+	precision = precRequest;
+    } else {
+	precision  = (precision > precRequest) ? precRequest:
+		 (precision == 0) ? 1 : precision;
+    }
+    return precision;
+}
 
 /*
  * QZMathDeleteProc --
  *
- * Delete the QZMathTable and free mp_epsilon if set
+ * Delete the QZMathTable
  *
  */
 
@@ -1777,12 +1787,13 @@ QZMathDeleteProc(clientData, interp)
  */
 
 static int
-ExprTopLevel(interp, string, valuePtr)
+ExprTopLevel(interp, string, valuePtr, mdPtr)
     Tcl_Interp *interp;			/* Context in which to evaluate the
 					 * expression. */
     CONST char *string;		/* Expression to evaluate. */
     Mp_Value *valuePtr;			/* Where to store result.  Should
 					 * not be initialized by caller. */
+    Mp_Data *mdPtr;
 {
     ExprInfo info;
     int result;
@@ -1819,7 +1830,7 @@ ExprTopLevel(interp, string, valuePtr)
     valuePtr->pv.clientData = (ClientData) NULL;
     valuePtr->pv.noEval = 0;
 
-    result = ExprGetValue(interp, &info, -1, valuePtr);
+    result = ExprGetValue(interp, &info, -1, valuePtr, mdPtr);
 
     if (result != TCL_OK) {
 	return result;
@@ -1853,10 +1864,11 @@ ExprTopLevel(interp, string, valuePtr)
  */
 
 int
-Mp_ExprString(interp, string)
+Mp_ExprString(interp, string, mdPtr)
     Tcl_Interp *interp;			/* Context in which to evaluate the
 					 * expression. */
     CONST char *string;		/* Expression to evaluate. */
+    Mp_Data *mdPtr;
 {
     Mp_Value value;
     int result;
@@ -1879,7 +1891,7 @@ Mp_ExprString(interp, string)
 	goto done;
     }
 
-    result = ExprTopLevel(interp, string, &value);
+    result = ExprTopLevel(interp, string, &value, mdPtr);
 
     if (result == TCL_OK) {
 	if (value.type == MP_INT) {
@@ -1890,16 +1902,7 @@ Mp_ExprString(interp, string)
 	    Tcl_SetResult(interp, math_io, TCL_VOLATILE);
 	    ckfree(math_io);
 	} else if (value.type == MP_DOUBLE) {
-	    q_rounded = qround(value.doubleValue, mp_precision);
-	    Qfree(value.doubleValue);
-	    value.doubleValue = q_rounded;
-	    precision  = qplaces(value.doubleValue);
-            if (precision < 0) {
-	        precision = mp_precision;
-	    } else {
-	        precision  = (precision > mp_precision) ? mp_precision :
-		     (precision == 0) ? 1 : precision;
-	    }
+	    precision = DeterminePrecision(&value, mdPtr->precision);
             math_divertio();
 	    Qprintff(value.doubleValue, 0L, precision);
 	    math_io = math_getdivertedio();
@@ -2026,7 +2029,7 @@ ExprFreeMathArgs (args)
  */
 
 static int
-ExprMathFunc(interp, infoPtr, valuePtr)
+ExprMathFunc(interp, infoPtr, valuePtr, mdPtr)
     Tcl_Interp *interp;			/* Interpreter to use for error
 					 * reporting. */
     register ExprInfo *infoPtr;		/* Describes the state of the parse.
@@ -2037,6 +2040,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 					 * what's parsed from string.  Caller
 					 * must have initialized pv field
 					 * correctly. */
+    Mp_Data *mdPtr;
 {
     Mp_MathFunc *mathFuncPtr;		/* Info about math function. */
     Mp_Value args[MP_MAX_MATH_ARGS];	/* Arguments for function call. */
@@ -2070,7 +2074,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
 	p++;
     }
     infoPtr->expr = p;
-    result = ExprLex(interp, infoPtr, valuePtr);
+    result = ExprLex(interp, infoPtr, valuePtr, mdPtr);
     if (result != TCL_OK) {
 	return TCL_ERROR;
     }
@@ -2099,14 +2103,14 @@ ExprMathFunc(interp, infoPtr, valuePtr)
      */
 
     if (mathFuncPtr->numArgs == 0) {
-	result = ExprLex(interp, infoPtr, valuePtr);
+	result = ExprLex(interp, infoPtr, valuePtr, mdPtr);
 	if ((result != TCL_OK) || (infoPtr->token != CLOSE_PAREN)) {
 	    goto syntaxError;
 	}
     } else {
 	for (i = 0; ; i++) {
 	    valuePtr->pv.next = valuePtr->pv.buffer;
-	    result = ExprGetValue(interp, infoPtr, -1, valuePtr);
+	    result = ExprGetValue(interp, infoPtr, -1, valuePtr, mdPtr);
 	    if (result != TCL_OK) {
 		ExprFreeMathArgs(args);
         	zfree(funcResult.intValue);
@@ -2198,7 +2202,7 @@ ExprMathFunc(interp, infoPtr, valuePtr)
      */
 
     result = (*mathFuncPtr->proc)(mathFuncPtr->clientData, interp, args,
-	    &funcResult);
+	    mdPtr, &funcResult);
 
     ExprFreeMathArgs(args);
 
@@ -2249,12 +2253,13 @@ ExprMathFunc(interp, infoPtr, valuePtr)
  */
 
 static int
-ExprUnaryFunc(clientData, interp, args, resultPtr)
+ExprUnaryFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;		/* Contains address of procedure that
 					 * takes one double argument and
 					 * returns a double result. */
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     NUMBER *(*func) _ANSI_ARGS_((NUMBER *, NUMBER *)) =
@@ -2262,19 +2267,20 @@ ExprUnaryFunc(clientData, interp, args, resultPtr)
     NUMBER *q_tmp;
 
     resultPtr->type = MP_DOUBLE;
-    q_tmp = (*func)(args[0].doubleValue, mp_epsilon);
+    q_tmp = (*func)(args[0].doubleValue, mdPtr->epsilon);
     Qfree(resultPtr->doubleValue);
     resultPtr->doubleValue = q_tmp;
     return TCL_OK;
 }
 
 static int
-ExprUnaryZFunc(clientData, interp, args, resultPtr)
+ExprUnaryZFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;		/* Contains address of procedure that
 					 * takes one int argument and
 					 * returns a int result. */
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     void (*func) _ANSI_ARGS_((ZVALUE, ZVALUE *)) =
@@ -2287,12 +2293,13 @@ ExprUnaryZFunc(clientData, interp, args, resultPtr)
 }
 
 static int
-ExprBinaryFunc(clientData, interp, args, resultPtr)
+ExprBinaryFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;		/* Contains address of procedure that
 					 * takes two double arguments and
 					 * returns a double result. */
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     NUMBER *(*func) _ANSI_ARGS_((NUMBER *, NUMBER *, NUMBER *))
@@ -2301,19 +2308,20 @@ ExprBinaryFunc(clientData, interp, args, resultPtr)
     NUMBER *q_tmp;
 
     resultPtr->type = MP_DOUBLE;
-    q_tmp = (*func)(args[0].doubleValue, args[1].doubleValue, mp_epsilon);
+    q_tmp = (*func)(args[0].doubleValue, args[1].doubleValue, mdPtr->epsilon);
     Qfree(resultPtr->doubleValue);
     resultPtr->doubleValue = q_tmp;
     return TCL_OK;
 }
 
 static int
-ExprBinary2Func(clientData, interp, args, resultPtr)
+ExprBinary2Func(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;		/* Contains address of procedure that
 					 * takes two double arguments and
 					 * returns a double result. */
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     NUMBER *(*func) _ANSI_ARGS_((NUMBER *, NUMBER *))
@@ -2329,12 +2337,13 @@ ExprBinary2Func(clientData, interp, args, resultPtr)
 }
 
 static int
-ExprBinaryZFunc(clientData, interp, args, resultPtr)
+ExprBinaryZFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;		/* Contains address of procedure that
 					 * takes two int arguments and
 					 * returns a int result. */
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     void (*func) _ANSI_ARGS_((ZVALUE, ZVALUE, ZVALUE *))
@@ -2350,12 +2359,13 @@ ExprBinaryZFunc(clientData, interp, args, resultPtr)
 
 /* EFP */
 static int
-ExprTertiaryZFunc(clientData, interp, args, resultPtr)
+ExprTertiaryZFunc(clientData, interp, args, mdPtr, resultPtr)
 ClientData clientData;		/* Contains address of procedure that
                                  * takes two int arguments and
                                  * returns a int result. */
 Tcl_Interp *interp;
 Mp_Value *args;
+    Mp_Data *mdPtr;
 Mp_Value *resultPtr;
 {
     void (*func) _ANSI_ARGS_((ZVALUE, ZVALUE, ZVALUE, ZVALUE *))
@@ -2371,10 +2381,11 @@ Mp_Value *resultPtr;
 
 	/* ARGSUSED */
 static int
-ExprAbsFunc(clientData, interp, args, resultPtr)
+ExprAbsFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     resultPtr->type = MP_DOUBLE;
@@ -2400,24 +2411,26 @@ ExprAbsFunc(clientData, interp, args, resultPtr)
 	/* ARGSUSED */
 	/* ARGSUSED */
 static int
-ExprPiFunc(clientData, interp, args, resultPtr)
+ExprPiFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     resultPtr->type = MP_DOUBLE;
     Qfree(resultPtr->doubleValue);
-    resultPtr->doubleValue = qpi(mp_epsilon);
+    resultPtr->doubleValue = qpi(mdPtr->epsilon);
     return TCL_OK;
 }
 
 	/* ARGSUSED */
 static int
-ExprDoubleFunc(clientData, interp, args, resultPtr)
+ExprDoubleFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     resultPtr->type = MP_DOUBLE;
@@ -2434,10 +2447,11 @@ ExprDoubleFunc(clientData, interp, args, resultPtr)
 
 	/* ARGSUSED */
 static int
-ExprIntFunc(clientData, interp, args, resultPtr)
+ExprIntFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     int neg;
@@ -2460,10 +2474,11 @@ ExprIntFunc(clientData, interp, args, resultPtr)
 
 	/* ARGSUSED */
 static int
-ExprRoundFunc(clientData, interp, args, resultPtr)
+ExprRoundFunc(clientData, interp, args, mdPtr, resultPtr)
     ClientData clientData;
     Tcl_Interp *interp;
     Mp_Value *args;
+    Mp_Data *mdPtr;
     Mp_Value *resultPtr;
 {
     NUMBER *q_tmp;
@@ -2529,8 +2544,9 @@ ExprLooksLikeInt(p)
 
 
 static NUMBER *
-qceil (q)
+qceil (q, eps)
     NUMBER *q;
+    NUMBER *eps;
 {
     NUMBER *res;
     NUMBER *q2;
@@ -2558,8 +2574,9 @@ qceil (q)
 
 
 static NUMBER *
-qfloor (q)
+qfloor (q, eps)
     NUMBER *q;
+    NUMBER *eps;
 {
     NUMBER *res;
     NUMBER *q2;
@@ -2585,28 +2602,18 @@ qfloor (q)
     return res;
 }
 
-
 static NUMBER *
-qlog (q)
+qlog10 (q, eps)
     NUMBER *q;
-{
-    NUMBER *q_res;
-
-    q_res = qln(q, mp_epsilon);
-    return q_res;
-}
-
-static NUMBER *
-qlog10 (q)
-    NUMBER *q;
+    NUMBER *eps;
 {
     NUMBER *q2, *q3, *q4, *q5, *q_res;
 
     q2 = itoq(10);
-    q3 = qln(q,mp_epsilon);
-    q4 = qln(q2,mp_epsilon);
+    q3 = qln(q, eps);
+    q4 = qln(q2, eps);
     q5 = qdiv(q3,q4);
-    q_res = qround(q5, mp_precision);
+    q_res = qround(q5, zlog10(eps->den));
     Qfree(q2);
     Qfree(q3);
     Qfree(q4);
