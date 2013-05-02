@@ -70,6 +70,7 @@ qmod(q1, q2)
 }
 
 
+#if 0
 /*
  * Given two numbers (a and b), calculate the quotient (c) and remainder (d)
  * when a is divided by b.  This is defined so 0 <= d < b, and c is integral,
@@ -135,7 +136,6 @@ qquomod(q1, q2, retqdiv, retqmod)
 }
 
 
-#if 0
 /*
  * Return the product of two integers modulo a third integer.
  * The result is in the range 0 to q3 - 1 inclusive.
@@ -251,7 +251,7 @@ qnegmod(q1, q2)
 }
 #endif
 
-
+#if 0
 /*
  * Return the integer congruent to an integer whose absolute value is smallest.
  * This is a unique integer in the range int((q2-1)/2 to int(q2/2), inclusive.
@@ -275,7 +275,6 @@ qminmod(q1, q2)
 	return q;
 }
 
-
 /*
  * Return whether or not two integers are congruent modulo a third integer.
  * Returns TRUE if the numbers are not congruent, and FALSE if they are.
@@ -292,7 +291,6 @@ qcmpmod(q1, q2, q3)
 		return FALSE;
 	return zcmpmod(q1->num, q2->num, q3->num);
 }
-
 
 /*
  * Convert an integer into REDC format for use in faster modular arithmetic.
@@ -413,7 +411,7 @@ qredcpower(q1, q2, q3)
 	zredcpower(rp, q1->num, q2->num, &r->num);
 	return r;
 }
-
+#endif
 
 /*
  * Search for and return the REDC information for the specified number.

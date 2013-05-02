@@ -9,7 +9,8 @@
 
 #include "qmath.h"
 
-BOOL _sinisneg_;	/* whether sin(x) < 0 (set by cos(x)) */
+/* TODO */
+static BOOL _sinisneg_;	/* whether sin(x) < 0 (set by cos(x)) */
 
 
 /*
@@ -875,7 +876,7 @@ qtanh(q, epsilon)
 	return tmp1;
 }
 
-
+#if 0
 /*
  * Compute the hyperbolic arccosine within the specified accuracy.
  * This is calculated using the formula:
@@ -966,5 +967,5 @@ qatanh(q, epsilon)
 	qfree(tmp1);
 	return tmp2;
 }
-
+#endif
 /* END CODE */

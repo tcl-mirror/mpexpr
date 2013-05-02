@@ -892,7 +892,7 @@ zmodi(z, n)
 	return val;
 }
 
-
+#if 0
 /*
  * Return whether or not one number exactly divides another one.
  * Returns TRUE if division occurs with no remainder.
@@ -937,7 +937,7 @@ zdivides(z1, z2)
 	zfree(temp);
 	return (cv == 0);
 }
-
+#endif
 
 /*
  * Compute the logical OR of two numbers
@@ -1197,7 +1197,6 @@ zbitrev(low, high, z, res)
 	ZVALUE *res;	/* resulting bit reverse number */
 {
 }
-#endif
 
 
 /*
@@ -1213,6 +1212,7 @@ zisset(z, n)
 		return FALSE;
 	return ((z.v[n / BASEB] & (((HALF) 1) << (n % BASEB))) != 0);
 }
+#endif
 
 
 /*

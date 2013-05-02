@@ -15,7 +15,7 @@
 #define	PRINTF1(fmt, a1)	math_fmt(fmt, a1)
 #define	PRINTF2(fmt, a1, a2)	math_fmt(fmt, a1, a2)
 
-int tilde_ok = TRUE;	/* FALSE => don't print '~' for rounded value */
+static CONST int tilde_ok = TRUE;	/* FALSE => don't print '~' for rounded value */
 
 #if 0
 static long	etoalen;
@@ -215,6 +215,7 @@ qreadval(fp)
 #endif
 
 
+#if 0
 /*
  * Print a number in the specified output mode.
  * If MODE_DEFAULT is given, then the default output mode is used.
@@ -295,7 +296,7 @@ qprintnum(q, outmode)
 			math_error("Bad mode for print");
 	}
 }
-
+#endif
 
 /*
  * Print a number in floating point representation.
@@ -493,6 +494,7 @@ qprintfe_round(q, width, precision)
 		zfree(den);
 }
 
+#if 0
 /*
  * Print a number in exponential notation.
  * Example: 4.1856e34
@@ -546,7 +548,7 @@ Qprintfe(q, width, precision)
 	if (den.v != q->den.v)
 		zfree(den);
 }
-
+#endif
 
 /*
  * Print a number in rational representation.
@@ -637,6 +639,7 @@ qprintfo(q, width)
 }
 
 
+#if 0
 /*
  * Convert a string to a number in rational, floating point,
  * exponential notation, hex, or octal.
@@ -734,6 +737,7 @@ atoqnum(s)
 	q->den = newden;
 	return q;
 }
+#endif
 
 
 /*

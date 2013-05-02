@@ -113,7 +113,7 @@ next: ;
 	*dest = res;
 }
 
-
+#if 0
 /*
  * Compute the least common multiple of all the numbers up to the
  * specified number.
@@ -160,7 +160,7 @@ next: ;
 	zshift(res, zhighbit(z), dest);
 	zfree(res);
 }
-
+#endif
 
 /*
  * Compute the permutation function  M! / (M - N)!.
@@ -345,7 +345,7 @@ notprime:
 	return FALSE;
 }
 
-
+#if 0
 /*
  * Compute the Jacobi function (p / q) for odd q.
  * If q is prime then the result is:
@@ -402,7 +402,7 @@ zjacobi(z1, z2)
 		p = tmp;
 	}
 }
-
+#endif
 
 /*
  * Return the Fibonacci number F(n).
@@ -1056,7 +1056,7 @@ zrelprime(z1, z2)
 	return result;
 }
 
-
+#if 0
 /*
  * Compute the log of one number base another, to the closest integer.
  * This is the largest integer which when the second number is raised to it,
@@ -1132,7 +1132,7 @@ zlog(z1, z2)
 	}
 	return power;
 }
-
+#endif
 
 /*
  * Return the integral log base 10 of a number.
@@ -1183,7 +1183,7 @@ zlog10(z)
 	return power;
 }
 
-
+#if 0
 /*
  * Return the number of times that one number will divide another.
  * This works similarly to zlog, except that divisions must be exact.
@@ -1200,7 +1200,7 @@ zdivcount(z1, z2)
 	zfree(tmp);
 	return count;
 }
-
+#endif
 
 /*
  * Remove all occurances of the specified factor from a number.
@@ -1416,7 +1416,7 @@ zdigits(z1)
 	return (zlog10(z1) + 1);
 }
 
-
+#if 0
 /*
  * Return the single digit at the specified decimal place of a number,
  * where 0 means the rightmost digit.  Example:  zdigit(1234, 1) = 3.
@@ -1447,7 +1447,7 @@ zdigit(z1, n)
 	zfree(tmp2);
 	return res;
 }
-
+#endif
 
 /*
  * Find the square root of a number.  This is the greatest integer whose
@@ -1656,7 +1656,7 @@ zroot(z1, z2, dest)
 	}
 }
 
-
+#if 0
 /*
  * Test to see if a number is an exact square or not.
  */
@@ -1707,5 +1707,5 @@ zhash(z)
 		hash = hash * 79372817 + z.v[i] + 10000079;
 	return hash;
 }
-
+#endif
 /* END CODE */

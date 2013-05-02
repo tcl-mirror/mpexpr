@@ -9,9 +9,9 @@
 #include "qmath.h"
 
 
+#if 0
 NUMBER *_epsilon_;	/* default precision for real functions */
 long _epsilonprec_;	/* bits of precision for epsilon */
-
 
 /*
  * Set the default precision for real calculations.
@@ -31,7 +31,7 @@ setepsilon(q)
 	if (old)
 		qfree(old);
 }
-
+#endif
 
 /*
  * Return the inverse of one number modulo another.
@@ -55,7 +55,7 @@ qminv(q1, q2)
 	return r;
 }
 
-
+#if 0
 /*
  * Return the residue modulo an integer (q3) of an integer (q1) 
  * raised to a positive integer (q2) power.  
@@ -82,6 +82,7 @@ qpowermod(q1, q2, q3)
 	qfree(r);
 	return t;
 }
+#endif
 
 
 /*
@@ -264,7 +265,7 @@ qsqrt(q1, epsilon)
 	return r;
 }
 
-
+#if 0
 /*
  * Calculate the integral part of the square root of a number.
  * Example:  qisqrt(13) = 3.
@@ -293,7 +294,6 @@ qisqrt(q)
 	return r;
 }
 
-
 /*
  * Return whether or not a number is an exact square.
  */
@@ -308,7 +308,6 @@ qissquare(q)
 		return flag;
 	return zissquare(q->den);
 }
-
 
 /*
  * Compute the greatest integer of the Kth root of a number.
@@ -339,7 +338,6 @@ qiroot(q1, q2)
 	zfree(tmp);
 	return r;
 }
-
 
 /*
  * Return the greatest integer of the base 2 log of a number.
@@ -374,7 +372,6 @@ qilog2(q)
 		n--;
 	return n;
 }
-
 
 /*
  * Return the greatest integer of the base 10 log of a number.
@@ -417,6 +414,7 @@ qilog10(q)
 	zfree(temp);
 	return n;
 }
+#endif
 
 
 /*
@@ -440,6 +438,7 @@ qdigits(q)
 }
 
 
+#if 0
 /*
  * Return the digit at the specified decimal place of a number represented
  * in floating point.  The lowest digit of the integral part of a number
@@ -483,7 +482,6 @@ qdigit(q, n)
 	zfree(tmp2);
 	return res;
 }
-
 
 /*
  * Return whether or not a bit is set at the specified bit position in a
@@ -600,7 +598,6 @@ qperm(q1, q2)
 	return r;
 }
 
-
 /*
  * Compute the combinatorial function  M! / (N! * (M - N)!).
  */
@@ -616,7 +613,6 @@ qcomb(q1, q2)
 	zcomb(q1->num, q2->num, &r->num);
 	return r;
 }
-
 
 /*
  * Compute the Jacobi function (a / b).
@@ -649,7 +645,6 @@ qfib(q)
 	zfib(q->num, &r->num);
 	return r;
 }
-
 
 /*
  * Truncate a number to the specified number of decimal places.
@@ -703,7 +698,7 @@ qtrunc(q1, q2)
 	zfree(tenpow);
 	return r;
 }
-
+#endif
 
 /*
  * Round a number to the specified number of decimal places.
@@ -761,7 +756,7 @@ qround(q, places)
 	return r;
 }
 
-
+#if 0
 /*
  * Truncate a number to the specified number of binary places.
  * Specifying zero places makes the result identical to qint.
@@ -812,7 +807,7 @@ qbtrunc(q1, q2)
 	zbitvalue(places, &r->den);
 	return r;
 }
-
+#endif
 
 /*
  * Round a number to the specified number of binary places.
@@ -871,6 +866,7 @@ qbround(q, places)
 }
 
 
+#if 0
 /*
  * Approximate a number by using binary rounding with the minimum number
  * of binary places so that the resulting number is within the specified
@@ -890,7 +886,6 @@ qbappr(q, e)
 		bits = qprecision(e) + 1;
 	return qbround(q, bits);
 }
-
 
 /*
  * Approximate a number using continued fractions until the approximation
@@ -1008,6 +1003,7 @@ qnear(q1, q2, epsilon)
 	qfree(qq);
 	return res;
 }
+#endif
 
 
 /*
@@ -1100,7 +1096,7 @@ qfacrem(q1, q2)
 	return r;
 }
 
-
+#if 0
 /*
  * Divide one number by the gcd of it with another number repeatedly until
  * the number is relatively prime.
@@ -1142,7 +1138,7 @@ qlowfactor(q1, q2)
 		math_error("Non-integers for lowfactor");
 	return itoq(zlowfactor(q1->num, ztoi(q2->num)));
 }
-
+#endif
 
 /*
  * Return the number of places after the decimal point needed to exactly
@@ -1182,7 +1178,7 @@ qplaces(q)
 	return twopow;
 }
 
-
+#if 0
 /*
  * Perform a probabilistic primality test (algorithm P in Knuth).
  * Returns FALSE if definitely not prime, or TRUE if probably prime.
@@ -1196,7 +1192,6 @@ qprimetest(q1, q2)
 		math_error("Bad arguments for qprimetest");
 	return zprimetest(q1->num, qtoi(q2));
 }
-
 
 /*
  * Return a trivial hash value for a number.
@@ -1212,5 +1207,6 @@ qhash(q)
 		hash += zhash(q->den) * 2000003;
 	return hash;
 }
+#endif
 
 /* END CODE */

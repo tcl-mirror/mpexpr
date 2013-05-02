@@ -1356,24 +1356,30 @@ ExprGetValue(interp, infoPtr, prec, valuePtr, mdPtr)
 		}
 		break;
 	    case LEFT_SHIFT:
+/*
     		math_divertio();
 		zprintval(value2.intValue, 0L, 0L);
 		math_io = math_getdivertedio();
 		math_cleardiversions();
 		l_shift = atol(math_io);
 		ckfree(math_io);
+*/
+		l_shift = ztoi(value2.intValue);
 		zshift(valuePtr->intValue, l_shift, &z_tmp);
 		zfree(valuePtr->intValue);
 		zcopy(z_tmp, &valuePtr->intValue);
 		zfree(z_tmp);
 		break;
 	    case RIGHT_SHIFT:
+/*
     		math_divertio();
 		zprintval(value2.intValue, 0L, 0L);
 		math_io = math_getdivertedio();
 		math_cleardiversions();
 		l_shift = atol(math_io);
 		ckfree(math_io);
+*/
+		l_shift = ztoi(value2.intValue);
 		zshift(valuePtr->intValue, (-l_shift), &z_tmp);
 		zfree(valuePtr->intValue);
 		zcopy(z_tmp, &valuePtr->intValue);

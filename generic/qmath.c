@@ -284,6 +284,7 @@ qdec(q)
 }
 
 
+#if 0
 /*
  * Add a normal small integer value to an arbitrary number.
  */
@@ -322,6 +323,7 @@ qaddi(q1, n)
 	else
 		return qadd(q1, &addnum);
 }
+#endif
 
 
 /*
@@ -386,6 +388,7 @@ qmul(q1, q2)
 }
 
 
+#if 0
 /*
  * Multiply a number by a small integer.
  *	q2 = qmuli(q1, n);
@@ -419,6 +422,7 @@ qmuli(q, n)
 	(void) zdivi(q->den, d, &r->den);
 	return r;
 }
+#endif
 
 
 /*
@@ -565,7 +569,7 @@ qneg(q)
 	return r;
 }
 
-
+#if 0
 /*
  * Return the sign of a number (-1, 0 or 1)
  */
@@ -579,7 +583,7 @@ qsign(q)
 		return qlink(&_qnegone_);
 	return qlink(&_qone_);
 }
-
+#endif
 
 /*
  * Invert a number.
@@ -608,6 +612,7 @@ qinv(q)
 }
 
 
+#if 0
 /*
  * Return just the numerator of a number.
  *	q2 = qnum(q1);
@@ -647,7 +652,6 @@ qden(q)
 	return r;
 }
 
-
 /*
  * Return the fractional part of a number.
  *	q2 = qfrac(q1);
@@ -676,7 +680,7 @@ qfrac(q)
 	r->num.sign = q->num.sign;
 	return r;
 }
-
+#endif
 
 /*
  * Return the integral part of a number.
@@ -722,7 +726,7 @@ qsquare(q)
 	return q;
 }
 
-
+#if 0
 /*
  * Shift an integer by a given number of bits. This multiplies the number
  * by the appropriate power of two.  Positive numbers shift left, negative
@@ -745,7 +749,7 @@ qshift(q, n)
 	zshift(q->num, n, &r->num);
 	return r;
 }
-
+#endif
 
 /*
  * Scale a number by a power of two, as in:
@@ -822,7 +826,7 @@ qmax(q1, q2)
 	return qlink(q1);
 }
 
-
+#if 0
 /*
  * Perform the logical OR of two integers.
  */
@@ -898,7 +902,7 @@ qxor(q1, q2)
 	r->num = res;
 	return r;
 }
-
+#endif
 
 #if 0
 /*
@@ -978,7 +982,6 @@ qtest(q)
 		return -1;
 	return 1;
 }
-#endif
 
 
 /*
@@ -998,6 +1001,7 @@ qdivides(q1, q2)
 	}
 	return zdivides(q1->num, q2->num) && zdivides(q2->den, q1->den);
 }
+#endif
 
 
 /*
@@ -1133,6 +1137,7 @@ qreli(q, n)
 }
 
 
+#if 0
 /*
  * Compare a number against a small integer to see if they are equal.
  * Returns TRUE if they differ.
@@ -1154,7 +1159,7 @@ qcmpi(q, n)
 	n = ((FULL) n) >> BASEB;
 	return (((n != 0) != (len == 2)) || (n != q->num.v[1]));
 }
-
+#endif
 
 /*
  * Number node allocation routines

@@ -17,9 +17,6 @@
 #define	PRINTF1(fmt, a1)	math_fmt(fmt, a1)
 #define	PRINTF2(fmt, a1, a2)	math_fmt(fmt, a1, a2)
 
-
-long	_outdigits_ = 20;		/* default digits for output */
-
 /*
  * Output state that has been saved when diversions are done.
  */
@@ -164,6 +161,7 @@ math_fmt TCL_VARARGS_DEF(char *, arg1)
 }
 
 
+#if 0
 /*
  * Flush the current output stream.
  */
@@ -173,6 +171,7 @@ math_flush()
 	if (!outputisstring)
 		fflush(outfp);
 }
+#endif
 
 
 /*
@@ -190,7 +189,6 @@ math_divertio()
 	if (sp == NULL)
 		math_error("No memory for diverting output");
 	sp->oldiostates = oldiostates;
-	sp->outdigits = _outdigits_;
 	sp->outfp = outfp;
 	sp->outbuf = outbuf;
 	sp->outbufsize = outbufsize;
@@ -225,7 +223,6 @@ math_getdivertedio()
 	cp = outbuf;
 	cp[outbufused] = '\0';
 	oldiostates = sp->oldiostates;
-	_outdigits_ = sp->outdigits;
 	outfp = sp->outfp;
 	outbuf = sp->outbuf;
 	outbufsize = sp->outbufsize;
@@ -249,6 +246,7 @@ math_cleardiversions()
 }
 
 
+#if 0
 /*
  * Set the output routines to output to the specified FILE stream.
  * This interacts with output diversion in the following manner.
@@ -283,7 +281,7 @@ math_setdigits(newdigits)
 	_outdigits_ = newdigits;
 	return olddigits;
 }
-
+#endif
 
 /*
  * Print an integer value as a hex number.

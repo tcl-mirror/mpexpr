@@ -280,7 +280,6 @@ znegmod(z1, z2, res)
 	z1.sign = !sign;
 	zmod(z1, z2, res);
 }
-#endif
 
 
 /*
@@ -494,6 +493,7 @@ zcmpmod(z1, z2, z3)
 		return TRUE;
 	}
 }
+#endif
 
 
 /*

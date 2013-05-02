@@ -164,87 +164,103 @@ typedef struct {
 #define MATH_PROTO(a) ()
 #endif
 
-extern HALF * alloc MATH_PROTO((LEN len));
+extern HALF * alloc MATH_PROTO((LEN len));	/* NEED **/
 #ifdef	ALLOCTEST
-extern void freeh MATH_PROTO((HALF *));
+extern void freeh MATH_PROTO((HALF *));		/* NEED **/
 #endif
 
 
 /*
  * Input, output, and conversion routines.
  */
-extern void zcopy MATH_PROTO((ZVALUE z, ZVALUE *res));
-extern void itoz MATH_PROTO((long i, ZVALUE *res));
-extern void atoz MATH_PROTO((CONST char *s, ZVALUE *res));
-extern long ztoi MATH_PROTO((ZVALUE z));
-extern void zprintval MATH_PROTO((ZVALUE z, long decimals, long width));
-extern void Zprintval MATH_PROTO((ZVALUE z, long decimals, long width));
-extern void zprintx MATH_PROTO((ZVALUE z, long width));
-extern void zprintb MATH_PROTO((ZVALUE z, long width));
-extern void zprinto MATH_PROTO((ZVALUE z, long width));
+extern void zcopy MATH_PROTO((ZVALUE z, ZVALUE *res));/* NEED **/
+extern void itoz MATH_PROTO((long i, ZVALUE *res));/* NEED **/
+extern void atoz MATH_PROTO((CONST char *s, ZVALUE *res));/* NEED **/
+extern long ztoi MATH_PROTO((ZVALUE z));/* NEED **/
+extern void zprintval MATH_PROTO((ZVALUE z, long decimals, long width));/* NEED **/
+extern void Zprintval MATH_PROTO((ZVALUE z, long decimals, long width));/* NEED **/
+extern void zprintx MATH_PROTO((ZVALUE z, long width));/* NEED **/
+extern void zprintb MATH_PROTO((ZVALUE z, long width));/* NEED **/
+extern void zprinto MATH_PROTO((ZVALUE z, long width));/* NEED **/
 
 
 /*
  * Basic numeric routines.
  */
-extern void zmuli MATH_PROTO((ZVALUE z, long n, ZVALUE *res));
-extern long zdivi MATH_PROTO((ZVALUE z, long n, ZVALUE *res));
-extern long zmodi MATH_PROTO((ZVALUE z, long n));
-extern void zadd MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zsub MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zmul MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zdiv MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res, ZVALUE *rem));
-extern void zquo MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *rem));
+extern void zmuli MATH_PROTO((ZVALUE z, long n, ZVALUE *res));/* NEED **/
+extern long zdivi MATH_PROTO((ZVALUE z, long n, ZVALUE *res));/* NEED **/
+extern long zmodi MATH_PROTO((ZVALUE z, long n));/* NEED **/
+extern void zadd MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zsub MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zmul MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zdiv MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res, ZVALUE *rem));/* NEED **/
+extern void zquo MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *rem));/* NEED **/
+#if 0
 extern BOOL zdivides MATH_PROTO((ZVALUE z1, ZVALUE z2));
-extern void zor MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zand MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zxor MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zshift MATH_PROTO((ZVALUE z, long n, ZVALUE *res));
-extern void zsquare MATH_PROTO((ZVALUE z, ZVALUE *res));
-extern long zlowbit MATH_PROTO((ZVALUE z));
-extern long zhighbit MATH_PROTO((ZVALUE z));
-extern void zbitvalue MATH_PROTO((long n, ZVALUE *res));
+#endif
+extern void zor MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zand MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zxor MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zshift MATH_PROTO((ZVALUE z, long n, ZVALUE *res));/* NEED **/
+extern void zsquare MATH_PROTO((ZVALUE z, ZVALUE *res));/* NEED **/
+extern long zlowbit MATH_PROTO((ZVALUE z));/* NEED **/
+extern long zhighbit MATH_PROTO((ZVALUE z));/* NEED **/
+extern void zbitvalue MATH_PROTO((long n, ZVALUE *res));/* NEED **/
+#if 0
 extern BOOL zisset MATH_PROTO((ZVALUE z, long n));
-extern BOOL zisonebit MATH_PROTO((ZVALUE z));
-extern BOOL zisallbits MATH_PROTO((ZVALUE z));
-extern FLAG ztest MATH_PROTO((ZVALUE z));
-extern FLAG zrel MATH_PROTO((ZVALUE z1, ZVALUE z2));
-extern BOOL zcmp MATH_PROTO((ZVALUE z1, ZVALUE z2));
+#endif
+extern BOOL zisonebit MATH_PROTO((ZVALUE z));/* NEED **/
+extern BOOL zisallbits MATH_PROTO((ZVALUE z));/* NEED **/
+extern FLAG ztest MATH_PROTO((ZVALUE z));/* NEED **/
+extern FLAG zrel MATH_PROTO((ZVALUE z1, ZVALUE z2));/* NEED **/
+extern BOOL zcmp MATH_PROTO((ZVALUE z1, ZVALUE z2));/* NEED **/
 
 
 /*
  * More complicated numeric functions.
  */
-extern long iigcd MATH_PROTO((long i1, long i2));
-extern void zgcd MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zlcm MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zreduce MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *z1res, ZVALUE *z2res));
-extern void zfact MATH_PROTO((ZVALUE z, ZVALUE *dest));
-extern void zpfact MATH_PROTO((ZVALUE z, ZVALUE *dest));
+extern long iigcd MATH_PROTO((long i1, long i2));/* NEED **/
+extern void zgcd MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zlcm MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zreduce MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *z1res, ZVALUE *z2res));/* NEED **/
+extern void zfact MATH_PROTO((ZVALUE z, ZVALUE *dest));/* NEED **/
+extern void zpfact MATH_PROTO((ZVALUE z, ZVALUE *dest));/* NEED **/
+#if 0
 extern void zlcmfact MATH_PROTO((ZVALUE z, ZVALUE *dest));
-extern void zperm MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zcomb MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern BOOL zprimetest MATH_PROTO((ZVALUE z, long count));
+#endif
+extern void zperm MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zcomb MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern BOOL zprimetest MATH_PROTO((ZVALUE z, long count));/* NEED **/
+#if 0
 extern FLAG zjacobi MATH_PROTO((ZVALUE z1, ZVALUE z2));
-extern void zfib MATH_PROTO((ZVALUE z, ZVALUE *res));
-extern void zpowi MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void ztenpow MATH_PROTO((long power, ZVALUE *res));
-extern void zpowermod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE z3, ZVALUE *res));
-extern BOOL zmodinv MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern BOOL zrelprime MATH_PROTO((ZVALUE z1, ZVALUE z2));
+#endif
+extern void zfib MATH_PROTO((ZVALUE z, ZVALUE *res));/* NEED **/
+extern void zpowi MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void ztenpow MATH_PROTO((long power, ZVALUE *res));/* NEED **/
+extern void zpowermod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE z3, ZVALUE *res));/* NEED **/
+extern BOOL zmodinv MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern BOOL zrelprime MATH_PROTO((ZVALUE z1, ZVALUE z2));/* NEED **/
+#if 0
 extern long zlog MATH_PROTO((ZVALUE z1, ZVALUE z2));
-extern long zlog10 MATH_PROTO((ZVALUE z));
+#endif
+extern long zlog10 MATH_PROTO((ZVALUE z));/* NEED **/
+#if 0
 extern long zdivcount MATH_PROTO((ZVALUE z1, ZVALUE z2));
-extern long zfacrem MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *rem));
-extern void zgcdrem MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern long zlowfactor MATH_PROTO((ZVALUE z, long count));
-extern long zdigits MATH_PROTO((ZVALUE z1));
+#endif
+extern long zfacrem MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *rem));/* NEED **/
+extern void zgcdrem MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern long zlowfactor MATH_PROTO((ZVALUE z, long count));/* NEED **/
+extern long zdigits MATH_PROTO((ZVALUE z1));/* NEED **/
+#if 0
 extern FLAG zdigit MATH_PROTO((ZVALUE z1, long n));
-extern BOOL zsqrt MATH_PROTO((ZVALUE z1, ZVALUE *dest));
-extern void zroot MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *dest));
+#endif
+extern BOOL zsqrt MATH_PROTO((ZVALUE z1, ZVALUE *dest));/* NEED **/
+extern void zroot MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *dest));/* NEED **/
+#if 0
 extern BOOL zissquare MATH_PROTO((ZVALUE z));
 extern HASH zhash MATH_PROTO((ZVALUE z));
+#endif
 
 #if 0
 extern void zapprox MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res1, ZVALUE *res2));
@@ -256,18 +272,20 @@ extern void zmulmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE z3, ZVALUE *res));
 extern void zsquaremod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
 extern void zsubmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE z3, ZVALUE *res));
 #endif
+#if 0
 extern void zminmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
 extern BOOL zcmpmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE z3));
+#endif
 
 
 /*
  * These functions are for internal use only.
  */
-extern void ztrim MATH_PROTO((ZVALUE *z));
-extern void zshiftr MATH_PROTO((ZVALUE z, long n));
-extern void zshiftl MATH_PROTO((ZVALUE z, long n));
-extern HALF *zalloctemp MATH_PROTO((LEN len));
-extern void initmasks MATH_PROTO((void));
+extern void ztrim MATH_PROTO((ZVALUE *z));/* NEED **/
+extern void zshiftr MATH_PROTO((ZVALUE z, long n));/* NEED **/
+extern void zshiftl MATH_PROTO((ZVALUE z, long n));/* NEED **/
+extern HALF *zalloctemp MATH_PROTO((LEN len));/* NEED **/
+extern void initmasks MATH_PROTO((void));/* NEED **/
 
 
 /*
@@ -284,13 +302,13 @@ typedef	struct {
 	ZVALUE one;		/* REDC format for the number 1 */
 } REDC;
 
-extern REDC *zredcalloc MATH_PROTO((ZVALUE z1));
-extern void zredcfree MATH_PROTO((REDC *rp));
-extern void zredcencode MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE *res));
-extern void zredcdecode MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE *res));
-extern void zredcmul MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE z2, ZVALUE *res));
-extern void zredcsquare MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE *res));
-extern void zredcpower MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE z2, ZVALUE *res));
+extern REDC *zredcalloc MATH_PROTO((ZVALUE z1));/* NEED **/
+extern void zredcfree MATH_PROTO((REDC *rp));/* NEED **/
+extern void zredcencode MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE *res));/* NEED **/
+extern void zredcdecode MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE *res));/* NEED **/
+extern void zredcmul MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
+extern void zredcsquare MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE *res));/* NEED **/
+extern void zredcpower MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE z2, ZVALUE *res));/* NEED **/
 
 
 /*
@@ -339,21 +357,27 @@ extern void zredcpower MATH_PROTO((REDC *rp, ZVALUE z1, ZVALUE z2, ZVALUE *res))
 /*
  * Output routines for either FILE handles or strings.
  */
-extern void math_chr MATH_PROTO((int ch));
-extern void math_str MATH_PROTO((CONST char *str));
-extern void math_fill MATH_PROTO((char *str, long width));
+extern void math_chr MATH_PROTO((int ch));/* NEED **/
+extern void math_str MATH_PROTO((CONST char *str));/* NEED **/
+extern void math_fill MATH_PROTO((char *str, long width));/* NEED **/
+#if 0
 extern void math_flush MATH_PROTO((void));
-extern void math_divertio MATH_PROTO((void));
-extern void math_cleardiversions MATH_PROTO((void));
+#endif
+extern void math_divertio MATH_PROTO((void));/* NEED **/
+extern void math_cleardiversions MATH_PROTO((void));/* NEED **/
+#if 0
 extern void math_setfp MATH_PROTO((FILE *fp));
-extern char *math_getdivertedio MATH_PROTO((void));
+#endif
+extern char *math_getdivertedio MATH_PROTO((void));/* NEED **/
+#if 0
 extern long math_setdigits MATH_PROTO((long digits));
+#endif
 
 
 #ifdef VARARGS
-extern void math_fmt();
+extern void math_fmt();/* NEED **/
 #else
-extern void math_fmt MATH_PROTO((char *, ...));
+extern void math_fmt MATH_PROTO((char *, ...));/* NEED **/
 #endif
 
 
