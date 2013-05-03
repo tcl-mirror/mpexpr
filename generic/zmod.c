@@ -23,8 +23,6 @@
 static CONST LEN _pow2_ = POW_ALG2;	/* modulo size to use REDC for powers */
 static CONST LEN _redc2_ = REDC_ALG2;	/* modulo size to use second REDC algorithm */
 
-static REDC *powermodredc = NULL;	/* REDC info for raising to power */
-
 #if 0
 extern void zaddmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE z3, ZVALUE *res));
 extern void znegmod MATH_PROTO((ZVALUE z1, ZVALUE z2, ZVALUE *res));
@@ -587,17 +585,12 @@ zpowermod(z1, z2, z3, res)
 	if ((z2.len > 1) && (z3.len >= _pow2_) && zisodd(z3)
 		&& !zisallbits(z3))
 	{
-		if (powermodredc && zcmp(powermodredc->mod, z3)) {
-			zredcfree(powermodredc);
-			powermodredc = NULL;
-		}
-		if (powermodredc == NULL)
-			powermodredc = zredcalloc(z3);
-		rp = powermodredc;
+		rp = zredcalloc(z3);
 		zredcencode(rp, z1, &temp);
 		zredcpower(rp, temp, z2, &z1);
 		zfree(temp);
 		zredcdecode(rp, z1, res);
+		zredcfree(rp);
 		zfree(z1);
 		return;
 	}

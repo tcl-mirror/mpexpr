@@ -9,6 +9,7 @@
 
 #include "qmath.h"
 
+#if 0
 
 /*
  * Structure used for caching REDC information.
@@ -23,8 +24,8 @@ typedef struct	{
 static long redc_age;			/* current age counter */
 static REDC_CACHE redc_cache[MAXREDC];	/* cached REDC info */
 
-
 static REDC *qfindredc MATH_PROTO((NUMBER *q));
+#endif
 
 
 /*
@@ -249,9 +250,7 @@ qnegmod(q1, q2)
 	znegmod(q1->num, q2->num, &q->num);
 	return q;
 }
-#endif
 
-#if 0
 /*
  * Return the integer congruent to an integer whose absolute value is smallest.
  * This is a unique integer in the range int((q2-1)/2 to int(q2/2), inclusive.
@@ -411,7 +410,6 @@ qredcpower(q1, q2, q3)
 	zredcpower(rp, q1->num, q2->num, &r->num);
 	return r;
 }
-#endif
 
 /*
  * Search for and return the REDC information for the specified number.
@@ -477,5 +475,6 @@ qfindredc(q)
 	rcp->age = ++redc_age;
 	return rcp->redc;
 }
+#endif
 
 /* END CODE */
