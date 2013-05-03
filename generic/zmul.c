@@ -19,7 +19,12 @@ static CONST LEN _mul2_ = MUL_ALG2;	/* size of number to use multiply algorithm 
 static CONST LEN _sq2_ = SQ_ALG2;	/* size of number to use square algorithm 2 */
 
 
-static HALF *tempbuf;		/* temporary buffer for multiply and square */
+static Tcl_ThreadDataKey bufKey;
+typedef struct {
+    HALF *buf;		/* Points to start of array of temporary storage */
+    HALF *temp;		/* Points to next temporary available to use */
+    LEN length;		/* Number of temporaries in the storage */
+} Store;
 
 static LEN domul MATH_PROTO((HALF *v1, LEN size1, HALF *v2, LEN size2, HALF *ans));
 static LEN dosquare MATH_PROTO((HALF *vp, LEN size, HALF *ans));
@@ -67,7 +72,7 @@ zmul(z1, z2, res)
 	if (len < z2.len)
 		len = z2.len;
 	len = 2 * len + 64;
-	tempbuf = zalloctemp(len);
+	(void) zalloctemp(len);
 
 	res->sign = (z1.sign != z2.sign);
 	res->v = alloc(z1.len + z2.len + 1);
@@ -120,6 +125,8 @@ domul(v1, size1, v2, size2, ans)
 	BOOL neg;		/* whether imtermediate term is negative */
 	register HALF *hd, *h1=NULL, *h2=NULL;	/* for inner loops */
 	SIUNION sival;		/* for addition of digits */
+
+	Store *store = Tcl_GetThreadData(&bufKey, sizeof(Store));
 
 	/*
 	 * Trim the numbers of leading zeroes and initialize the
@@ -265,8 +272,8 @@ domul(v1, size1, v2, size2, ans)
 	 * for the multiply to use.
 	 */
 	shift = (size1 + 1) / 2;
-	temp = tempbuf;
-	tempbuf += (2 * shift) + 1;
+	temp = store->temp;
+	store->temp += (2 * shift) + 1;
 
 	/*
 	 * Determine the sizes and locations of all the numbers.
@@ -337,6 +344,8 @@ domul(v1, size1, v2, size2, ans)
 	while ((*hd == 0) && (sizeD > 1)) {
 		hd--;
 		sizeD--;
+
+
 	}
 
 	/*
@@ -380,7 +389,7 @@ domul(v1, size1, v2, size2, ans)
 			hd--;
 			len--;
 		}
-		tempbuf = temp;
+		store->temp = temp;
 		return len;
 	}
 
@@ -645,7 +654,7 @@ domul(v1, size1, v2, size2, ans)
 		hd--;
 		len--;
 	}
-	tempbuf = temp;
+	store->temp = temp;
 	return len;
 }
 
@@ -681,7 +690,7 @@ zsquare(z, res)
 	 * Allocate some extra words for rounding up the sizes.
 	 */
 	len = 3 * z.len + 32;
-	tempbuf = zalloctemp(len);
+	(void) zalloctemp(len);
 
 	res->sign = 0;
 	res->v = alloc((z.len+1) * 2);
@@ -729,6 +738,7 @@ dosquare(vp, size, ans)
 	HALF *baseABAB;		/* base of square of difference of A and B */
 	register HALF *hd, *h1, *h2, *h3;	/* for inner loops */
 	SIUNION sival;		/* for addition of digits */
+	Store *store = Tcl_GetThreadData(&bufKey, sizeof(Store));
 
 	/*
 	 * First trim the number of leading zeroes.
@@ -848,8 +858,8 @@ dosquare(vp, size, ans)
 	 * Allocate temporary space and determine the sizes and
 	 * positions of the values to be calculated.
 	 */
-	temp = tempbuf;
-	tempbuf += (3 * (size + 1) / 2);
+	temp = store->temp;
+	store->temp += (3 * (size + 1) / 2);
 
 	sizeA = size / 2;
 	sizeB = size - sizeA;
@@ -1060,7 +1070,7 @@ dosquare(vp, size, ans)
 		len--;
 		hd--;
 	}
-	tempbuf = temp;
+	store->temp = temp;
 	return len;
 }
 
@@ -1078,11 +1088,12 @@ zalloctemp(len)
 	LEN len;		/* required number of HALFs in buffer */
 {
 	HALF *hp;
-	static LEN buflen;	/* current length of temp buffer */
-	static HALF *bufptr;	/* pointer to current temp buffer */
 
-	if (len <= buflen)
-		return bufptr;
+	Store *store = Tcl_GetThreadData(&bufKey, sizeof(Store));
+
+	if (len <= store->length) {
+	    return store->temp = store->buf;
+	}
 
 	/*
 	 * We need to grow the temporary buffer.
@@ -1091,15 +1102,16 @@ zalloctemp(len)
 	 * in order to reduce the number of reallocations.
 	 */
 	len += 100;
-	if (buflen) {
-		buflen = 0;
-		ckfree((char *)bufptr);
+	if (store->length) {
+		store->length = 0;
+		ckfree((char *)store->buf);
+		store->temp = store->buf = NULL;
 	}
 	hp = (HALF *) ckalloc(len * sizeof(HALF));
 	if (hp == NULL)
 		math_error("No memory for temp buffer");
-	bufptr = hp;
-	buflen = len;
+	store->temp = store->buf = hp;
+	store->length = len;
 	return hp;
 }
 
