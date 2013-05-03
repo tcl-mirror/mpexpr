@@ -1172,6 +1172,7 @@ union allocNode {
 	union allocNode	*link;
 };
 
+static Tcl_ThreadDataKey allocKey;
 static union allocNode	*freeNum;
 
 
@@ -1179,19 +1180,22 @@ NUMBER *
 qalloc()
 {
 	register union allocNode *temp;
+	union allocNode **freeNumPtr = Tcl_GetThreadData(&allocKey,
+		sizeof(union allocNode *));
 
-	if (freeNum == NULL) {
-		freeNum = (union allocNode *)
-		ckalloc(sizeof (NUMBER) * NNALLOC);
-		if (freeNum == NULL)
+	if (*freeNumPtr == NULL) {
+		*freeNumPtr = (union allocNode *)
+			ckalloc(sizeof (NUMBER) * NNALLOC);
+		if (*freeNumPtr == NULL)
 			math_error("Not enough memory");
-		freeNum[NNALLOC-1].link = NULL;
-		for (temp=freeNum+NNALLOC-2; temp >= freeNum; --temp) {
+		(*freeNumPtr)[NNALLOC-1].link = NULL;
+		for (temp=(*freeNumPtr)+NNALLOC-2; temp >= (*freeNumPtr);
+			--temp) {
 			temp->link = temp+1;
 		}
 	}
-	temp = freeNum;
-	freeNum = temp->link;
+	temp = (*freeNumPtr);
+	(*freeNumPtr) = temp->link;
 	temp->num.links = 1;
 	temp->num.num = _one_;
 	temp->num.den = _one_;
@@ -1204,14 +1208,16 @@ qfreenum(q)
 	register NUMBER *q;
 {
 	union allocNode *a;
+	union allocNode **freeNumPtr = Tcl_GetThreadData(&allocKey,
+		sizeof(union allocNode *));
 
 	if (q == NULL)
 		return;
 	zfree(q->num);
 	zfree(q->den);
 	a = (union allocNode *) q;
-	a->link = freeNum;
-	freeNum = a;
+	a->link = (*freeNumPtr);
+	(*freeNumPtr) = a;
 }
 
 /* END CODE */
