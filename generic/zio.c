@@ -6,9 +6,7 @@
  * Scanf and printf routines for arbitrary precision integers.
  */
 
-#include <tcl.h>
-#include "zmath.h"
-
+#include "mpexpr.h"
 
 #define	OUTBUFSIZE	200		/* realloc size for output buffers */
 
@@ -20,26 +18,17 @@
 /*
  * Output state that has been saved when diversions are done.
  */
-typedef struct iostate IOSTATE;
-struct iostate {
-	IOSTATE *oldiostates;		/* previous saved state */
-	long outdigits;			/* digits for output */
-	FILE *outfp;			/* file unit for output (if any) */
-	char *outbuf;			/* output string buffer (if any) */
-	long outbufsize;		/* current size of string buffer */
-	long outbufused;		/* space used in string buffer */
-	BOOL outputisstring;		/* TRUE if output is to string buffer */
-};
+
+static Tcl_ThreadDataKey outKey;
+typedef struct Out {
+    struct Out *next;	/* List of pending nested buffers */
+    char *buf;		/* output string buffer */
+    long size;		/* current size of buffer */
+    long used;		/* space used in buffer */
+} Out;
 
 
-static IOSTATE	*oldiostates = NULL;	/* list of saved output states */
-static FILE	*outfp = NULL;		/* file unit for output */
-static char	*outbuf = NULL;		/* current diverted buffer */
-static BOOL	outputisstring = FALSE;
-static long	outbufsize;
-static long	outbufused;
-
-
+#if 0
 /*
  * zio_init - perform needed initilization work
  *
@@ -57,7 +46,20 @@ zio_init()
 	done = 1;
     }
 }
+#endif
 
+static Out *
+GetOut()
+{
+	Out **outListPtr = Tcl_GetThreadData(&outKey, sizeof(Out *));
+	Out *out = *outListPtr;
+
+	if (out == NULL) {
+		math_divertio();
+		out = *outListPtr;
+	}
+	return out;
+}
 
 /*
  * Routine to output a character either to a FILE
@@ -68,19 +70,16 @@ math_chr(ch)
 	int ch;
 {
 	char	*cp;
+	Out *out = GetOut();
 
-	if (!outputisstring) {
-		fputc(ch, outfp);
-		return;
-	}
-	if (outbufused >= outbufsize) {
-		cp = (char *)ckrealloc(outbuf, outbufsize + OUTBUFSIZE + 1);
+	if (out->used >= out->size) {
+		cp = (char *)ckrealloc(out->buf, out->size + OUTBUFSIZE + 1);
 		if (cp == NULL)
 			math_error("Cannot realloc output string");
-		outbuf = cp;
-		outbufsize += OUTBUFSIZE;
+		out->buf = cp;
+		out->size += OUTBUFSIZE;
 	}
-	outbuf[outbufused++] = (char)ch;
+	out->buf[out->used++] = (char)ch;
 }
 
 
@@ -92,23 +91,20 @@ void
 math_str(str)
 	CONST char	*str;
 {
+	Out *out = GetOut();
 	char	*cp;
 	int	len;
 
-	if (!outputisstring) {
-		fputs(str, outfp);
-		return;
-	}
 	len = strlen(str);
-	if ((outbufused + len) > outbufsize) {
-		cp = (char *)ckrealloc(outbuf, outbufsize + len + OUTBUFSIZE + 1);
+	if ((out->used + len) > out->size) {
+		cp = (char *)ckrealloc(out->buf, out->size + len + OUTBUFSIZE + 1);
 		if (cp == NULL)
 			math_error("Cannot realloc output string");
-		outbuf = cp;
-		outbufsize += (len + OUTBUFSIZE);
+		out->buf = cp;
+		out->size += (len + OUTBUFSIZE);
 	}
-	memcpy(&outbuf[outbufused], str, len);
-	outbufused += len;
+	memcpy(out->buf + out->used, str, len);
+	out->used += len;
 }
 
 
@@ -183,26 +179,18 @@ math_flush()
 void
 math_divertio()
 {
-	register IOSTATE *sp;
+	Out **outListPtr = Tcl_GetThreadData(&outKey, sizeof(Out *));
+	Out *new = (Out *) ckalloc(sizeof(Out));
 
-	sp = (IOSTATE *) ckalloc(sizeof(IOSTATE));
-	if (sp == NULL)
+	if (new == NULL)
 		math_error("No memory for diverting output");
-	sp->oldiostates = oldiostates;
-	sp->outfp = outfp;
-	sp->outbuf = outbuf;
-	sp->outbufsize = outbufsize;
-	sp->outbufused = outbufused;
-	sp->outputisstring = outputisstring;
-
-	outbufused = 0;
-	outbufsize = 0;
-	outbuf = (char *) ckalloc(OUTBUFSIZE + 1);
-	if (outbuf == NULL)
+	new->next = *outListPtr;
+	new->buf = (char *) ckalloc(OUTBUFSIZE + 1);
+	if (new->buf == NULL)
 		math_error("Cannot allocate divert string");
-	outbufsize = OUTBUFSIZE;
-	outputisstring = TRUE;
-	oldiostates = sp;
+	new->size = OUTBUFSIZE;
+	new->used = 0;
+	*outListPtr = new;
 }
 
 
@@ -214,22 +202,16 @@ math_divertio()
 char *
 math_getdivertedio()
 {
-	register IOSTATE *sp;
+	Out **outListPtr = Tcl_GetThreadData(&outKey, sizeof(Out *));
+	Out *out = *outListPtr;
 	char *cp;
 
-	sp = oldiostates;
-	if (sp == NULL)
+	if (out == NULL)
 		math_error("No diverted state to restore");
-	cp = outbuf;
-	cp[outbufused] = '\0';
-	oldiostates = sp->oldiostates;
-	outfp = sp->outfp;
-	outbuf = sp->outbuf;
-	outbufsize = sp->outbufsize;
-	outbufused = sp->outbufused;
-	outbuf = sp->outbuf;
-	outputisstring = sp->outputisstring;
-	ckfree((char *)sp);		/* TP: fix memory leak */
+	cp = out->buf;
+	cp[out->used] = '\0';
+	*outListPtr = out->next;
+	ckfree((char *)out);
 	return cp;
 }
 
@@ -241,7 +223,9 @@ math_getdivertedio()
 void
 math_cleardiversions()
 {
-	while (oldiostates)
+	Out **outListPtr = Tcl_GetThreadData(&outKey, sizeof(Out *));
+
+	while (*outListPtr) 
 		ckfree(math_getdivertedio());
 }
 

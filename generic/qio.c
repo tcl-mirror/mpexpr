@@ -212,10 +212,8 @@ qreadval(fp)
 	}
 	return r;
 }
-#endif
 
 
-#if 0
 /*
  * Print a number in the specified output mode.
  * If MODE_DEFAULT is given, then the default output mode is used.
