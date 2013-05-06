@@ -902,9 +902,7 @@ qxor(q1, q2)
 	r->num = res;
 	return r;
 }
-#endif
 
-#if 0
 /*
  * Return the number whose binary representation only has the specified
  * bit set (counting from zero).  This thus produces a given power of two.

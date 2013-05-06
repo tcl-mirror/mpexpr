@@ -9,9 +9,7 @@
 
 #include "qmath.h"
 
-/* TODO */
-static BOOL _sinisneg_;	/* whether sin(x) < 0 (set by cos(x)) */
-
+static NUMBER *qcosimpl MATH_PROTO((NUMBER *q, NUMBER *epsilon, BOOL *sinisnegPtr));
 
 /*
  * Calculate the cosine of a number with an accuracy within epsilon.
@@ -21,11 +19,20 @@ NUMBER *
 qcos(q, epsilon)
 	NUMBER *q, *epsilon;
 {
+    BOOL sinisneg = qisneg(q);
+
+    return qcosimpl(q, epsilon, &sinisneg);
+}
+
+static NUMBER *
+qcosimpl(q, epsilon, sinisnegPtr)
+	NUMBER *q, *epsilon;
+	BOOL *sinisnegPtr;
+{
 	NUMBER *term, *sum, *qsq, *epsilon2, *tmp;
 	FULL n, i;
 	long scale, bits, bits2;
 
-	_sinisneg_ = qisneg(q);
 	if (qisneg(epsilon) || qiszero(epsilon))
 		math_error("Illegal epsilon value for cosine");
 	if (qiszero(q))
@@ -86,7 +93,7 @@ qcos(q, epsilon)
 	 */
 	while (--scale >= 0) {
 		if (qisneg(sum))
-			_sinisneg_ = !_sinisneg_;
+			*sinisnegPtr = !(*sinisnegPtr);
 		tmp = qsquare(sum);
 		qfree(sum);
 		sum = qscale(tmp, 1L);
@@ -114,15 +121,16 @@ qsin(q, epsilon)
 	NUMBER *q, *epsilon;
 {
 	NUMBER *tmp1, *tmp2, *epsilon2;
+	BOOL sinisneg = qisneg(q);
 
 	if (qisneg(epsilon) || qiszero(epsilon))
 		math_error("Illegal epsilon value for sine");
 	if (qiszero(q))
 		return qlink(q);
 	epsilon2 = qsquare(epsilon);
-	tmp1 = qcos(q, epsilon2);
+	tmp1 = qcosimpl(q, epsilon2, &sinisneg);
 	qfree(epsilon2);
-	tmp2 = qlegtoleg(tmp1, epsilon, _sinisneg_);
+	tmp2 = qlegtoleg(tmp1, epsilon, sinisneg);
 	qfree(tmp1);
 	return tmp2;
 }
@@ -136,14 +144,15 @@ qtan(q, epsilon)
 	NUMBER *q, *epsilon;
 {
 	NUMBER *cosval, *sinval, *epsilon2, *tmp, *res;
+	BOOL sinisneg = qisneg(q);
 
 	if (qisneg(epsilon) || qiszero(epsilon))
 		math_error("Illegal epsilon value for tangent");
 	if (qiszero(q))
 		return qlink(q);
 	epsilon2 = qsquare(epsilon);
-	cosval = qcos(q, epsilon2);
-	sinval = qlegtoleg(cosval, epsilon2, _sinisneg_);
+	cosval = qcosimpl(q, epsilon2, &sinisneg);
+	sinval = qlegtoleg(cosval, epsilon2, sinisneg);
 	qfree(epsilon2);
 	tmp = qdiv(sinval, cosval);
 	qfree(cosval);
