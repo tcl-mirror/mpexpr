@@ -6,9 +6,7 @@
  * Extended precision rational arithmetic primitive routines
  */
 
-#include <tcl.h>
-#include "qmath.h"
-
+#include "mpexpr.h"
 
 NUMBER _qzero_ =	{ { _zeroval_, 1, 0 }, { _oneval_, 1, 0 }, 1 };
 NUMBER _qone_ =		{ { _oneval_, 1, 0 }, { _oneval_, 1, 0 }, 1 };
@@ -16,7 +14,6 @@ static NUMBER _qtwo_ =	{ { _twoval_, 1, 0 }, { _oneval_, 1, 0 }, 1 };
 static NUMBER _qten_ =	{ { _tenval_, 1, 0 }, { _oneval_, 1, 0 }, 1 };
 NUMBER _qnegone_ =	{ { _oneval_, 1, 1 }, { _oneval_, 1, 0 }, 1 };
 NUMBER _qonehalf_ =	{ { _oneval_, 1, 0 }, { _twoval_, 1, 0 }, 1 };
-
 
 /*
  * Create another copy of a number.

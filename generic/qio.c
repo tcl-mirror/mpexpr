@@ -6,9 +6,7 @@
  * Scanf and printf routines for arbitrary precision rational numbers
  */
 
-#include <tcl.h>
-#include "qmath.h"
-
+#include "mpexpr.h"
 
 #define	PUTCHAR(ch)		math_chr(ch)
 #define	PUTSTR(str)		math_str(str)
@@ -22,9 +20,11 @@ static long	etoalen;
 static char	*etoabuf = NULL;
 #endif
 
-static long	scalefactor;
-static ZVALUE	scalenumber = { 0, 0, 0 };
-
+static Tcl_ThreadDataKey scaleKey;
+typedef struct {
+    long factor;
+    ZVALUE number;
+} Scale;
 
 /*
  * Print a formatted string containing arbitrary numbers, similar to printf.
@@ -309,15 +309,16 @@ qprintff(q, width, precision)
 	long precision;
 {
 	ZVALUE z, z1;
+	Scale *scale = Tcl_GetThreadData(&scaleKey, sizeof(Scale));
 
-	if (precision != scalefactor) {
-		if (scalenumber.v)
-			zfree(scalenumber);
-		ztenpow(precision, &scalenumber);
-		scalefactor = precision;
+	if (precision != scale->factor) {
+		if (scale->number.v)
+			zfree(scale->number);
+		ztenpow(precision, &(scale->number));
+		scale->factor = precision;
 	}
-	if (scalenumber.v)
-		zmul(q->num, scalenumber, &z);
+	if (scale->number.v)
+		zmul(q->num, scale->number, &z);
 	else
 		z = q->num;
 	if (qisfrac(q)) {
@@ -345,15 +346,16 @@ Qprintff(q, width, precision)
 	long precision;
 {
 	ZVALUE z, z1;
+	Scale *scale = Tcl_GetThreadData(&scaleKey, sizeof(Scale));
 
-	if (precision != scalefactor) {
-		if (scalenumber.v)
-			zfree(scalenumber);
-		ztenpow(precision, &scalenumber);
-		scalefactor = precision;
+	if (precision != scale->factor) {
+		if (scale->number.v)
+			zfree(scale->number);
+		ztenpow(precision, &(scale->number));
+		scale->factor = precision;
 	}
-	if (scalenumber.v)
-		zmul(q->num, scalenumber, &z);
+	if (scale->number.v)
+		zmul(q->num, scale->number, &z);
 	else
 		z = q->num;
 	if (qisfrac(q)) {

@@ -11,8 +11,7 @@
  * two algorithms are equal in speed at about 100 decimal digits.
  */
 
-#include <tcl.h>
-#include "zmath.h"
+#include "mpexpr.h"
 
 
 static CONST LEN _mul2_ = MUL_ALG2;	/* size of number to use multiply algorithm 2 */
