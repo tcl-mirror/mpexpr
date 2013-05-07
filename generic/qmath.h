@@ -40,7 +40,9 @@ extern void qprintnum MATH_PROTO((NUMBER *q, int mode));
 #endif
 extern void qprintff MATH_PROTO((NUMBER *q, long width, long precision));/* NEED **/
 extern void Qprintff MATH_PROTO((NUMBER *q, long width, long precision)); /* NEED **/
+#if 0
 extern void qprintfe MATH_PROTO((NUMBER *q, long width, long precision));/* NEED **/
+#endif
 extern void qprintfe_round MATH_PROTO((NUMBER *q, long width, long precision));/* NEED **/
 #if 0
 extern void Qprintfe MATH_PROTO((NUMBER *q, long width, long precision));
@@ -242,10 +244,12 @@ extern NUMBER *qpi MATH_PROTO((NUMBER *epsilon)); /* NEED **/
 #define QPF_IMAG	0x2	/* allow trailing 'i' for imaginary number */
 
 
+#if 0
 #ifdef VARARGS
 extern void qprintf();
 #else
 extern void qprintf MATH_PROTO((char *, ...));
+#endif
 #endif
 
 

@@ -26,6 +26,7 @@ typedef struct {
     ZVALUE number;
 } Scale;
 
+#if 0
 /*
  * Print a formatted string containing arbitrary numbers, similar to printf.
  * ALL numeric arguments to this routine are rational NUMBERs.
@@ -151,7 +152,6 @@ percent:	;
 }
 
 
-#if 0
 /*
  * Read a number from the specified FILE stream (NULL means stdin).
  * The number can be an integer, a fraction, a real number, an
@@ -332,7 +332,6 @@ qprintff(q, width, precision)
 		zfree(z);
 }
 
-
 /*
  * Print a number in floating point representation.
  * Example:  193.784
@@ -370,6 +369,7 @@ Qprintff(q, width, precision)
 }
 
 
+#if 0
 /*
  * Print a number in exponential notation.
  * Example: 4.1856e34
@@ -423,7 +423,7 @@ qprintfe(q, width, precision)
 	if (den.v != q->den.v)
 		zfree(den);
 }
-
+#endif
 
 /*
  * Print a number in exponential notation.
