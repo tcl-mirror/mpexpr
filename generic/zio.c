@@ -19,7 +19,7 @@
  * Output state that has been saved when diversions are done.
  */
 
-static Tcl_ThreadDataKey outKey;
+static Tcl_ThreadDataKey outKey = NULL;
 typedef struct Out {
     struct Out *next;	/* List of pending nested buffers */
     char *buf;		/* output string buffer */

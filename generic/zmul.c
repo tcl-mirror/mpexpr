@@ -18,7 +18,7 @@ static CONST LEN _mul2_ = MUL_ALG2;	/* size of number to use multiply algorithm 
 static CONST LEN _sq2_ = SQ_ALG2;	/* size of number to use square algorithm 2 */
 
 
-static Tcl_ThreadDataKey bufKey;
+static Tcl_ThreadDataKey bufKey = NULL;
 typedef struct {
     HALF *buf;		/* Points to start of array of temporary storage */
     HALF *temp;		/* Points to next temporary available to use */

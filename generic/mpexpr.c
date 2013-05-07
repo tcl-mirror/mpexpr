@@ -225,7 +225,7 @@ static char *operatorStrings[] = {
  * Data support for setjmp/longjmp use.
  */
 
-static Tcl_ThreadDataKey mp_jdKey;
+static Tcl_ThreadDataKey mp_jdKey = NULL;
 typedef struct {
     Tcl_Interp *interp;
     jmp_buf jb;

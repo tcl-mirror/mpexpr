@@ -20,7 +20,7 @@ static long	etoalen;
 static char	*etoabuf = NULL;
 #endif
 
-static Tcl_ThreadDataKey scaleKey;
+static Tcl_ThreadDataKey scaleKey = NULL;
 typedef struct {
     long factor;
     ZVALUE number;

@@ -1167,7 +1167,7 @@ union allocNode {
 	union allocNode	*link;
 };
 
-static Tcl_ThreadDataKey allocKey;
+static Tcl_ThreadDataKey allocKey = NULL;
 static union allocNode	*freeNum;
 
 
