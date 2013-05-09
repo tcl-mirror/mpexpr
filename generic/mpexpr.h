@@ -76,7 +76,7 @@ typedef void * Tcl_ThreadDataKey;
 
 #include "qmath.h"
 
-#define MPEXPR_VERSION   "1.0"
+#define MPEXPR_VERSION   "1.2"
 
 #define MP_PRECISION_DEF      17
 #define MP_PRECISION_VAR      "mp_precision"
