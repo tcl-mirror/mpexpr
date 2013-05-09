@@ -711,7 +711,7 @@ qround(q, places)
 	long places;		/* number of decimal places to round to */
 {
 	NUMBER *r;
-	ZVALUE tenpow, roundval, tmp1, tmp2;
+	ZVALUE tenpow, roundval, tmp1, tmp2, rem;
 
 	if (places < 0)
 		math_error("Negative places for qround");
@@ -732,8 +732,14 @@ qround(q, places)
 	zadd(tmp2, roundval, &tmp1);
 	zfree(tmp2);
 	zfree(roundval);
-	zquo(tmp1, q->den, &tmp2);
+	zdiv(tmp1, q->den, &tmp2, &rem);
 	zfree(tmp1);
+	if (ziszero(rem) && zisodd(tmp2) && ziseven(q->den)) {
+		zsub(tmp2, _one_, &tmp1);
+		zfree(tmp2);
+		tmp2 = tmp1;
+	}
+	zfree(rem);
 	if (ziszero(tmp2)) {
 		zfree(tmp2);
 		return qlink(&_qzero_);
