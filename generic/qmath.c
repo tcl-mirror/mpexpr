@@ -280,49 +280,6 @@ qdec(q)
 	return r;
 }
 
-
-#if 0
-/*
- * Add a normal small integer value to an arbitrary number.
- */
-NUMBER *
-qaddi(q1, n)
-	NUMBER *q1;
-	long n;
-{
-	NUMBER addnum;		/* temporary number */
-	HALF addval[2];		/* value of small number */
-	BOOL neg;		/* TRUE if number is neg */
-
-	if (n == 0)
-		return qlink(q1);
-	if (n == 1)
-		return qinc(q1);
-	if (n == -1)
-		return qdec(q1);
-	if (qiszero(q1))
-		return itoq(n);
-	addnum.num.sign = 0;
-	addnum.num.len = 1;
-	addnum.num.v = addval;
-	addnum.den = _one_;
-	neg = (n < 0);
-	if (neg)
-		n = -n;
-	addval[0] = (HALF) n;
-	n = (((FULL) n) >> BASEB);
-	if (n) {
-		addval[1] = (HALF) n;
-		addnum.num.len = 2;
-	}
-	if (neg)
-		return qsub(q1, &addnum);
-	else
-		return qadd(q1, &addnum);
-}
-#endif
-
-
 /*
  * Multiply two numbers.
  *	q3 = qmul(q1, q2);
@@ -383,44 +340,6 @@ qmul(q1, q2)
 		zfree(d2);
 	return r;
 }
-
-
-#if 0
-/*
- * Multiply a number by a small integer.
- *	q2 = qmuli(q1, n);
- */
-NUMBER *
-qmuli(q, n)
-	NUMBER *q;
-	long n;
-{
-	NUMBER *r;
-	long d;			/* gcd of multiplier and denominator */
-	int sign;
-
-	if ((n == 0) || qiszero(q))
-		return qlink(&_qzero_);
-	if (n == 1)
-		return qlink(q);
-	r = qalloc();
-	if (qisint(q)) {
-		zmuli(q->num, n, &r->num);
-		return r;
-	}
-	sign = 1;
-	if (n < 0) {
-		n = -n;
-		sign = -1;
-	}
-	d = zmodi(q->den, n);
-	d = iigcd(d, n);
-	zmuli(q->num, (n * sign) / d, &r->num);
-	(void) zdivi(q->den, d, &r->den);
-	return r;
-}
-#endif
-
 
 /*
  * Divide two numbers (as fractions).
@@ -566,22 +485,6 @@ qneg(q)
 	return r;
 }
 
-#if 0
-/*
- * Return the sign of a number (-1, 0 or 1)
- */
-NUMBER *
-qsign(q)
-	NUMBER *q;
-{
-	if (qiszero(q))
-		return qlink(&_qzero_);
-	if (qisneg(q))
-		return qlink(&_qnegone_);
-	return qlink(&_qone_);
-}
-#endif
-
 /*
  * Invert a number.
  *	q2 = qinv(q1);
@@ -607,77 +510,6 @@ qinv(q)
 	r->den.sign = 0;
 	return r;
 }
-
-
-#if 0
-/*
- * Return just the numerator of a number.
- *	q2 = qnum(q1);
- */
-NUMBER *
-qnum(q)
-	register NUMBER *q;
-{
-	register NUMBER *r;
-
-	if (qisint(q))
-		return qlink(q);
-	if (zisunit(q->num)) {
-		r = (qisneg(q) ? &_qnegone_ : &_qone_);
-		return qlink(r);
-	}
-	r = qalloc();
-	zcopy(q->num, &r->num);
-	return r;
-}
-
-
-/*
- * Return just the denominator of a number.
- *	q2 = qden(q1);
- */
-NUMBER *
-qden(q)
-	register NUMBER *q;
-{
-	register NUMBER *r;
-
-	if (qisint(q))
-		return qlink(&_qone_);
-	r = qalloc();
-	zcopy(q->den, &r->num);
-	return r;
-}
-
-/*
- * Return the fractional part of a number.
- *	q2 = qfrac(q1);
- */
-NUMBER *
-qfrac(q)
-	register NUMBER *q;
-{
-	register NUMBER *r;
-	ZVALUE z;
-
-	if (qisint(q))
-		return qlink(&_qzero_);
-	if ((q->num.len < q->den.len) || ((q->num.len == q->den.len) &&
-		(q->num.v[q->num.len - 1] < q->den.v[q->num.len - 1])))
-			return qlink(q);
-	r = qalloc();
-	if (qisneg(q)) {
-		zmod(q->num, q->den, &z);
-		zsub(q->den, z, &r->num);
-		zfree(z);
-	} else {
-		zmod(q->num, q->den, &r->num);
-	}
-	zcopy(q->den, &r->den);
-	r->num.sign = q->num.sign;
-	return r;
-}
-#endif
 
 /*
  * Return the integral part of a number.
@@ -722,31 +554,6 @@ qsquare(q)
 		zsquare(den, &q->den);
 	return q;
 }
-
-#if 0
-/*
- * Shift an integer by a given number of bits. This multiplies the number
- * by the appropriate power of two.  Positive numbers shift left, negative
- * ones shift right.  Low bits are truncated when shifting right.
- */
-NUMBER *
-qshift(q, n)
-	NUMBER *q;
-	long n;
-{
-	register NUMBER *r;
-
-	if (qisfrac(q))
-		math_error("Shift of non-integer");
-	if (qiszero(q) || (n == 0))
-		return qlink(q);
-	if (n <= -(q->num.len * BASEB))
-		return qlink(&_qzero_);
-	r = qalloc();
-	zshift(q->num, n, &r->num);
-	return r;
-}
-#endif
 
 /*
  * Scale a number by a power of two, as in:
@@ -823,122 +630,6 @@ qmax(q1, q2)
 	return qlink(q1);
 }
 
-#if 0
-/*
- * Perform the logical OR of two integers.
- */
-NUMBER *
-qor(q1, q2)
-	NUMBER *q1, *q2;
-{
-	register NUMBER *r;
-
-	if (qisfrac(q1) || qisfrac(q2))
-		math_error("Non-integers for logical or");
-	if ((q1 == q2) || qiszero(q2))
-		return qlink(q1);
-	if (qiszero(q1))
-		return qlink(q2);
-	r = qalloc();
-	zor(q1->num, q2->num, &r->num);
-	return r;
-}
-
-
-/*
- * Perform the logical AND of two integers.
- */
-NUMBER *
-qand(q1, q2)
-	NUMBER *q1, *q2;
-{
-	register NUMBER *r;
-	ZVALUE res;
-
-	if (qisfrac(q1) || qisfrac(q2))
-		math_error("Non-integers for logical and");
-	if (q1 == q2)
-		return qlink(q1);
-	if (qiszero(q1) || qiszero(q2))
-		return qlink(&_qzero_);
-	zand(q1->num, q2->num, &res);
-	if (ziszero(res)) {
-		zfree(res);
-		return qlink(&_qzero_);
-	}
-	r = qalloc();
-	r->num = res;
-	return r;
-}
-
-
-/*
- * Perform the logical XOR of two integers.
- */
-NUMBER *
-qxor(q1, q2)
-	NUMBER *q1, *q2;
-{
-	register NUMBER *r;
-	ZVALUE res;
-
-	if (qisfrac(q1) || qisfrac(q2))
-		math_error("Non-integers for logical xor");
-	if (q1 == q2)
-		return qlink(&_qzero_);
-	if (qiszero(q1))
-		return qlink(q2);
-	if (qiszero(q2))
-		return qlink(q1);
-	zxor(q1->num, q2->num, &res);
-	if (ziszero(res)) {
-		zfree(res);
-		return qlink(&_qzero_);
-	}
-	r = qalloc();
-	r->num = res;
-	return r;
-}
-
-/*
- * Return the number whose binary representation only has the specified
- * bit set (counting from zero).  This thus produces a given power of two.
- */
-NUMBER *
-qbitvalue(n)
-	long n;
-{
-	register NUMBER *r;
-
-	if (n <= 0)
-		return qlink(&_qone_);
-	r = qalloc();
-	zbitvalue(n, &r->num);
-	return r;
-}
-
-
-/*
- * Test to see if the specified bit of a number is on (counted from zero).
- * Returns TRUE if the bit is set, or FALSE if it is not.
- *	i = qbittest(q, n);
- */
-BOOL
-qbittest(q, n)
-	register NUMBER *q;
-	long n;
-{
-	int x, y;
-
-	if ((n < 0) || (n >= (q->num.len * BASEB)))
-		return FALSE;
-	x = q->num.v[n / BASEB];
-	y = (1 << (n % BASEB));
-	return ((x & y) != 0);
-}
-#endif
-
-
 /*
  * Return the precision of a number (usually for examining an epsilon value).
  * This is the largest power of two whose reciprocal is not smaller in absolute
@@ -960,44 +651,6 @@ qprecision(q)
 		r = 0;
 	return r;
 }
-
-
-#if 0
-/*
- * Return an integer indicating the sign of a number (-1, 0, or 1).
- *	i = qtst(q);
- */
-FLAG
-qtest(q)
-	register NUMBER *q;
-{
-	if (!ztest(q->num))
-		return 0;
-	if (q->num.sign)
-		return -1;
-	return 1;
-}
-
-
-/*
- * Determine whether or not one number exactly divides another one.
- * Returns TRUE if the first number is an integer multiple of the second one.
- */
-BOOL
-qdivides(q1, q2)
-	NUMBER *q1, *q2;
-{
-	if (qiszero(q1))
-		return TRUE;
-	if (qisint(q1) && qisint(q2)) {
-		if (qisunit(q2))
-			return TRUE;
-		return zdivides(q1->num, q2->num);
-	}
-	return zdivides(q1->num, q2->num) && zdivides(q2->den, q1->den);
-}
-#endif
-
 
 /*
  * Compare two numbers and return an integer indicating their relative size.
@@ -1130,31 +783,6 @@ qreli(q, n)
 	q2.links = 1;
 	return qrel(q, &q2);	/* full fractional compare */
 }
-
-
-#if 0
-/*
- * Compare a number against a small integer to see if they are equal.
- * Returns TRUE if they differ.
- */
-BOOL
-qcmpi(q, n)
-	NUMBER *q;
-	long n;
-{
-	long len;
-
-	len = q->num.len;
-	if ((len > 2) || qisfrac(q) || (q->num.sign != (n < 0)))
-		return TRUE;
-	if (n < 0)
-		n = -n;
-	if (((HALF)(n)) != q->num.v[0])
-		return TRUE;
-	n = ((FULL) n) >> BASEB;
-	return (((n != 0) != (len == 2)) || (n != q->num.v[1]));
-}
-#endif
 
 /*
  * Number node allocation routines

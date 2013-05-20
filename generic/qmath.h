@@ -25,191 +25,82 @@ typedef struct {
 /*
  * Input. output, allocation, and conversion routines.
  */
-extern NUMBER *qalloc MATH_PROTO((void)); /* NEED **/
-extern NUMBER *qcopy MATH_PROTO((NUMBER *q));/* NEED **/
-extern NUMBER *iitoq MATH_PROTO((long i1, long i2));/* NEED **/
-#if 0
-extern NUMBER *atoqnum MATH_PROTO((char *str));
-#endif
-extern NUMBER *itoq MATH_PROTO((long i));/* NEED **/
-extern long qtoi MATH_PROTO((NUMBER *q));/* NEED **/
-extern long qparse MATH_PROTO((CONST char *str, int flags));/* NEED **/
-extern void qfreenum MATH_PROTO((NUMBER *q));/* NEED **/
-#if 0
-extern void qprintnum MATH_PROTO((NUMBER *q, int mode));
-#endif
-extern void qprintff MATH_PROTO((NUMBER *q, long width, long precision));/* NEED **/
-extern void Qprintff MATH_PROTO((NUMBER *q, long width, long precision)); /* NEED **/
-#if 0
-extern void qprintfe MATH_PROTO((NUMBER *q, long width, long precision));/* NEED **/
-#endif
-extern void qprintfe_round MATH_PROTO((NUMBER *q, long width, long precision));/* NEED **/
-#if 0
-extern void Qprintfe MATH_PROTO((NUMBER *q, long width, long precision));
-#endif
-extern void qprintfr MATH_PROTO((NUMBER *q, long width, BOOL force));/* NEED **/
-extern void qprintfd MATH_PROTO((NUMBER *q, long width));/* NEED **/
-extern void qprintfx MATH_PROTO((NUMBER *q, long width));/* NEED **/
-extern void qprintfb MATH_PROTO((NUMBER *q, long width));/* NEED **/
-extern void qprintfo MATH_PROTO((NUMBER *q, long width));/* NEED **/
-#if 0
-extern int tilde_ok;
-extern int tab_ok;
-#endif
-
-
+extern NUMBER *qalloc MATH_PROTO((void));
+extern NUMBER *qcopy MATH_PROTO((NUMBER *q));
+extern NUMBER *iitoq MATH_PROTO((long i1, long i2));
+extern NUMBER *itoq MATH_PROTO((long i));
+extern long qtoi MATH_PROTO((NUMBER *q));
+extern long qparse MATH_PROTO((CONST char *str, int flags));
+extern void qfreenum MATH_PROTO((NUMBER *q));
+extern void qprintff MATH_PROTO((NUMBER *q, long width, long precision));
+extern void Qprintff MATH_PROTO((NUMBER *q, long width, long precision)); 
+extern void qprintfe_round MATH_PROTO((NUMBER *q, long width, long precision));
+extern void qprintfr MATH_PROTO((NUMBER *q, long width, BOOL force));
+extern void qprintfd MATH_PROTO((NUMBER *q, long width));
+extern void qprintfx MATH_PROTO((NUMBER *q, long width));
+extern void qprintfb MATH_PROTO((NUMBER *q, long width));
+extern void qprintfo MATH_PROTO((NUMBER *q, long width));
 
 /*
  * Basic numeric routines.
  */
-#if 0
-extern NUMBER *qaddi MATH_PROTO((NUMBER *q, long i));
-extern NUMBER *qmuli MATH_PROTO((NUMBER *q, long i));
-#endif
-extern NUMBER *qdivi MATH_PROTO((NUMBER *q, long i));/* NEED **/
-extern NUMBER *qadd MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qsub MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qmul MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qdiv MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qquo MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qmod MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qmin MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qmax MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-#if 0
-extern NUMBER *qand MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qor MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qxor MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qpowermod MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-#endif
-extern NUMBER *qpowi MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qsquare MATH_PROTO((NUMBER *q));/* NEED **/
-extern NUMBER *qneg MATH_PROTO((NUMBER *q));/* NEED **/
-#if 0
-extern NUMBER *qsign MATH_PROTO((NUMBER *q));
-#endif
-extern NUMBER *qint MATH_PROTO((NUMBER *q));/* NEED **/
-#if 0
-extern NUMBER *qfrac MATH_PROTO((NUMBER *q));
-extern NUMBER *qnum MATH_PROTO((NUMBER *q));
-extern NUMBER *qden MATH_PROTO((NUMBER *q));
-#endif
-extern NUMBER *qinv MATH_PROTO((NUMBER *q));/* NEED **/
-extern NUMBER *qabs MATH_PROTO((NUMBER *q));/* NEED **/
-extern NUMBER *qinc MATH_PROTO((NUMBER *q));/* NEED **/
-extern NUMBER *qdec MATH_PROTO((NUMBER *q));/* NEED **/
-#if 0
-extern NUMBER *qshift MATH_PROTO((NUMBER *q, long n));
-extern NUMBER *qtrunc MATH_PROTO((NUMBER *q1, NUMBER *q2));
-#endif
-extern NUMBER *qround MATH_PROTO((NUMBER *q, long places));/* NEED **/
-#if 0
-extern NUMBER *qbtrunc MATH_PROTO((NUMBER *q1, NUMBER *q2));
-#endif
-extern NUMBER *qbround MATH_PROTO((NUMBER *q, long places));/* NEED **/
-extern NUMBER *qscale MATH_PROTO((NUMBER *q, long i));/* NEED **/
-#if 0
-extern BOOL qdivides MATH_PROTO((NUMBER *q1, NUMBER *q2));
-#endif
-extern BOOL qcmp MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-#if 0
-extern BOOL qcmpi MATH_PROTO((NUMBER *q, long i));
-#endif
-extern FLAG qrel MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern FLAG qreli MATH_PROTO((NUMBER *q, long i));/* NEED **/
-#if 0
-extern BOOL qisset MATH_PROTO((NUMBER *q, long i));
-#endif
-
+extern NUMBER *qdivi MATH_PROTO((NUMBER *q, long i));
+extern NUMBER *qadd MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qsub MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qmul MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qdiv MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qquo MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qmod MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qmin MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qmax MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qpowi MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qsquare MATH_PROTO((NUMBER *q));
+extern NUMBER *qneg MATH_PROTO((NUMBER *q));
+extern NUMBER *qint MATH_PROTO((NUMBER *q));
+extern NUMBER *qinv MATH_PROTO((NUMBER *q));
+extern NUMBER *qabs MATH_PROTO((NUMBER *q));
+extern NUMBER *qinc MATH_PROTO((NUMBER *q));
+extern NUMBER *qdec MATH_PROTO((NUMBER *q));
+extern NUMBER *qround MATH_PROTO((NUMBER *q, long places));
+extern NUMBER *qbround MATH_PROTO((NUMBER *q, long places));
+extern NUMBER *qscale MATH_PROTO((NUMBER *q, long i));
+extern BOOL qcmp MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern FLAG qrel MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern FLAG qreli MATH_PROTO((NUMBER *q, long i));
 
 /*
  * More complicated numeric functions.
  */
-#if 0
-extern NUMBER *qcomb MATH_PROTO((NUMBER *q1, NUMBER *q2));
-#endif
-extern NUMBER *qgcd MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qlcm MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-#if 0
-extern NUMBER *qfact MATH_PROTO((NUMBER *q));
-extern NUMBER *qpfact MATH_PROTO((NUMBER *q));
-#endif
-extern NUMBER *qminv MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-extern NUMBER *qfacrem MATH_PROTO((NUMBER *q1, NUMBER *q2));/* NEED **/
-#if 0
-extern NUMBER *qperm MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qgcdrem MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qlowfactor MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qfib MATH_PROTO((NUMBER *q));
-extern NUMBER *qcfappr MATH_PROTO((NUMBER *q, NUMBER *epsilon));
-extern NUMBER *qisqrt MATH_PROTO((NUMBER *q));
-extern NUMBER *qjacobi MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qiroot MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qbappr MATH_PROTO((NUMBER *q, NUMBER *epsilon));
-extern NUMBER *qlcmfact MATH_PROTO((NUMBER *q));
-extern NUMBER *qminmod MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qredcin MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qredcout MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qredcmul MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-extern NUMBER *qredcsquare MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qredcpower MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-extern BOOL qprimetest MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern BOOL qissquare MATH_PROTO((NUMBER *q));
-extern long qilog2 MATH_PROTO((NUMBER *q));
-extern long qilog10 MATH_PROTO((NUMBER *q));
-extern BOOL qcmpmod MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-extern BOOL qquomod MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER **retdiv,
-	NUMBER **retmod));
-extern FLAG qnear MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));
-extern FLAG qdigit MATH_PROTO((NUMBER *q, long i));
-#endif
-extern long qprecision MATH_PROTO((NUMBER *q));/* NEED **/
-extern long qplaces MATH_PROTO((NUMBER *q));/* NEED **/
-extern long qdigits MATH_PROTO((NUMBER *q));/* NEED **/
-#if 0
-extern HASH qhash MATH_PROTO((NUMBER *q));
-extern void setepsilon MATH_PROTO((NUMBER *q));
-#endif
-
-#if 0
-extern NUMBER *qbitvalue MATH_PROTO((long i));
-extern NUMBER *qmulmod MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-extern NUMBER *qsquaremod MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern NUMBER *qaddmod MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-extern NUMBER *qsubmod MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *q3));
-extern NUMBER *qreadval MATH_PROTO((FILE *fp));
-extern NUMBER *qnegmod MATH_PROTO((NUMBER *q1, NUMBER *q2));
-extern BOOL qbittest MATH_PROTO((NUMBER *q, long i));
-extern FLAG qtest MATH_PROTO((NUMBER *q));
-#endif
-
+extern NUMBER *qgcd MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qlcm MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qminv MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern NUMBER *qfacrem MATH_PROTO((NUMBER *q1, NUMBER *q2));
+extern long qprecision MATH_PROTO((NUMBER *q));
+extern long qplaces MATH_PROTO((NUMBER *q));
+extern long qdigits MATH_PROTO((NUMBER *q));
 
 /*
  * Transcendental functions.  These all take an epsilon argument to
  * specify the required accuracy of the calculation.
  */
-extern NUMBER *qsqrt MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qpower MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qroot MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qcos MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qsin MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qexp MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qln MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qtan MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qacos MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qasin MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qatan MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qatan2 MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qhypot MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qcosh MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qsinh MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-extern NUMBER *qtanh MATH_PROTO((NUMBER *q, NUMBER *epsilon));/* NEED **/
-#if 0
-extern NUMBER *qacosh MATH_PROTO((NUMBER *q, NUMBER *epsilon));
-extern NUMBER *qasinh MATH_PROTO((NUMBER *q, NUMBER *epsilon));
-extern NUMBER *qatanh MATH_PROTO((NUMBER *q, NUMBER *epsilon));
-#endif
-extern NUMBER *qlegtoleg MATH_PROTO((NUMBER *q, NUMBER *epsilon, BOOL wantneg));/* NEED **/
-extern NUMBER *qpi MATH_PROTO((NUMBER *epsilon)); /* NEED **/
+extern NUMBER *qsqrt MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qpower MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));
+extern NUMBER *qroot MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));
+extern NUMBER *qcos MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qsin MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qexp MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qln MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qtan MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qacos MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qasin MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qatan MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qatan2 MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));
+extern NUMBER *qhypot MATH_PROTO((NUMBER *q1, NUMBER *q2, NUMBER *epsilon));
+extern NUMBER *qcosh MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qsinh MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qtanh MATH_PROTO((NUMBER *q, NUMBER *epsilon));
+extern NUMBER *qlegtoleg MATH_PROTO((NUMBER *q, NUMBER *epsilon, BOOL wantneg));
+extern NUMBER *qpi MATH_PROTO((NUMBER *epsilon)); 
 
 
 /*
@@ -243,24 +134,10 @@ extern NUMBER *qpi MATH_PROTO((NUMBER *epsilon)); /* NEED **/
 #define QPF_SLASH	0x1	/* allow slash for fractional number */
 #define QPF_IMAG	0x2	/* allow trailing 'i' for imaginary number */
 
-
-#if 0
-#ifdef VARARGS
-extern void qprintf();
-#else
-extern void qprintf MATH_PROTO((char *, ...));
-#endif
-#endif
-
-
 /*
  * constants used often by the arithmetic routines
  */
 extern NUMBER _qzero_, _qone_, _qnegone_, _qonehalf_;
-#if 0
-extern long _epsilonprec_;	/* binary precision of epsilon */
-extern NUMBER *_epsilon_;	/* default error for real functions */
-#endif
 
 #endif
 

@@ -304,9 +304,6 @@ static NUMBER *		Afractoq   _ANSI_ARGS_ ((char *, char **));
 static NUMBER *		qceil      _ANSI_ARGS_ ((NUMBER *, NUMBER *));
 static NUMBER *		qfloor     _ANSI_ARGS_ ((NUMBER *, NUMBER *));
 static NUMBER *		qlog10     _ANSI_ARGS_ ((NUMBER *, NUMBER *));
-/*
-static void		Qfree      _ANSI_ARGS_ ((NUMBER *));
-*/
 #define Qfree(q)  qfree(q); (q)=NULL
 static void		Zlowfactor _ANSI_ARGS_ ((ZVALUE, ZVALUE, ZVALUE *));
 static void		Zprimetest _ANSI_ARGS_ ((ZVALUE, ZVALUE, ZVALUE *));
@@ -1356,14 +1353,6 @@ ExprGetValue(interp, infoPtr, prec, valuePtr, mdPtr)
 		}
 		break;
 	    case LEFT_SHIFT:
-/*
-    		math_divertio();
-		zprintval(value2.intValue, 0L, 0L);
-		math_io = math_getdivertedio();
-		math_cleardiversions();
-		l_shift = atol(math_io);
-		ckfree(math_io);
-*/
 		l_shift = ztoi(value2.intValue);
 		zshift(valuePtr->intValue, l_shift, &z_tmp);
 		zfree(valuePtr->intValue);
@@ -1371,14 +1360,6 @@ ExprGetValue(interp, infoPtr, prec, valuePtr, mdPtr)
 		zfree(z_tmp);
 		break;
 	    case RIGHT_SHIFT:
-/*
-    		math_divertio();
-		zprintval(value2.intValue, 0L, 0L);
-		math_io = math_getdivertedio();
-		math_cleardiversions();
-		l_shift = atol(math_io);
-		ckfree(math_io);
-*/
 		l_shift = ztoi(value2.intValue);
 		zshift(valuePtr->intValue, (-l_shift), &z_tmp);
 		zfree(valuePtr->intValue);
@@ -2909,19 +2890,6 @@ Afractoq (s, term)
     q->den = newden;
     return q;
 }
-
-/* Qfree  - safe interface to qfree */
-/*
-static void
-Qfree(q)
-    NUMBER *q;
-{
-    if (q == NULL) {
-	return;
-    }
-    qfree(q);
-}
-*/
 
 static void
 Zlowfactor(z1, z2, res)
