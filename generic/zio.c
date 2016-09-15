@@ -27,27 +27,6 @@ typedef struct Out {
     long used;		/* space used in buffer */
 } Out;
 
-
-#if 0
-/*
- * zio_init - perform needed initilization work
- *
- * On some systems, one cannot initialize a pointer to a FILE *.
- * This routine, called once at startup is a work-a-round for
- * systems with such bogons.
- */
-void
-zio_init()
-{
-    static int done = 0;	/* 1 => routine already called */
-
-    if (!done) {
-	outfp = stdout;
-	done = 1;
-    }
-}
-#endif
-
 static Out *
 GetOut()
 {
@@ -156,20 +135,6 @@ math_fmt TCL_VARARGS_DEF(char *, arg1)
 	math_str(buf);
 }
 
-
-#if 0
-/*
- * Flush the current output stream.
- */
-void
-math_flush()
-{
-	if (!outputisstring)
-		fflush(outfp);
-}
-#endif
-
-
 /*
  * Divert further output so that it is saved into a string that will be
  * returned later when the diversion is completed.  The current state of
@@ -228,44 +193,6 @@ math_cleardiversions()
 	while (*outListPtr) 
 		ckfree(math_getdivertedio());
 }
-
-
-#if 0
-/*
- * Set the output routines to output to the specified FILE stream.
- * This interacts with output diversion in the following manner.
- *	STDOUT	diversion	action
- *	----	---------	------
- *	yes	yes		set output to diversion string again.
- *	yes	no		set output to stdout.
- *	no	yes		set output to specified file.
- *	no	no		set output to specified file.
- */
-void
-math_setfp(newfp)
-	FILE *newfp;
-{
-	outfp = newfp;
-	outputisstring = (oldiostates && (newfp == stdout));
-}
-
-/*
- * Set the number of digits for float or exponential output.
- * This also returns the previous number of digits.
- */
-long
-math_setdigits(newdigits)
-	long newdigits;
-{
-	long olddigits;
-
-	if (newdigits < 0)
-		math_error("Setting illegal number of digits");
-	olddigits = _outdigits_;
-	_outdigits_ = newdigits;
-	return olddigits;
-}
-#endif
 
 /*
  * Print an integer value as a hex number.

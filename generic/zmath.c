@@ -892,53 +892,6 @@ zmodi(z, n)
 	return val;
 }
 
-#if 0
-/*
- * Return whether or not one number exactly divides another one.
- * Returns TRUE if division occurs with no remainder.
- * z1 is the number to be divided by z2.
- */
-BOOL
-zdivides(z1, z2)
-	ZVALUE z1, z2;		/* numbers to test division into and by */
-{
-	ZVALUE temp;
-	long cv;
-
-	z1.sign = 0;
-	z2.sign = 0;
-	/*
-	 * Take care of obvious cases first
-	 */
-	if (zisleone(z2)) {	/* division by zero or one */
-		if (*z2.v == 0)
-			math_error("Division by zero");
-		return TRUE;
-	}
-	if (ziszero(z1))	/* everything divides zero */
-		return TRUE;
-	if (z1.len < z2.len)	/* quick size comparison */
-		return FALSE;
-	if ((z1.len == z2.len) && (z1.v[z1.len-1] < z2.v[z2.len-1]))	/* more */
-		return FALSE;
-	if (zisodd(z1) && ziseven(z2))	/* can't divide odd by even */
-		return FALSE;
-	if (zlowbit(z1) < zlowbit(z2))	/* can't have smaller power of two */
-		return FALSE;
-	cv = zrel(z1, z2);	/* can't divide smaller number */
-	if (cv <= 0)
-		return (cv == 0);
-	/*
-	 * Now do the real work.  Divisor divides dividend if the gcd of the
-	 * two numbers equals the divisor.
-	 */
-	zgcd(z1, z2, &temp);
-	cv = zcmp(z2, temp);
-	zfree(temp);
-	return (cv == 0);
-}
-#endif
-
 /*
  * Compute the logical OR of two numbers
  */
@@ -1165,55 +1118,6 @@ zhighbit(z)
 	}
 	return (z.len*BASEB)+(bitval-bitmask-BASEB);
 }
-
-
-#if 0
-/*
- * Reverse the bits of a particular range of bits of a number.
- *
- * This function returns an integer with bits a thru b swapped.
- * That is, bit a is swapped with bit b, bit a+1 is swapped with b-1,
- * and so on.
- *
- * As a special case, if the ending bit position is < 0, is it taken to 
- * mean the highest bit set.  Thus zbitrev(0, -1, z, &res) will 
- * perform a complete bit reverse of the number 'z'.
- *
- * As a special case, if the starting bit position is < 0, is it taken to 
- * mean the lowest bit set.  Thus zbitrev(-1, -1, z, &res) is the
- * same as zbitrev(lowbit(z), highbit(z), z, &res).
- *
- * Note that the low order bit number is taken to be 0.  Also, bitrev
- * ignores the sign of the number.
- *
- * Bits beyond the highest bit are taken to be zero.  Thus the calling
- * bitrev(0, 100, _one_, &res) will result in a value of 2^100.
- */
-void
-zbitrev(low, high, z, res)
-	long low;	/* lowest bit to reverse, <0 => lowbit(z) */
-	long high;	/* highest bit to reverse, <0 => highbit(z) */
-	ZVALUE z;	/* value to bit reverse */
-	ZVALUE *res;	/* resulting bit reverse number */
-{
-}
-
-
-/*
- * Return whether or not the specifed bit number is set in a number.
- * Rightmost bit of a number is bit 0.
- */
-BOOL
-zisset(z, n)
-	ZVALUE z;
-	long n;
-{
-	if ((n < 0) || ((n / BASEB) >= z.len))
-		return FALSE;
-	return ((z.v[n / BASEB] & (((HALF) 1) << (n % BASEB))) != 0);
-}
-#endif
-
 
 /*
  * Check whether or not a number has exactly one bit set, and

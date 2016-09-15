@@ -11,7 +11,6 @@
 static ZVALUE primeprod;		/* product of primes under 100 */
 ZVALUE _tenpowers_[2 * BASEB];		/* table of 10^2^n */
 
-
 /*
  * Compute the factorial of a number.
  */
@@ -112,55 +111,6 @@ next: ;
 	}
 	*dest = res;
 }
-
-#if 0
-/*
- * Compute the least common multiple of all the numbers up to the
- * specified number.
- */
-void
-zlcmfact(z, dest)
-	ZVALUE z, *dest;
-{
-	long n;			/* limiting number to multiply by */
-	long p;			/* current prime */
-	long pp = 0;		/* power of prime */
-	long i;			/* test value */
-	ZVALUE res, temp;
-
-	if (zisneg(z) || ziszero(z))
-		math_error("Non-positive argument for lcmfact");
-	if (zisbig(z))
-		math_error("Very large lcmfact");
-	n = (zistiny(z) ? z1tol(z) : z2tol(z));
-	/*
-	 * Multiply by powers of the necessary odd primes in order.
-	 * The power for each prime is the highest one which is not
-	 * more than the specified number.
-	 */
-	res = _one_;
-	for (p = 3; p <= n; p += 2) {
-		for (i = 3; (i * i) <= p; i += 2) {
-			if ((p % i) == 0)
-				goto next;
-		}
-		i = p;
-		while (i <= n) {
-			pp = i;
-			i *= p;
-		}
-		zmuli(res, pp, &temp);
-		zfree(res);
-		res = temp;
-next: ;
-	}
-	/*
-	 * Finish by scaling by the necessary power of two.
-	 */
-	zshift(res, zhighbit(z), dest);
-	zfree(res);
-}
-#endif
 
 /*
  * Compute the permutation function  M! / (M - N)!.
@@ -344,65 +294,6 @@ notprime:
 	zfree(z1);
 	return FALSE;
 }
-
-#if 0
-/*
- * Compute the Jacobi function (p / q) for odd q.
- * If q is prime then the result is:
- *	1 if p == x^2 (mod q) for some x.
- *	-1 otherwise.
- * If q is not prime, then the result is not meaningful if it is 1.
- * This function returns 0 if q is even or q < 0.
- */
-FLAG
-zjacobi(z1, z2)
-	ZVALUE z1, z2;
-{
-	ZVALUE p, q, tmp;
-	long lowbit;
-	int val;
-
-	if (ziseven(z2) || zisneg(z2))
-		return 0;
-	val = 1;
-	if (ziszero(z1) || zisone(z1))
-		return val;
-	if (zisunit(z1)) {
-		if ((*z2.v - 1) & 0x2)
-			val = -val;
-		return val;
-	}
-	zcopy(z1, &p);
-	zcopy(z2, &q);
-	for (;;) {
-		zmod(p, q, &tmp);
-		zfree(p);
-		p = tmp;
-		if (ziszero(p)) {
-			zfree(p);
-			p = _one_;
-		}
-		if (ziseven(p)) {
-			lowbit = zlowbit(p);
-			zshift(p, -lowbit, &tmp);
-			zfree(p);
-			p = tmp;
-			if ((lowbit & 1) && (((*q.v & 0x7) == 3) || ((*q.v & 0x7) == 5)))
-				val = -val;
-		}
-		if (zisunit(p)) {
-			zfree(p);
-			zfree(q);
-			return val;
-		}
-		if ((*p.v & *q.v & 0x3) == 3)
-			val = -val;
-		tmp = q;
-		q = p;
-		p = tmp;
-	}
-}
-#endif
 
 /*
  * Return the Fibonacci number F(n).
@@ -787,60 +678,6 @@ zmodinv(u, v, res)
 	return FALSE;
 }
 
-
-#if 0
-/*
- * Approximate the quotient of two integers by another set of smaller
- * integers.  This uses continued fractions to determine the smaller set.
- */
-void
-zapprox(z1, z2, res1, res2)
-	ZVALUE z1, z2, *res1, *res2;
-{
-	int sign;
-	ZVALUE u1, v1, u3, v3, q, t1, t2, t3;
-
-	sign = ((z1.sign != 0) ^ (z2.sign != 0));
-	z1.sign = 0;
-	z2.sign = 0;
-	v3 = z2;
-	u3 = z1;
-	u1 = _one_;
-	v1 = _zero_;
-	while (!ziszero(v3)) {
-		zdiv(u3, v3, &q, &t1);
-		zmul(v1, q, &t2);
-		zsub(u1, t2, &t3);
-		zfree(q);
-		zfree(t2);
-		zfree(u1);
-		if ((u3.v != z1.v) && (u3.v != z2.v))
-			zfree(u3);
-		u1 = v1;
-		u3 = v3;
-		v1 = t3;
-		v3 = t1;
-	}
-	if (!zisunit(u3))
-		math_error("Non-relativly prime numbers for approx");
-	if ((u3.v != z1.v) && (u3.v != z2.v))
-		zfree(u3);
-	if ((v3.v != z1.v) && (v3.v != z2.v))
-		zfree(v3);
-	zfree(v1);
-	zmul(u1, z1, &t1);
-	zsub(t1, _one_, &t2);
-	zfree(t1);
-	zquo(t2, z2, &t1);
-	zfree(t2);
-	u1.sign = (BOOL)sign;
-	t1.sign = 0;
-	*res1 = t1;
-	*res2 = u1;
-}
-#endif
-
-
 /*
  * Binary gcd algorithm
  * This algorithm taken from Knuth
@@ -1056,84 +893,6 @@ zrelprime(z1, z2)
 	return result;
 }
 
-#if 0
-/*
- * Compute the log of one number base another, to the closest integer.
- * This is the largest integer which when the second number is raised to it,
- * the resulting value is less than or equal to the first number.
- * Example:  zlog(123456, 10) = 5.
- */
-long
-zlog(z1, z2)
-	ZVALUE z1, z2;
-{
-	register ZVALUE *zp;		/* current square */
-	long power;			/* current power */
-	long worth;			/* worth of current square */
-	ZVALUE val;			/* current value of power */
-	ZVALUE temp;			/* temporary */
-	ZVALUE squares[32];		/* table of squares of base */
-
-	/*
-	 * Make sure that the numbers are nonzero and the base is greater than one.
-	 */
-	if (zisneg(z1) || ziszero(z1) || zisneg(z2) || zisleone(z2))
-		math_error("Bad arguments for log");
-	/*
-	 * Reject trivial cases.
-	 */
-	if (z1.len < z2.len)
-		return 0;
-	if ((z1.len == z2.len) && (z1.v[z1.len-1] < z2.v[z2.len-1]))
-		return 0;
-	power = zrel(z1, z2);
-	if (power <= 0)
-		return (power + 1);
-	/*
-	 * Handle any power of two special.
-	 */
-	if (zisonebit(z2))
-		return (zhighbit(z1) / zlowbit(z2));
-	/*
-	 * Handle base 10 special
-	 */
-	if ((z2.len == 1) && (*z2.v == 10))
-		return zlog10(z1);
-	/*
-	 * Now loop by squaring the base each time, and see whether or
-	 * not each successive square is still smaller than the number.
-	 */
-	worth = 1;
-	zp = &squares[0];
-	*zp = z2;
-	while (((zp->len * 2) - 1) <= z1.len) {	/* while square not too large */
-		zsquare(*zp, zp + 1);
-		zp++;
-		worth *= 2;
-	}
-	/*
-	 * Now back down the squares, and multiply them together to see
-	 * exactly how many times the base can be raised by.
-	 */
-	val = _one_;
-	power = 0;
-	for (; zp >= squares; zp--, worth /= 2) {
-		if ((val.len + zp->len - 1) <= z1.len) {
-			zmul(val, *zp, &temp);
-			if (zrel(z1, temp) >= 0) {
-				zfree(val);
-				val = temp;
-				power += worth;
-			} else
-				zfree(temp);
-		}
-		if (zp != squares)
-			zfree(*zp);
-	}
-	return power;
-}
-#endif
-
 /*
  * Return the integral log base 10 of a number.
  */
@@ -1182,25 +941,6 @@ zlog10(z)
 	zfree(val);  /* tp: fix leak */
 	return power;
 }
-
-#if 0
-/*
- * Return the number of times that one number will divide another.
- * This works similarly to zlog, except that divisions must be exact.
- * For example, zdivcount(540, 3) = 3, since 3^3 divides 540 but 3^4 won't.
- */
-long
-zdivcount(z1, z2)
-	ZVALUE z1, z2;
-{
-	long count;		/* number of factors removed */
-	ZVALUE tmp;		/* ignored return value */
-
-	count = zfacrem(z1, z2, &tmp);
-	zfree(tmp);
-	return count;
-}
-#endif
 
 /*
  * Remove all occurances of the specified factor from a number.
@@ -1416,39 +1156,6 @@ zdigits(z1)
 	return (zlog10(z1) + 1);
 }
 
-#if 0
-/*
- * Return the single digit at the specified decimal place of a number,
- * where 0 means the rightmost digit.  Example:  zdigit(1234, 1) = 3.
- */
-FLAG
-zdigit(z1, n)
-	ZVALUE z1;
-	long n;
-{
-	ZVALUE tmp1, tmp2;
-	FLAG res;
-
-	z1.sign = 0;
-	if (ziszero(z1) || (n < 0) || (n / BASEDIG >= z1.len))
-		return 0;
-	if (n == 0)
-		return zmodi(z1, 10L);
-	if (n == 1)
-		return zmodi(z1, 100L) / 10;
-	if (n == 2)
-		return zmodi(z1, 1000L) / 100;
-	if (n == 3)
-		return zmodi(z1, 10000L) / 1000;
-	ztenpow(n, &tmp1);
-	zquo(z1, tmp1, &tmp2);
-	res = zmodi(tmp2, 10L);
-	zfree(tmp1);
-	zfree(tmp2);
-	return res;
-}
-#endif
-
 /*
  * Find the square root of a number.  This is the greatest integer whose
  * square is less than or equal to the number. Returns TRUE if the
@@ -1656,56 +1363,4 @@ zroot(z1, z2, dest)
 	}
 }
 
-#if 0
-/*
- * Test to see if a number is an exact square or not.
- */
-BOOL
-zissquare(z)
-	ZVALUE z;		/* number to be tested */
-{
-	long n, i;
-	ZVALUE tmp;
-
-	if (z.sign)		/* negative */
-		return FALSE;
-	while ((z.len > 1) && (*z.v == 0)) {	/* ignore trailing zero words */
-		z.len--;
-		z.v++;
-	}
-	if (zisleone(z))	/* zero or one */
-		return TRUE;
-	n = *z.v & 0xf;		/* check mod 16 values */
-	if ((n != 0) && (n != 1) && (n != 4) && (n != 9))
-		return FALSE;
-	n = *z.v & 0xff;	/* check mod 256 values */
-	i = 0x80;
-	while (((i * i) & 0xff) != n)
-		if (--i <= 0)
-			return FALSE;
-	n = zsqrt(z, &tmp);	/* must do full square root test now */
-	zfree(tmp);
-	return n;
-}
-
-
-/*
- * Return a trivial hash value for an integer.
- */
-HASH
-zhash(z)
-	ZVALUE z;
-{
-	HASH hash;
-	int i;
-
-	hash = z.len * 1000003;
-	if (z.sign)
-		hash += 10000019;
-	for (i = z.len - 1; i >= 0; i--)
-		/* ignore Saber-C warning about Over/underflow */
-		hash = hash * 79372817 + z.v[i] + 10000079;
-	return hash;
-}
-#endif
 /* END CODE */
