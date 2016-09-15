@@ -10,9 +10,13 @@ INSTALLING MPEXPR FOR WINDOWS
 
 Binary install:
  
-1. Copy mpexpr.dll to your Tcl .\lib directory.  
+1. Copy appropriate mpexpr.dll to your Tcl .\lib directory.  
     
-    copy mpexpr12.dll  c:\tcl\lib\mpexpr12.dll
+   For a 32-bit installation of Tcl:
+    copy mpexpr12.dll-win32  c:\tcl\lib\mpexpr12.dll
+
+   For a 64-bit installation of Tcl:
+    copy mpexpr12.dll-win64  c:\tcl\lib\mpexpr12.dll
 
 2. Copy or add pkgIndex.tcl to your Tcl lib directory.  This is so the
    'package unknown' scripts can resolve the 'package ifneeded' to load the
@@ -41,8 +45,8 @@ BUILDING MPEXPR FOR WINDOWS
 
 The test development environment is
 	Windows 7
-	Microsoft Visual C++ 11.0
-	Tcl 8.5.13 for Windows
+	Microsoft Visual C++ 2015
+	Tcl 8.6.4 for Windows (32/64-bit)
 
 1.  Install Tcl.  The 'binary' Tcl distributions contain all the include
     and library files needed by Mpexpr.  Alternatively, you can build
@@ -55,7 +59,7 @@ The test development environment is
 3.  Make it!  
 	C:\mpexpr\win> nmake -f makefile.vc
     or
-        C:\mpexpr\win> nmake -f makefile.vc TCL=C:\tcl TCLLIB=C:\tcl\lib\tcl85.lib
+        C:\mpexpr\win> nmake -f makefile.vc TCL=C:\tcl TCLLIB=C:\tcl\lib\tcl86.lib
 
     If you get an error about ntwin32.mak not found, look for the
     ntwin32.mak file in the Windows SDK directories, and add an extended
