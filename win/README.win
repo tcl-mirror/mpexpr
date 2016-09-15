@@ -3,7 +3,7 @@ Mpexpr for Windows
 BEFORE YOU BEGIN
 
 Mpexpr has been ported to WindowsNT.
-It has been tested with the latest version of Tcl, 8.6.0
+It has been tested with the latest version of Tcl, 8.6
 
 
 INSTALLING MPEXPR FOR WINDOWS
@@ -12,20 +12,20 @@ Binary install:
  
 1. Copy mpexpr.dll to your Tcl .\lib directory.  
     
-    copy mpexpr10.dll  c:\tcl\lib\mpexpr10.dll
+    copy mpexpr12.dll  c:\tcl\lib\mpexpr12.dll
 
 2. Copy or add pkgIndex.tcl to your Tcl lib directory.  This is so the
    'package unknown' scripts can resolve the 'package ifneeded' to load the
    dll.
 
-    mkdir c:\tcl\lib\mpexpr10
-    copy pkgIndex.tcl c:\tcl\lib\mpexpr10
+    mkdir c:\tcl\lib\mpexpr12
+    copy pkgIndex.tcl c:\tcl\lib\mpexpr12
 
 3. Try it out!
 
     c:\> tclsh
     % package require Mpexpr
-    1.0 
+    1.2 
     % mpexpr fib(34)
 
     If you get errors:
@@ -33,7 +33,7 @@ Binary install:
     If 'package require' says it can't find package Mpexpr:
 	    -make sure you've installed the pkgIndex.tcl.
 	    -or just load the mpexpr.dll manually
-		    % load "c:/tcl/lib/mpexpr10.dll"
+		    % load "c:/tcl/lib/mpexpr12.dll"
 		    (or wherever you put it)
 
 

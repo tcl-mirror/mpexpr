@@ -4,7 +4,7 @@ Mpexpr README
 Multiple precision math for Tcl
 
 Copyright 1998 Tom Poindexter,  all rights reserved
-tpoindex@nyx.net
+tpoindex@gmail.com
 
 Mpexpr is distributed under a "BSD" style license.  
 See the file 'LICENSE.TERMS' for details.
@@ -129,9 +129,9 @@ REQUIREMENTS:
 
 WINDOWS BINARIES
 
-A Windows DLL is included, compiled with Tcl 8.0.  To install, unpack
+A Windows DLL is included, compiled with Tcl 8.6.  To install, unpack
 all the files in the ./win directory, and run:
-	tclsh80 install.tcl
+	tclsh86 install.tcl
 
 Please note!!  	I'm not suppling a .zip file for Windows.
 		The popular WinZip program can unpack .tar.gz files.  Save the
