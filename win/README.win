@@ -61,14 +61,6 @@ The test development environment is
     or
         C:\mpexpr\win> nmake -f makefile.vc TCL=C:\tcl TCLLIB=C:\tcl\lib\tcl86.lib
 
-    If you get an error about ntwin32.mak not found, look for the
-    ntwin32.mak file in the Windows SDK directories, and add an extended
-    INCLUDE list, e.g.,
-
-       INCLUDE="%INCLUDE%;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include"
-
-    to the nmake command line.
-
 4.  Test
 	C:\mpexpr> nmake -f makefile.vc test
 

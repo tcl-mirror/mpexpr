@@ -54,7 +54,9 @@ DEFINES = -nologo $(DEBUGDEFINES) -DUSE_TCLALLOC -D_CRT_SECURE_NO_DEPRECATE -DBU
 #   Warning 4131 is old-style function declarations.
 WARNINGS = -wd4131
 
-!include <ntwin32.mak>
+cflags    = -c
+link      = link.exe
+dlllflags = -dll
 
 # 
 # Global makefile settings
