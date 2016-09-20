@@ -1,6 +1,6 @@
 # simple installer for Sybtcl/Oratcl
 # Copyright 1997 Tom Poindexter
-# 1.1 - add support for install on Macs
+# 1.2 - add support for install on Macs
 
 # read in the makefile, to figure out which package and version
 

@@ -130,7 +130,8 @@ REQUIREMENTS:
 WINDOWS BINARIES
 
 A Windows DLL is included, compiled with Tcl 8.6.  To install, unpack
-all the files in the ./win directory, and run:
+all the files in the ./win directory, rename to appropriate DLL for
+your system to 'mpexpr12.dll' and run:
 	tclsh86 install.tcl
 
 Please note!!  	I'm not suppling a .zip file for Windows.
