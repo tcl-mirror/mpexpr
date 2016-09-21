@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-main()
+int main()
 {
     printf("#undef LONG_BITS\n");
     printf("#define LONG_BITS %ld\n", sizeof(long)*8);
