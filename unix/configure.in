@@ -53,11 +53,13 @@ done
  
 # find lib/tclConfig.sh
 for f in $with_tclpath $exec_prefix_locations ; do
-  if test -r "$f/lib/tclConfig.sh"; then
-    TCL_LIB_DIR=$f/lib
+ for l in lib lib64 ; do
+  if test -r "$f/$l/tclConfig.sh"; then
+    TCL_LIB_DIR=$f/$l
     AC_MSG_RESULT(setting TCL_LIB_DIR to $TCL_LIB_DIR)
     break
   fi
+ done
 done
  
 if test -z "$TCL_INC_DIR" ; then
