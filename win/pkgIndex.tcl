@@ -1,1 +1,1 @@
-package ifneeded Mpexpr 1.2 "load [file join $dir .. mpexpr12.dll]"
+package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list load [file join $dir @PKG_LIB_FILE@]]

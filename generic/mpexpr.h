@@ -39,7 +39,7 @@
 #include <tcl.h>
 
 #undef TCL_STORAGE_CLASS
-#ifdef BUILD_mpexpr
+#ifdef BUILD_Mpexpr
 # define TCL_STORAGE_CLASS DLLEXPORT
 #else
 # ifdef USE_TCL_STUBS

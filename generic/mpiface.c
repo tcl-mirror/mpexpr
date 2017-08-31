@@ -72,6 +72,16 @@ Mpexpr_Init (interp)
     static int initialized = 0;
     TCL_DECLARE_MUTEX(mpMutex)
 
+#ifdef USE_TCL_STUBS
+    if (Tcl_InitStubs(interp, "8.5", 0) == NULL) {
+	return TCL_ERROR;
+    }
+
+    if (Tcl_PkgRequire(interp, "Tcl", "8.5", 0) == NULL) {
+	return TCL_ERROR;
+    }
+#endif
+
     if (!initialized) {
 	Tcl_MutexLock(&mpMutex);
 	if (!initialized) {
