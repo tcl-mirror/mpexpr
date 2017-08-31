@@ -861,14 +861,12 @@ ExprGetValue(interp, infoPtr, prec, valuePtr, mdPtr)
 					 * for unary operator).  Don't lex
 					 * again. */
     int result;
-    int save;
 
     ZVALUE  z_tmp;
     ZVALUE  z_div;
     ZVALUE  z_quot;
     ZVALUE  z_rem;
     long    l_shift;
-    char   *math_io;
 
     NUMBER  *q_tmp;
 
@@ -1669,7 +1667,6 @@ ExprMakeString(precRequest, valuePtr)
     int total;
     long precision;
     char *math_io;
-    NUMBER *q_rounded;
 
     if (valuePtr->type == MP_INT) {
         shortfall = zdigits(valuePtr->intValue) -
@@ -1829,7 +1826,6 @@ Mp_ExprString(interp, string, mdPtr)
     int result;
     long precision;
     char *math_io;
-    NUMBER *q_rounded;
     JumpData jd;
     JumpData **jdPtrPtr = Tcl_GetThreadData(&mp_jdKey, sizeof(JumpData *));
     JumpData *savePtr = *jdPtrPtr;

@@ -264,10 +264,7 @@ PrecTrace(clientData, interp, name1, name2, flags)
     CONST84 char *name2;        /* Second part of variable name. */
     int flags;                  /* Information about what happened. */
 {
-    CONST char *value;
-    char *end;
     char mp_buf[6];
-    long prec;
     char *result = NULL;
 
     Mp_Data *mdPtr = (Mp_Data *)clientData;
