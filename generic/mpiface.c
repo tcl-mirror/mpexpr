@@ -72,6 +72,16 @@ Mpexpr_Init (interp)
     static int initialized = 0;
     TCL_DECLARE_MUTEX(mpMutex)
 
+#ifdef USE_TCL_STUBS
+    if (Tcl_InitStubs(interp, "8.5", 0) == NULL) {
+	return TCL_ERROR;
+    }
+
+    if (Tcl_PkgRequire(interp, "Tcl", "8.5", 0) == NULL) {
+	return TCL_ERROR;
+    }
+#endif
+
     if (!initialized) {
 	Tcl_MutexLock(&mpMutex);
 	if (!initialized) {
@@ -254,10 +264,7 @@ PrecTrace(clientData, interp, name1, name2, flags)
     CONST84 char *name2;        /* Second part of variable name. */
     int flags;                  /* Information about what happened. */
 {
-    CONST char *value;
-    char *end;
     char mp_buf[6];
-    long prec;
     char *result = NULL;
 
     Mp_Data *mdPtr = (Mp_Data *)clientData;
