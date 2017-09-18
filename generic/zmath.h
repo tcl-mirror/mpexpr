@@ -27,7 +27,7 @@
 #else
 #include <string.h>
 #endif
-#if defined(__STDC__) || defined(HAS_STDARG)
+#if defined(_MSC_VER) || defined(__STDC__) || defined(HAS_STDARG)
 #include <stdarg.h>
 #else
 #include <varargs.h>
