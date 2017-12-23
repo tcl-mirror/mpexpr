@@ -17,7 +17,20 @@
 #------------------------------------------------------------------------------
 
 PROJECT = Mpexpr
-DOTVERSION      = 1.2
+
+# Unlike most extensions, mpexpr does not store version in configure.ac
+# so we cannot use the build-in version detection and need to extract it
+# from generic\mpexpr.h. We need nmakehlp to do the hard work for us.
+!if !exist("nmakehlp.exe")
+!if [$(CC) -nologo "nmakehlp.c" -link -subsystem:console > nul]
+!error Could not compile nmakehlp
+!endif
+!endif
+!if [echo DOTVERSION = \> versions.vc] \
+   && [nmakehlp -V "..\generic\mpexpr.h" MPEXPR_VERSION >> versions.vc]
+!error Could not detect Mpexpr version.
+!endif
+!include versions.vc
 
 !include "rules-ext.vc"
 
@@ -36,8 +49,6 @@ PRJ_OBJS = \
 	$(TMP_DIR)\zmath.obj   \
 	$(TMP_DIR)\zmod.obj    \
 	$(TMP_DIR)\zmul.obj 
-
-#PRJ_DEFINES = -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
 
 !include "$(_RULESDIR)\targets.vc"
 
