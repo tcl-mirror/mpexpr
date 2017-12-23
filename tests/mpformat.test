@@ -18,8 +18,8 @@
 
 # check if mpexpr is already loaded:
 
-if {[info commands mpexpr] == "mpexpr"} {
-  puts "mpexpr statically compiled into [info nameofexecutable]"
+if {[info commands mpformat] == "mpformat"} {
+  puts "mpformat statically compiled into [info nameofexecutable]"
 } elseif {![catch {package require Mpexpr} version]} {
   puts "Mpexpr $version loaded via package require"
 } else {
