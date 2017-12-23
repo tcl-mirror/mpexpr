@@ -535,7 +535,6 @@ NMAKEHLPC = $(_TCLDIR)\win\nmakehlp.c
 
 # We always build nmakehlp even if it exists since we do not know
 # what source it was built from.
-!message *** Using $(NMAKEHLPC)
 !if [$(cc32) -nologo "$(NMAKEHLPC)" -link -subsystem:console > nul]
 !endif
 
@@ -590,7 +589,6 @@ FPOPTS  = $(FPOPTS) -QI0f
 OPTIMIZATIONS = $(FPOPTS)
 
 !if [nmakehlp -c -O2]
-!message *** Compiler has 'Optimizations'
 OPTIMIZING = 1
 OPTIMIZATIONS   = $(OPTIMIZATIONS) -O2
 !else
@@ -1749,7 +1747,6 @@ TCLNMAKECONFIG = "$(OUT_DIR)\tcl.nmake"
 !message *** Output directory will be '$(OUT_DIR)'
 !message *** Installation, if selected, will be in '$(_INSTALLDIR)'
 !message *** Suffix for binaries will be '$(SUFX)'
-!message *** Compiler version $(VCVER). Target machine is $(MACHINE)
-!message *** Host architecture is $(NATIVE_ARCH)
+!message *** Compiler version $(VCVER). Target $(MACHINE), host $(NATIVE_ARCH).
 
 !endif # ifdef _RULES_VC
